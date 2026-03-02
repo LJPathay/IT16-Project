@@ -186,11 +186,42 @@ namespace ljp_itsolutions.Services
                             }
                         }
                     }
+ 
+                    // 5. Point Redemption Logic (Tiered Reward Selection)
+                    if (request.RedemptionTier > 0 && request.CustomerId.HasValue)
+                    {
+                        var customer = await _db.Customers.FindAsync(request.CustomerId.Value);
+                        if (customer != null)
+                        {
+                            int ptsRequired = 0;
+                            decimal rewardValue = 0;
+                            string tierLabel = "";
+
+                            switch (request.RedemptionTier)
+                            {
+                                case 1: ptsRequired = 5; rewardValue = 50m; tierLabel = "Bronze"; break;
+                                case 2: ptsRequired = 10; rewardValue = 110m; tierLabel = "Silver"; break; // +10 bonus
+                                case 3: ptsRequired = 20; rewardValue = 250m; tierLabel = "Gold"; break; // +50 bonus
+                            }
+
+                            if (customer.Points >= ptsRequired)
+                            {
+                                customer.Points -= ptsRequired;
+                                discount += rewardValue;
+                                result.Warnings.Add($"{tierLabel} Reward Applied: {ptsRequired} points redeemed for ₱{rewardValue:N0} discount.");
+                                await LogAuditAsync(cashierId, "Loyalty Redemption", $"Deducted {ptsRequired} points ({tierLabel} Tier) from Customer {customer.FullName}.");
+                            }
+                            else
+                            {
+                                result.Warnings.Add($"Loyalty Redemption Failed: Customer has insufficient points for {tierLabel} reward (Required: {ptsRequired}).");
+                            }
+                        }
+                    }
 
                     order.DiscountAmount = discount;
                     order.FinalAmount = Math.Max(0, order.TotalAmount - order.DiscountAmount);
 
-                    // 5. Loyalty Points handling
+                    // Loyalty Points handling (Earn points for current purchase)
                     if (request.CustomerId.HasValue)
                     {
                         var customer = await _db.Customers.FindAsync(request.CustomerId.Value);
@@ -210,7 +241,7 @@ namespace ljp_itsolutions.Services
                         }
                     }
 
-                    // 6. Notifications for High Value Orders
+                    // Notifications for High Value Orders
                     if (order.FinalAmount >= 1000)
                     {
                          _db.Notifications.Add(new Notification
@@ -224,7 +255,7 @@ namespace ljp_itsolutions.Services
                         });
                     }
 
-                    // 7. Save
+                    // Save
                     _db.Orders.Add(order);
                     await _db.SaveChangesAsync();
                     
@@ -233,7 +264,7 @@ namespace ljp_itsolutions.Services
 
                     await transaction.CommitAsync();
 
-                    // 8. Trigger Background Receipt
+                    // Trigger Background Receipt
                     _ = Task.Run(async () =>
                     {
                         try
@@ -324,7 +355,7 @@ namespace ljp_itsolutions.Services
                 if (customer != null)
                 {
                      decimal basePoints = order.FinalAmount / 100m;
-                     customer.Points -= (int)Math.Floor(basePoints); // Simplified reversal
+                     customer.Points -= (int)Math.Floor(basePoints); 
                 }
             }
 

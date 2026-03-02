@@ -6,288 +6,441 @@
 
 <div class="container-fluid px-4 py-3">
 
-    <!-- KPI Strip -->
+    <!-- TOP KPI SECTION: STRATEGIC REVENUE FOCUS -->
     <div class="row g-3 mb-4">
+        <!-- Campaign Revenue -->
         <div class="col-md-3">
             <div class="kpi-card-premium brand-primary">
                 <div class="kpi-content">
-                    <p class="kpi-title">Active Campaigns</p>
-                    <span class="kpi-main-val">@Model.ActiveCampaigns</span>
-                    <div class="kpi-trend text-success">
-                        <i class="fas fa-check-circle"></i> Live
+                    <p class="kpi-title">Campaign Revenue</p>
+                    <span class="kpi-main-val">₱@Model.CampaignRevenue.ToString("N0")</span>
+                    <div class="kpi-trend text-primary">
+                        Influenced Sales
                     </div>
                 </div>
                 <div class="kpi-icon-box">
-                    <i class="fas fa-bullhorn"></i>
+                    <i class="fas fa-funnel-dollar"></i>
                 </div>
             </div>
         </div>
 
+        <!-- Loyalty Revenue Contribution -->
         <div class="col-md-3">
             <div class="kpi-card-premium brand-success">
                 <div class="kpi-content">
-                    <p class="kpi-title">Conversion Volume</p>
-                    <span class="kpi-main-val">@Model.ConversionVolume</span>
+                    <p class="kpi-title">Loyalty Revenue %</p>
+                    <span class="kpi-main-val">@Model.LoyaltyRevenueContributionPercent.ToString("N1")%</span>
                     <div class="kpi-trend text-success">
-                        <i class="fas fa-arrow-up"></i> @Model.ReachGrowth.ToString("N1")% Growth
+                        Share of Total Sales
                     </div>
                 </div>
                 <div class="kpi-icon-box">
-                    <i class="fas fa-filter"></i>
+                    <i class="fas fa-hand-holding-usd"></i>
                 </div>
             </div>
         </div>
 
+        <!-- Retention Rate -->
         <div class="col-md-3">
             <div class="kpi-card-premium brand-indigo">
                 <div class="kpi-content">
-                    <p class="kpi-title">Conversion Rate</p>
-                    <span class="kpi-main-val">@Model.ConversionRate.ToString("N1")%</span>
-                    <div class="progress" style="height: 4px; border-radius: 10px; background-color: rgba(0, 0, 0, 0.05); margin-top: 8px;">
-                        <div class="progress-bar bg-primary" role="progressbar" style="width: @Model.ConversionRate%"></div>
+                    <p class="kpi-title">Retention Rate (%)</p>
+                    <span class="kpi-main-val">@Model.RetentionRatePercent.ToString("N1")%</span>
+                    <div class="progress mt-2" style="height: 4px; background: rgba(99, 102, 241, 0.2);">
+                        <div class="progress-bar bg-indigo" style="width: @Model.RetentionRatePercent%"></div>
                     </div>
                 </div>
                 <div class="kpi-icon-box">
-                    <i class="fas fa-percentage"></i>
+                    <i class="fas fa-sync"></i>
                 </div>
             </div>
         </div>
 
+        <!-- Campaign ROI -->
         <div class="col-md-3">
-            <div class="kpi-card-premium brand-warning">
+            <div class="kpi-card-premium brand-danger">
                 <div class="kpi-content">
-                    <p class="kpi-title">Total Patron Audience</p>
-                    <span class="kpi-main-val">@Model.AudiencePenetration</span>
-                    <div class="kpi-trend text-muted">
-                        Loyalty Network Size
+                    <p class="kpi-title">Campaign ROI</p>
+                    <span class="kpi-main-val">@($"x{Model.CampaignROI:N1}")</span>
+                    <div class="kpi-trend text-danger">
+                        Revenue / Discount
                     </div>
                 </div>
                 <div class="kpi-icon-box">
-                    <i class="fas fa-users"></i>
+                    <i class="fas fa-rocket"></i>
                 </div>
             </div>
         </div>
     </div>
 
-
-
-    <!-- Primary Analytics Row -->
+    <!-- MIDDLE INTELLIGENCE ROW -->
     <div class="row g-4 mb-4">
-        <!-- Growth Chart -->
+        <!-- Revenue Trend Chart -->
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
-                <div class="card-header bg-white py-3 px-4">
-                    <h6 class="fw-bold mb-0">Engagement Velocity & Conversion Trends</h6>
-                    <p class="text-muted xx-small mb-0">Aggregate conversion volume over the trailing 7-day period</p>
+                <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold mb-0">Customer Conversion Trend</h6>
+                        <p class="text-muted xx-small mb-0">Campaign revenue & acquisition velocity overview</p>
+                    </div>
+                    <div class="badge bg-soft-blue text-primary rounded-pill px-3">Weekly Strategy</div>
                 </div>
                 <div class="card-body p-4">
-                    <div style="height: 300px;">
-                        <canvas id="performanceChart"></canvas>
+                    <div style="height: 320px;">
+                        <canvas id="campaignRevenueTrendChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Patron Composition -->
+        <!-- Acquisition Matrix -->
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100">
                 <div class="card-header bg-white border-0 py-3 px-4">
                     <h6 class="fw-bold mb-0 text-dark">Patron Acquisition Matrix</h6>
-                    <p class="text-muted xx-small mb-0">New vs. returning loyalty retention share</p>
+                    <p class="text-muted xx-small mb-0">Demographic share & retention behavior</p>
                 </div>
-                <div class="card-body p-4 pt-0">
-                    <div style="height: 250px;">
-                        <canvas id="patronChart"></canvas>
+                <div class="card-body p-4 pt-0 d-flex flex-column align-items-center justify-content-center">
+                    <div class="position-relative" style="height: 220px; width: 100%;">
+                        <canvas id="acquisitionDonutChart"></canvas>
+                        <div class="position-absolute top-50 start-50 translate-middle text-center">
+                            @{
+                                var totalActive = Model.NewPatronsCount + Model.ReturningPatronsCount;
+                            }
+                            <h4 class="fw-bold mb-0">@totalActive</h4>
+                            <p class="text-muted xx-small uppercase mb-0">Active</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 w-100">
+                         <div class="bg-light rounded-3 p-3 border">
+                             <div class="row text-center mb-1">
+                                 <div class="col-6 border-end">
+                                     <p class="xx-small text-muted text-uppercase mb-0">New</p>
+                                     <h6 class="mb-0 fw-bold">@Model.NewPatronsCount</h6>
+                                 </div>
+                                 <div class="col-6">
+                                     <p class="xx-small text-muted text-uppercase mb-0">Returning</p>
+                                     <h6 class="mb-0 fw-bold">@Model.ReturningPatronsCount</h6>
+                                 </div>
+                             </div>
+                             <div class="text-center pt-2 border-top">
+                                 <p class="xx-small text-muted mb-0">Retention Success: <strong>@Model.RetentionRatePercent.ToString("N1")%</strong></p>
+                             </div>
+                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Secondary Strategic Row -->
+    <!-- STRATEGIC DRILL-DOWN ROW -->
     <div class="row g-4 mb-4">
-        <!-- VIP Loyalty Equity -->
-        <div class="col-lg-4">
+        <!-- Points Liability Ledger -->
+        <div class="col-lg-7">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100">
                 <div class="card-header bg-white border-0 py-3 px-4">
-                    <h6 class="fw-bold mb-0 text-dark">VIP Loyalty Equity</h6>
-                    <p class="text-muted xx-small mb-0">Highest capitalized patrons by engagement points</p>
+                    <h6 class="fw-bold mb-0 text-dark">Points Issued vs. Redeemed</h6>
+                    <p class="text-muted xx-small mb-0">Monitoring loyalty inflation and liability utilization</p>
                 </div>
                 <div class="card-body p-4 pt-0">
                     <div style="height: 300px;">
-                        <canvas id="vipEquityChart"></canvas>
+                        <canvas id="pointsLedgerChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Tier Saturation -->
-        <div class="col-lg-8">
+        <!-- Strategy Summary & Alerts -->
+        <div class="col-lg-5">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100">
                 <div class="card-header bg-white border-0 py-3 px-4">
-                    <h6 class="fw-bold mb-0 text-dark">Strategic Tier Saturation Index</h6>
-                    <p class="text-muted xx-small mb-0">Cross-demographic distribution of loyalty tier achievement</p>
+                    <h6 class="fw-bold mb-0 text-dark">Campaign Impact Ledger</h6>
+                    <p class="text-muted xx-small mb-0">Program status & automated intelligence</p>
                 </div>
                 <div class="card-body p-4 pt-0">
-                    <div style="height: 300px;">
-                        <canvas id="tierSaturationChart"></canvas>
+                    <!-- Top/Bottom Performers -->
+                    <div class="row g-2 mb-4">
+                        <div class="col-6">
+                            <div class="p-3 bg-success bg-opacity-10 border border-success border-opacity-20 rounded-3">
+                                <p class="xx-small text-success text-uppercase fw-bold mb-1">Top Performer</p>
+                                <h6 class="small fw-bold mb-0">@Model.TopCampaignName</h6>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-danger bg-opacity-10 border border-danger border-opacity-20 rounded-3">
+                                <p class="xx-small text-danger text-uppercase fw-bold mb-1">Underperforming</p>
+                                <h6 class="small fw-bold mb-0">@Model.BottomCampaignName</h6>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expiring Offers / Alerts -->
+                    <div class="mb-0">
+                        <p class="xx-small text-muted text-uppercase fw-bold mb-2">Automated Alerts</p>
+                        <div class="alert-list">
+                            <div class="d-flex align-items-center gap-3 p-3 mb-2 rounded-3 border border-light bg-light bg-opacity-50">
+                                <div class="icon-box bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-clock small"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="mb-0 fw-bold small">System Hub Alert</p>
+                                    <p class="xx-small text-muted mb-0">Check expiring offers for renewal.</p>
+                                </div>
+                                <i class="fas fa-chevron-right xx-small text-muted"></i>
+                            </div>
+                             <div class="d-flex align-items-center gap-3 p-3 rounded-3 border border-light bg-light bg-opacity-50">
+                                <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-lightbulb small"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <p class="mb-0 fw-bold small">Retention Insight</p>
+                                    <p class="xx-small text-muted mb-0">Retention is @Model.RetentionRatePercent.ToString("N1")%. Send re-engagement promo.</p>
+                                </div>
+                                <i class="fas fa-chevron-right xx-small text-muted"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- BOTTOM SECTION: TIER & VIP REVENUE -->
+    <div class="row g-4 mb-4">
+        <!-- Tier Distribution -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100">
+                <div class="card-header bg-white border-0 py-3 px-4">
+                    <h6 class="fw-bold mb-0 text-dark">Loyalty Tier Distribution</h6>
+                    <p class="text-muted xx-small mb-0">Weighted by revenue contribution per segment</p>
+                </div>
+                <div class="card-body p-4 pt-0 d-flex flex-column align-items-center justify-content-center">
+                    <div class="position-relative" style="height: 220px; width: 100%;">
+                        <canvas id="tierDonutChart"></canvas>
+                    </div>
+                    <div class="mt-4 w-100">
+                         @{
+                            var totalTierRev = Model.TierRevenueData.Sum();
+                            var topTierVal = Model.TierRevenueData.Any() ? Model.TierRevenueData.Max() : 0;
+                            var topTierIdx = Model.TierRevenueData.Any() ? Model.TierRevenueData.IndexOf(topTierVal) : 0;
+                            var topTierName = Model.TierLabels.ElementAtOrDefault(topTierIdx) ?? "Patron";
+                            var topPct = totalTierRev > 0 ? (topTierVal / totalTierRev * 100) : 0;
+                         }
+                         <div class="bg-light rounded-3 p-3 text-center border">
+                             <p class="small text-muted mb-1 text-uppercase fw-bold x-small">Star Segment</p>
+                             <h6 class="mb-0 fw-bold text-dark">@topTierName tier drives @topPct.ToString("N0")% of loyalty revenue.</h6>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Revenue Contributors -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100">
+                <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold mb-0 text-dark">Top Loyalty Revenue Contributors</h6>
+                        <p class="text-muted xx-small mb-0">Ranking by lifetime spend and order frequency</p>
+                    </div>
+                    <button class="btn btn-sm btn-light border rounded-pill px-3 xx-small fw-bold">Full Leaderboard</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light text-muted xx-small uppercase fw-bold">
+                                <tr>
+                                    <th class="ps-4 py-3">Patron</th>
+                                    <th class="py-3">Points</th>
+                                    <th class="py-3">Lifetime Spend</th>
+                                    <th class="py-3 text-end pe-4">Visits</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var customer in Model.VIPPerformance.Take(5))
+                                {
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="avatar-sm rounded-circle bg-soft-blue text-primary d-flex align-items-center justify-content-center fw-bold border" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                                    @customer.FullName.Substring(0, 1)
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold small">@customer.FullName</div>
+                                                    <div class="text-muted xx-small">Last: @(customer.LastVisit?.ToString("MMM dd") ?? "N/A")</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge rounded-pill bg-light text-muted border px-2" style="font-size: 0.6rem;">
+                                                @customer.Points.ToString("N0")
+                                            </span>
+                                        </td>
+                                        <td class="small fw-bold text-dark">₱@customer.TotalSpend.ToString("N2")</td>
+                                        <td class="text-end pe-4">
+                                            <span class="text-muted small">@customer.TransactionCount</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-
 
 <style>
-    .kpi-card { transition: transform 0.2s ease; cursor: pointer; }
-    .kpi-card:hover { transform: translateY(-3px); }
-    .kpi-icon-bg { position: absolute; right: -10px; bottom: -10px; font-size: 5rem; color: rgba(0,0,0,0.03); transform: rotate(-15deg); pointer-events: none; }
-    .bg-soft-blue { background-color: rgba(59, 130, 246, 0.1); }
-    .bg-indigo-900 { background-color: #1e1b4b; }
-    .hover-bg-light:hover { background-color: #f8fafc; cursor: pointer; }
-    .transition-all { transition: all 0.2s ease; }
-    .live-pulse { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 rgba(16, 185, 129, 0.4); animation: pulse 2s infinite; }
-    @@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+    .bg-soft-blue { background-color: rgba(79, 70, 229, 0.05); }
+    .bg-indigo { background-color: #6366f1 !important; }
+    .text-indigo { color: #6366f1 !important; }
     .xx-small { font-size: 0.65rem; }
+    .divider { height: 1px; background: #f1f5f9; margin: 1rem 0; }
     .uppercase { text-transform: uppercase; }
-    .tracking-wider { letter-spacing: 0.05em; }
-    .reward-item { transition: all 0.2s ease; border: 1px solid #f1f5f9; background: white; }
-    .reward-item:hover { border-color: #3b82f6; background: #f8fafc; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .reward-item:active { transform: translateY(0); }
 </style>
-
-<!-- Reward Selection Modal -->
-<div class="modal fade" id="rewardSelectionModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 px-4 pt-4 pb-0">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center text-primary" style="width: 42px; height: 42px; flex-shrink: 0;">
-                        <i class="fas fa-gift"></i>
-                    </div>
-                    @Html.AntiForgeryToken()
-                    <div>
-                        <h5 class="modal-title fw-bolder text-dark mb-0">Provision Loyalty Reward</h5>
-                        <p class="text-muted small mb-0 uppercase tracking-widest fw-bold" id="rewardCustomerName">Customer Name</p>
-                    </div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="text-muted small mb-3">Select an incentive tier to immediately provision for this patron. They currently have <strong class="text-success" id="rewardCustomerPoints">0</strong> points available.</p>
-                
-                <input type="hidden" id="rewardSelectedCustomerId" />
-
-                <!-- Tier 1 -->
-                <button class="btn w-100 text-start d-flex align-items-center gap-3 p-3 mb-2 rounded-3 reward-item" onclick="processReward(5, 5, '5% Patron Discount')">
-                    <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <i class="fas fa-ticket-alt"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0 text-dark">5% Discount</h6>
-                        <span class="xx-small text-muted">Deducts 5 points</span>
-                    </div>
-                </button>
-
-                <!-- Tier 2 -->
-                <button class="btn w-100 text-start d-flex align-items-center gap-3 p-3 mb-2 rounded-3 reward-item" onclick="processReward(10, 15, '15% Elite Discount')">
-                    <div class="bg-success bg-opacity-10 text-success rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <i class="fas fa-certificate"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0 text-dark">15% Discount</h6>
-                        <span class="xx-small text-muted">Deducts 10 points</span>
-                    </div>
-                </button>
-
-                <!-- Tier 3 -->
-                <button class="btn w-100 text-start d-flex align-items-center gap-3 p-3 mb-2 rounded-3 reward-item" onclick="processReward(20, 25, '25% VIP Discount')">
-                    <div class="bg-warning bg-opacity-10 text-warning rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <i class="fas fa-crown"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0 text-dark">25% Discount</h6>
-                        <span class="xx-small text-muted">Deducts 20 points</span>
-                    </div>
-                </button>
-
-            </div>
-        </div>
-    </div>
-</div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Performance Chart
-        const perfCtx = document.getElementById('performanceChart').getContext('2d');
-        new Chart(perfCtx, {
+        // Global Chart Defaults
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748b';
+
+        // 1. Campaign Revenue Trend (Line Chart)
+        const revenueCtx = document.getElementById('campaignRevenueTrendChart').getContext('2d');
+        new Chart(revenueCtx, {
             type: 'line',
             data: {
-                labels: @Html.Raw(Json.Serialize(Model.PerformanceLabels)),
+                labels: @Html.Raw(Json.Serialize(Model.CampaignRevenueTrendLabels)),
+                datasets: [
+                    {
+                        label: 'Campaign Revenue (₱)',
+                        data: @Html.Raw(Json.Serialize(Model.CampaignRevenueTrendData)),
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.05)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#4f46e5',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        yAxisID: 'yRev'
+                    },
+                    {
+                        label: 'Conversions',
+                        data: @Html.Raw(Json.Serialize(Model.PerformanceData)),
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        tension: 0.4,
+                        fill: false,
+                        yAxisID: 'yConv'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: true, position: 'top', align: 'end', labels: { usePointStyle: true, font: { size: 10 } } } },
+                scales: {
+                    yRev: { 
+                        type: 'linear', 
+                        position: 'left', 
+                        beginAtZero: true, 
+                        grid: { color: '#f1f5f9' }, 
+                        ticks: { callback: (v) => '₱' + v.toLocaleString(), font: { size: 10 } } 
+                    },
+                    yConv: { 
+                        type: 'linear', 
+                        position: 'right', 
+                        beginAtZero: true, 
+                        grid: { display: false }, 
+                        ticks: { font: { size: 10 } } 
+                    },
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                }
+            }
+        });
+
+        // 2. Acquisition Matrix (Donut Chart)
+        const acqCtx = document.getElementById('acquisitionDonutChart').getContext('2d');
+        new Chart(acqCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['New', 'Returning'],
                 datasets: [{
-                    label: 'Conversion Velocity',
-                    data: @Html.Raw(Json.Serialize(Model.PerformanceData)),
-                    borderColor: '#4f46e5',
-                    backgroundColor: 'rgba(79, 70, 229, 0.05)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#4f46e5',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointHoverRadius: 6,
-                    pointHoverBackgroundColor: '#4f46e5',
-                    pointHoverBorderColor: '#fff',
-                    pointHoverBorderWidth: 2
+                    data: [@Model.NewPatronsCount, @Model.ReturningPatronsCount],
+                    backgroundColor: ['#4f46e5', '#e2e8f0'],
+                    borderWidth: 0,
+                    hoverOffset: 10
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { 
+                cutout: '80%',
+                plugins: {
                     legend: { display: false },
                     tooltip: {
-                        enabled: true,
-                        backgroundColor: '#1E293B',
-                        padding: 12,
-                        titleFont: { size: 14, weight: 'bold' },
-                        bodyFont: { size: 13 },
-                        cornerRadius: 8,
-                        displayColors: false
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index',
-                },
-                scales: {
-                    y: { 
-                        beginAtZero: true, 
-                        grid: { color: '#f1f5f9', drawBorder: false },
-                        ticks: { font: { size: 11 } }
-                    },
-                    x: { 
-                        grid: { display: false },
-                        ticks: { font: { size: 11 } }
+                        callbacks: {
+                            label: function(item) {
+                                let total = item.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = Math.round((item.raw / total) * 100);
+                                return `${item.label}: ${item.raw} (${percentage}%)`;
+                            }
+                        }
                     }
                 }
             }
         });
 
-        // Patron Composition Chart
-        const patronCtx = document.getElementById('patronChart').getContext('2d');
-        new Chart(patronCtx, {
+        // 3. Points Ledger (Issued vs Redeemed - Bar Chart)
+        const pointsCtx = document.getElementById('pointsLedgerChart').getContext('2d');
+        new Chart(pointsCtx, {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.PointsTrendLabels)),
+                datasets: [
+                    {
+                        label: 'Points Issued',
+                        data: @Html.Raw(Json.Serialize(Model.PointsIssuedData)),
+                        backgroundColor: '#4f46e5',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Points Redeemed',
+                        data: @Html.Raw(Json.Serialize(Model.PointsRedeemedData)),
+                        backgroundColor: '#fbbf24',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', align: 'end', labels: { usePointStyle: true, font: { size: 11 } } } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                }
+            }
+        });
+
+        // 4. Loyalty Tier Distribution (Donut Chart)
+        const tierCtx = document.getElementById('tierDonutChart').getContext('2d');
+        const tierRevenueData = @Html.Raw(Json.Serialize(Model.TierRevenueData));
+        new Chart(tierCtx, {
             type: 'doughnut',
             data: {
-                labels: ['New Patrons', 'Returning'],
+                labels: @Html.Raw(Json.Serialize(Model.TierLabels)),
                 datasets: [{
-                    data: [@Model.NewPatronsCount, @Model.ReturningPatronsCount],
-                    backgroundColor: ['#3b82f6', '#6366f1'],
+                    data: @Html.Raw(Json.Serialize(Model.TierData)),
+                    backgroundColor: ['#f59e0b', '#6366f1', '#94a3b8', '#e2e8f0'],
                     borderWidth: 0,
-                    hoverOffset: 4
+                    hoverOffset: 15
                 }]
             },
             options: {
@@ -295,109 +448,18 @@
                 maintainAspectRatio: false,
                 cutout: '75%',
                 plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20,
-                            font: { size: 12, weight: '500' }
+                    legend: { position: 'bottom', labels: { usePointStyle: true, font: { size: 10 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(item) {
+                                let val = item.raw || 0;
+                                let revenue = tierRevenueData[item.dataIndex] || 0;
+                                return [`Members: ${val}`, `Weighted Revenue: ₱${revenue.toLocaleString()}`];
+                            }
                         }
                     }
                 }
             }
         });
-
-        // VIP Equity Chart
-        const vipCtx = document.getElementById('vipEquityChart').getContext('2d');
-        new Chart(vipCtx, {
-            type: 'bar',
-            data: {
-                labels: @Html.Raw(Json.Serialize(Model.VIPPerformance.Select(v => v.FullName))),
-                datasets: [{
-                    label: 'Loyalty Points',
-                    data: @Html.Raw(Json.Serialize(Model.VIPPerformance.Select(v => v.Points))),
-                    backgroundColor: '#4f46e5',
-                    borderRadius: 8,
-                    barThickness: 25
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { 
-                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-                    y: { grid: { display: false }, ticks: { font: { size: 10 } } }
-                }
-            }
-        });
-
-        // Tier Saturation Chart
-        const tierCtx = document.getElementById('tierSaturationChart').getContext('2d');
-        new Chart(tierCtx, {
-            type: 'bar',
-            data: {
-                labels: @Html.Raw(Json.Serialize(Model.TierLabels)),
-                datasets: [{
-                    label: 'Patron Volume',
-                    data: @Html.Raw(Json.Serialize(Model.TierData)),
-                    backgroundColor: ['#e67e22', '#6366f1', '#94a3b8', '#e2e8f0'],
-                    borderRadius: 12,
-                    barThickness: 45
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { 
-                    y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
-                    x: { grid: { display: false }, ticks: { font: { size: 10 } } }
-                }
-            }
-        });
-
-        let currentRewardCustomerId = 0;
-        let currentRewardCustomerPoints = 0;
-        const rewardModal = new bootstrap.Modal(document.getElementById('rewardSelectionModal'));
-
-        function openRewardModal(customerId, customerName, points) {
-            currentRewardCustomerId = customerId;
-            currentRewardCustomerPoints = points;
-            document.getElementById('rewardCustomerName').textContent = customerName;
-            document.getElementById('rewardCustomerPoints').textContent = points;
-            rewardModal.show();
-        }
-
-        async function processReward(reqPts, discountVal, rewardName) {
-            if (currentRewardCustomerPoints < reqPts) {
-                alert("Insufficient loyalty capital.");
-                return;
-            }
-
-            if (!confirm(`Provision ${rewardName}?`)) return;
-            
-            try {
-                const response = await fetch('@Url.Action("GenerateReward", "Marketing")', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    },
-                    body: JSON.stringify({ CustomerId: currentRewardCustomerId, PointsToDeduct: reqPts, DiscountValue: discountVal, RewardName: rewardName })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    alert('Provisioned successfully.');
-                    location.reload();
-                } else {
-                    alert(data.message);
-                }
-            } catch (err) {
-                alert('Network failure.');
-            }
-        }
     </script>
 }

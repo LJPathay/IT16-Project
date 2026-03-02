@@ -22,6 +22,7 @@ namespace ljp_itsolutions.Services
         public string? PromoCode { get; set; }
         public string? PaymentStatus { get; set; }
         public string? ReferenceNumber { get; set; }
+        public int RedemptionTier { get; set; }
     }
 
     public class OrderResult

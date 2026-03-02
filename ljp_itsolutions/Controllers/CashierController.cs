@@ -42,7 +42,7 @@ namespace ljp_itsolutions.Controllers
             public string PaymentMethod { get; set; } = "Cash";
             public int? CustomerId { get; set; }
             public string? PromoCode { get; set; }
-            public bool RedeemPoints { get; set; }
+            public int RedemptionTier { get; set; }
             public decimal? CashReceived { get; set; }
         }
 
@@ -104,7 +104,8 @@ namespace ljp_itsolutions.Controllers
                 CustomerId = request.CustomerId,
                 PaymentMethod = request.PaymentMethod,
                 PromoCode = request.PromoCode,
-                PaymentStatus = request.PaymentMethod == "Paymongo" ? "Paid (Digital)" : "Paid"
+                PaymentStatus = request.PaymentMethod == "Paymongo" ? "Paid (Digital)" : "Paid",
+                RedemptionTier = request.RedemptionTier
             };
 
             var result = await _orderService.ProcessOrderAsync(svcRequest, cashierId);
@@ -127,9 +128,6 @@ namespace ljp_itsolutions.Controllers
             }
             return RedirectToAction("Receipt", new { id = result.Order?.OrderID });
         }
-
-
-
 
         public async Task<IActionResult> TransactionHistory()
         {
@@ -167,7 +165,8 @@ namespace ljp_itsolutions.Controllers
                 CustomerId = request.CustomerId,
                 PaymentMethod = "E-Wallet (Paymongo)",
                 PromoCode = request.PromoCode,
-                PaymentStatus = "Pending"
+                PaymentStatus = "Pending",
+                RedemptionTier = request.RedemptionTier
             };
 
             var result = await _orderService.ProcessOrderAsync(svcRequest, cashierId);
@@ -189,7 +188,7 @@ namespace ljp_itsolutions.Controllers
             public List<int> ProductIds { get; set; } = new();
             public string? PromoCode { get; set; }
             public int? CustomerId { get; set; }
-            public bool RedeemPoints { get; set; }
+            public int RedemptionTier { get; set; }
         }
 
         public async Task<IActionResult> Receipt(Guid id)

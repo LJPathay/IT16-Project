@@ -13,6 +13,7 @@ namespace ljp_itsolutions.Services
         Task<byte[]> GenerateTransactionsCSVAsync();
         Task<byte[]> GenerateUsersCSVAsync();
         Task<byte[]> GenerateSalesTrendsCSVAsync(DateTime start, DateTime end, string periodLabel);
+        Task<byte[]> GenerateInventoryReportCSVAsync();
         Task<FinanceData> GetFinanceDataAsync();
         Task<AdminDashboardData> GetAdminDashboardDataAsync();
         Task<AdminReportsData> GetAdminReportsDataAsync();
@@ -41,23 +42,60 @@ namespace ljp_itsolutions.Services
         public int CustomerID { get; set; }
         public string FullName { get; set; } = string.Empty;
         public int Points { get; set; }
+        public decimal TotalSpend { get; set; }
+        public DateTime? LastVisit { get; set; }
+        public int TransactionCount { get; set; }
     }
 
     public class MarketingDashboardData
     {
+        // Top KPIs
+        public decimal LoyaltyRevenueContributionPercent { get; set; }
+        public int ActiveMembersThisWeek { get; set; }
+        public double RedemptionRatePercent { get; set; }
+        public double AvgPointsPerCustomer { get; set; }
+        public double CampaignROI { get; set; }
+        public decimal CampaignRevenue { get; set; }
+        public double RetentionRatePercent { get; set; }
+        public decimal AvgRevenuePerCampaign { get; set; }
+        public decimal TotalCampaignDiscount { get; set; }
+        
+        public string TopCampaignName { get; set; } = string.Empty;
+        public string BottomCampaignName { get; set; } = string.Empty;
+        
         public int AudiencePenetration { get; set; } 
+
+        // Core Metrics
         public int ActiveCampaigns { get; set; } 
-        public int ConversionVolume { get; set; } // Total Orders
-        public long NetworkEquity { get; set; } // Total Points
-        public double ConversionRate { get; set; } // Orders / Customers
-        public double ReachGrowth { get; set; } // today vs yesterday customer count %
-        public List<string> PerformanceLabels { get; set; } = new(); // chart labels
-        public List<int> PerformanceData { get; set; } = new(); // chart data
+        public int ConversionVolume { get; set; } 
+        public long NetworkEquity { get; set; } 
+        public double ConversionRate { get; set; } 
+        public double ReachGrowth { get; set; } 
+        
+        // Retention & Share
         public int ReturningPatronsCount { get; set; }
         public int NewPatronsCount { get; set; }
+        
+        // Charting
+        public List<string> PerformanceLabels { get; set; } = new(); 
+        public List<int> PerformanceData { get; set; } = new(); 
+        
+        // Tier Matrix
         public List<string> TierLabels { get; set; } = new();
         public List<int> TierData { get; set; } = new();
-        public List<CustomerBasicInfo> VIPPerformance { get; set; } = new(); // Top customers
+        public List<decimal> TierRevenueData { get; set; } = new();
+        
+        // Points Benchmark
+        public List<string> PointsTrendLabels { get; set; } = new();
+        public List<int> PointsIssuedData { get; set; } = new();
+        public List<int> PointsRedeemedData { get; set; } = new();
+
+        // Strategic Trends
+        public List<string> CampaignRevenueTrendLabels { get; set; } = new();
+        public List<decimal> CampaignRevenueTrendData { get; set; } = new();
+
+        // VIP / Leaderboard
+        public List<CustomerBasicInfo> VIPPerformance { get; set; } = new(); 
     }
 
 
@@ -131,9 +169,9 @@ namespace ljp_itsolutions.Services
 
     public class AdminDashboardData
     {
-        public int PortfolioValue { get; set; } // Total Products
-        public int DailyThroughput { get; set; } // Today's transactions
-        public double ThroughputGrowth { get; set; } // today vs yesterday %
+        public int PortfolioValue { get; set; } 
+        public int DailyThroughput { get; set; }
+        public double ThroughputGrowth { get; set; } 
         public decimal TotalGrossRevenue { get; set; }
         public List<string> SalesTrendLabels { get; set; } = new();
         public List<decimal> SalesTrendData { get; set; } = new();

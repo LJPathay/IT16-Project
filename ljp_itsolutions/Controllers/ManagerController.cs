@@ -344,6 +344,13 @@ namespace ljp_itsolutions.Controllers
             return File(buffer, "text/csv", $"LJP_Sales_Report_{start:yyyyMMdd}.csv");
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ExportInventoryCSV()
+        {
+            byte[] buffer = await _analyticsService.GenerateInventoryReportCSVAsync();
+            return File(buffer, "text/csv", $"LJP_Inventory_Audit_{DateTime.Now:yyyyMMdd}.csv");
+        }
+
         public async Task<IActionResult> Finance()
         {
             var data = await _analyticsService.GetFinanceDataAsync();

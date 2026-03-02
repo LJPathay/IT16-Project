@@ -11,6 +11,13 @@
 
 
 <div class="pos-container">
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+    
+    <button class="floating-cart-btn" onclick="toggleCart()" id="cartToggleBtn">
+        <i class="fas fa-shopping-cart"></i>
+        <span class="cart-badge" id="cartBadge" style="display:none">0</span>
+    </button>
+
     <div class="products-section">
         <div class="pos-header-actions mb-3">
             <div class="input-group search-bar">
@@ -65,15 +72,22 @@
                         <p class="product-name">@product.ProductName</p>
                         <p class="product-price">₱@product.Price.ToString("F2")</p>
                     </div>
+                    <div class="add-to-cart-overlay">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Add To Cart</span>
+                    </div>
                 </div>
             }
         </div>
     </div>
     
-    <div class="cart-section">
+    <div class="cart-section" id="cartDrawer">
         <div class="cart-header">
-            <h4>Current Order</h4>
-            <button class="btn btn-sm btn-outline-danger" onclick="clearCart()">Clear</button>
+            <h4><i class="fas fa-shopping-bag me-2 text-primary"></i>Current Order</h4>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-danger" onclick="clearCart()">Clear</button>
+                <button class="btn btn-sm btn-light d-lg-none" onclick="toggleCart()"><i class="fas fa-times"></i></button>
+            </div>
         </div>
 
         <div class="customer-loyalty-section px-3 py-2 bg-light border-bottom">
@@ -107,13 +121,13 @@
                             <span id="scPoints">0 pts</span>
                         </div>
                     </div>
-                    <button id="redeemBtn" class="btn btn-warning btn-xs px-2 rounded-pill fw-bold text-dark" onclick="toggleRedeem()" style="font-size: 0.65rem;">
+                    <button id="redeemBtn" class="btn btn-warning btn-xs px-2 rounded-pill fw-bold text-dark" onclick="showRewardPicker()" style="font-size: 0.65rem;">
                         Redeem
                     </button>
                 </div>
             </div>
             <input type="hidden" id="selectedCustomerId" value="">
-            <input type="hidden" id="isRedeeming" value="false">
+            <input type="hidden" id="redemptionTier" value="0">
         </div>
 
         <div class="cart-items" id="cartItems" style="display:none">
@@ -281,11 +295,61 @@
     </div>
 </div>
 
+<!-- Reward Picker Modal -->
+<div class="modal fade" id="rewardPickerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 1.25rem;">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold">Select Reward</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="d-grid gap-2">
+                    <!-- Bronze -->
+                    <button type="button" class="btn btn-outline-dark text-start p-3 border-2 rounded-4 reward-option" id="tier1Option" onclick="selectRewardTier(1)">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold">Bronze Reward</div>
+                                <div class="x-small text-muted">Redeem 5 Points</div>
+                            </div>
+                            <div class="fs-5 fw-bold text-primary">₱50</div>
+                        </div>
+                    </button>
+                    <!-- Silver -->
+                    <button type="button" class="btn btn-outline-dark text-start p-3 border-2 rounded-4 reward-option" id="tier2Option" onclick="selectRewardTier(2)">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold">Silver Reward</div>
+                                <div class="x-small text-muted">Redeem 10 Points</div>
+                            </div>
+                            <div class="fs-5 fw-bold text-success">₱110</div>
+                        </div>
+                    </button>
+                    <!-- Gold -->
+                    <button type="button" class="btn btn-outline-dark text-start p-3 border-2 rounded-4 reward-option" id="tier3Option" onclick="selectRewardTier(3)">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold">Gold Reward</div>
+                                <div class="x-small text-muted">Redeem 20 Points</div>
+                            </div>
+                            <div class="fs-5 fw-bold text-warning">₱250</div>
+                        </div>
+                    </button>
+                    
+                    <button type="button" class="btn btn-light mt-2 py-2 x-small fw-bold border" onclick="selectRewardTier(0)">
+                        Remove Reward
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         let cart = [];
         let paymentMethod = 'Cash';
-        let isRedeeming = false;
+        let redemptionTier = 0;
         let customerPoints = 0;
         let totalAmount = 0;
         let selectedCustomerEmail = null;
@@ -294,6 +358,14 @@
 
         // Removed cart loss protection to stop "Reload site?" warning as requested
 
+
+        function toggleCart() {
+            const drawer = document.getElementById('cartDrawer');
+            const overlay = document.getElementById('cartOverlay');
+            
+            drawer.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
 
         function addToCart(id, name, price) {
             const existing = cart.find(item => item.id === id);
@@ -326,44 +398,84 @@
             const emptyMsg = document.getElementById('emptyCartMsg');
             
             if (cart.length === 0) {
-                cartContainer.style.display = 'none';
-                if (emptyMsg) emptyMsg.style.display = 'block';
+                document.getElementById('emptyCartMsg').style.display = 'block';
+                document.getElementById('cartItems').style.display = 'none';
                 updateTotals(0);
+                // Update badge
+                const badge = document.getElementById('cartBadge');
+                badge.style.display = 'none';
                 return;
             }
 
-            if (emptyMsg) emptyMsg.style.display = 'none';
-            cartContainer.style.display = 'block';
-            cartContainer.innerHTML = cart.map(item => `
-                <div class="cart-item">
+            document.getElementById('emptyCartMsg').style.display = 'none';
+            document.getElementById('cartItems').style.display = 'flex';
+            cartContainer.innerHTML = ''; // Clear existing items
+
+            let subtotal = 0;
+            let totalItems = 0;
+            cart.forEach(item => {
+                subtotal += item.price * item.qty;
+                totalItems += item.qty;
+                const itemEl = document.createElement('div');
+                itemEl.className = 'cart-item animate__animated animate__fadeIn';
+                itemEl.innerHTML = `
                     <div class="cart-item-info">
                         <h6>${item.name}</h6>
-                        <span>₱${item.price.toFixed(2)} / unit</span>
+                        <span>₱${item.price.toFixed(2)}</span>
                     </div>
                     <div class="cart-item-qty">
-                        <button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button>
-                        <span>${item.qty}</span>
-                        <button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button>
+                        <button class="qty-btn" onclick="updateQty('${item.id}', -1)"><i class="fas fa-minus"></i></button>
+                        <span class="fw-bold">${item.qty}</span>
+                        <button class="qty-btn" onclick="updateQty('${item.id}', 1)"><i class="fas fa-plus"></i></button>
                     </div>
-                    <div class="fw-bold">₱${(item.price * item.qty).toFixed(2)}</div>
-                </div>
-            `).join('');
+                `;
+                cartContainer.appendChild(itemEl);
+            });
 
-            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            // Update badge
+            const badge = document.getElementById('cartBadge');
+            if (totalItems > 0) {
+                badge.innerText = totalItems;
+                badge.style.display = 'flex';
+                // Add jump animation to badge
+                badge.classList.remove('animate__bounce');
+                void badge.offsetWidth; // trigger reflow
+                badge.classList.add('animate__bounce');
+            } else {
+                badge.style.display = 'none';
+            }
+
             updateTotals(subtotal);
         }
 
-        function toggleRedeem() {
+        function showRewardPicker() {
             if (customerPoints < 5) {
-                alert('You need at least 5 points to redeem a ₱50 discount.');
+                showToast('Customer needs at least 5 points for any reward.', 'info');
                 return;
             }
-            isRedeeming = !isRedeeming;
-            const btn = document.getElementById('redeemBtn');
-            const sub = document.getElementById('subtotal').innerText.replace('₱', '');
             
-            if (isRedeeming) {
-                btn.innerText = 'Redeeming';
+            // Enable/Disable options based on points
+            document.getElementById('tier1Option').classList.toggle('disabled', customerPoints < 5);
+            document.getElementById('tier1Option').style.opacity = customerPoints < 5 ? '0.5' : '1';
+            
+            document.getElementById('tier2Option').classList.toggle('disabled', customerPoints < 10);
+            document.getElementById('tier2Option').style.opacity = customerPoints < 10 ? '0.5' : '1';
+            
+            document.getElementById('tier3Option').classList.toggle('disabled', customerPoints < 20);
+            document.getElementById('tier3Option').style.opacity = customerPoints < 20 ? '0.5' : '1';
+
+            const modal = new bootstrap.Modal(document.getElementById('rewardPickerModal'));
+            modal.show();
+        }
+
+        function selectRewardTier(tier) {
+            redemptionTier = tier;
+            document.getElementById('redemptionTier').value = tier;
+            
+            const btn = document.getElementById('redeemBtn');
+            if (tier > 0) {
+                const labels = ['', 'Bronze', 'Silver', 'Gold'];
+                btn.innerText = labels[tier];
                 btn.classList.add('btn-success');
                 btn.classList.remove('btn-warning');
             } else {
@@ -371,11 +483,17 @@
                 btn.classList.remove('btn-success');
                 btn.classList.add('btn-warning');
             }
+            
+            bootstrap.Modal.getInstance(document.getElementById('rewardPickerModal')).hide();
             renderCart();
         }
 
         function updateTotals(subtotal) {
-            let discountFromPoints = isRedeeming ? 50 : 0;
+            let discountFromPoints = 0;
+            if (redemptionTier === 1) discountFromPoints = 50;
+            else if (redemptionTier === 2) discountFromPoints = 110;
+            else if (redemptionTier === 3) discountFromPoints = 250;
+
             if (discountFromPoints > subtotal) discountFromPoints = subtotal;
 
             const tax = (subtotal - discountFromPoints) * TAX_RATE;
@@ -383,9 +501,8 @@
 
             document.getElementById('subtotal').innerText = `₱${subtotal.toFixed(2)}`;
             
-            const promoArea = document.querySelector('.promotion-area');
             let pointsLabel = document.getElementById('pointsDiscountRow');
-            if (isRedeeming) {
+            if (redemptionTier > 0) {
                 if (!pointsLabel) {
                     const row = document.createElement('div');
                     row.id = 'pointsDiscountRow';
@@ -549,6 +666,7 @@
 
             const productIds = cart.flatMap(item => Array(item.qty).fill(item.id));
             const promoCode = document.getElementById('promoCode').value;
+            const customerId = document.getElementById('selectedCustomerId').value || null;
 
             try {
                 const response = await fetch('@Url.Action("CreatePayMongoOrder", "Cashier")', {
@@ -557,7 +675,12 @@
                         'Content-Type': 'application/json',
                         'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
                     },
-                    body: JSON.stringify({ productIds, promoCode })
+                    body: JSON.stringify({ 
+                        productIds, 
+                        promoCode, 
+                        customerId: customerId ? parseInt(customerId) : null,
+                        redemptionTier: redemptionTier
+                    })
                 });
 
                 if (response.ok) {
@@ -605,7 +728,7 @@
                         paymentMethod, 
                         promoCode,
                         customerId: customerId ? parseInt(customerId) : null,
-                        redeemPoints: isRedeeming
+                        redemptionTier: redemptionTier
                     })
                 });
 
@@ -709,7 +832,11 @@
             document.getElementById('customerSearchResults').style.display = 'none';
             document.getElementById('customerSearch').value = '';
             
+            // Show redeem button if they have at least 5 points
             document.getElementById('redeemBtn').style.display = customerPoints >= 5 ? 'block' : 'none';
+            
+            // Reset redemption tier when switching customers
+            selectRewardTier(0);
         }
 
         function clearSelectedCustomer() {
@@ -717,10 +844,9 @@
             document.getElementById('customerSearch').style.display = 'block';
             document.getElementById('selectedCustomerDisplay').style.display = 'none';
             document.getElementById('clearCustomerBtn').style.display = 'none';
-            isRedeeming = false;
             customerPoints = 0;
             selectedCustomerEmail = null;
-            renderCart();
+            selectRewardTier(0);
         }
 
         function showRegisterModal() {
