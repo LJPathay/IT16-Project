@@ -211,9 +211,6 @@
         </div>
     </div>
 
-</div>
-</div>
-
 <!-- Add Ingredient Modal -->
 <div class="modal fade" id="addIngredientModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -711,16 +708,33 @@
                         logsBody.append('<tr><td colspan="4" class="text-center text-muted py-4"><i class="fas fa-history mb-2 d-block opacity-50"></i>No activity logs found.</td></tr>');
                     }
 
-                    // Set up "Edit" button in detail modal
+                    // Set up "Edit" button in detail modal — directly populate edit modal and show it
                     $('.btn-edit-from-detail').off('click').on('click', function() {
+                        // Populate edit modal fields from the data we already have
+                        const ingData = data.ingredient;
+                        const editId = ingData.ingredientID || ingData.IngredientID;
+                        const editName = ingData.name || ingData.Name;
+                        const editStock = ingData.stockQuantity || ingData.StockQuantity || 0;
+                        const editUnit = ingData.unit || ingData.Unit;
+                        const editThreshold = ingData.lowStockThreshold || ingData.LowStockThreshold || 0;
+                        const rawExp = ingData.expiryDate || ingData.ExpiryDate;
+                        const editExpiry = rawExp ? rawExp.split('T')[0] : '';
+
+                        $('#edit-ing-id').val(editId);
+                        $('#edit-ing-name').val(editName);
+                        $('#edit-ing-stock').val(editStock);
+                        $('#edit-ing-unit').val(editUnit);
+                        $('#edit-ing-threshold').val(editThreshold);
+                        $('#edit-ing-expiry').val(editExpiry);
+
+                        // Hide details modal first, then show edit modal
                         const detailsModalEl = document.getElementById('ingredientDetailsModal');
                         const detailsModal = bootstrap.Modal.getOrCreateInstance(detailsModalEl);
-                        
                         detailsModalEl.addEventListener('hidden.bs.modal', function onHidden() {
-                            $(`.btn-edit-ingredient[data-id="${id}"]`).click();
                             detailsModalEl.removeEventListener('hidden.bs.modal', onHidden);
+                            const editModalEl = document.getElementById('editIngredientModal');
+                            bootstrap.Modal.getOrCreateInstance(editModalEl).show();
                         }, { once: true });
-                        
                         detailsModal.hide();
                     });
 
@@ -732,7 +746,6 @@
                 console.error('Error loading ingredient details:', error);
             }
         }
-    </script>
     </script>
 }
 

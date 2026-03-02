@@ -12,7 +12,7 @@ namespace ljp_itsolutions.Services
         Task<byte[]> GenerateTacticalROICSVAsync();
         Task<byte[]> GenerateTransactionsCSVAsync();
         Task<byte[]> GenerateUsersCSVAsync();
-        Task<byte[]> GenerateSalesTrendsCSVAsync(DateTime month);
+        Task<byte[]> GenerateSalesTrendsCSVAsync(DateTime start, DateTime end, string periodLabel);
         Task<FinanceData> GetFinanceDataAsync();
         Task<AdminDashboardData> GetAdminDashboardDataAsync();
         Task<AdminReportsData> GetAdminReportsDataAsync();

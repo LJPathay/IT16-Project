@@ -230,18 +230,31 @@ namespace ljp_itsolutions.Controllers
             return RedirectToAction(nameof(Promotions));
         }
 
+        public class PromotionPerformanceViewModel
+        {
+            public int PromotionID { get; set; }
+            public string? PromotionName { get; set; }
+            public string? TargetAudience { get; set; }
+            public DateTime StartDate { get; set; }
+            public DateTime EndDate { get; set; }
+            public bool IsActive { get; set; }
+            public int UsageCount { get; set; }
+            public decimal TotalSalesValue { get; set; }
+            public decimal TotalDiscountGiven { get; set; }
+        }
+
         public async Task<IActionResult> PromotionPerformance()
         {
             var performance = await _db.Promotions
                 .Include(p => p.Orders)
-                .Select(p => new
+                .Select(p => new PromotionPerformanceViewModel
                 {
-                    p.PromotionID,
-                    p.PromotionName,
-                    p.TargetAudience,
-                    p.StartDate,
-                    p.EndDate,
-                    p.IsActive,
+                    PromotionID = p.PromotionID,
+                    PromotionName = p.PromotionName,
+                    TargetAudience = p.TargetAudience,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate,
+                    IsActive = p.IsActive,
                     UsageCount = p.Orders.Count,
                     TotalSalesValue = p.Orders.Sum(o => o.FinalAmount),
                     TotalDiscountGiven = p.Orders.Sum(o => o.DiscountAmount)
@@ -354,12 +367,19 @@ namespace ljp_itsolutions.Controllers
             return View(logs);
         }
 
+        public class SalesTrendViewModel
+        {
+            public DateTime Date { get; set; }
+            public decimal TotalSales { get; set; }
+            public int Count { get; set; }
+            public double AvgValue { get; set; }
+        }
+
         //  Reports
-        public async Task<IActionResult> SalesTrends(string type = "month", string value = "")
+        public async Task<IActionResult> SalesTrends(string type = "week", string value = "")
         {
             DateTime startDate = DateTime.Today;
             DateTime endDate = DateTime.Today;
-            string groupingFormat = "yyyy-MM-dd"; 
 
             if (string.IsNullOrEmpty(value))
             {
@@ -380,7 +400,6 @@ namespace ljp_itsolutions.Controllers
                     value = DateTime.Today.Year.ToString();
                 }
                 endDate = startDate.AddYears(1).AddDays(-1);
-                groupingFormat = "yyyy-MM"; // Group by month
             }
             else if (type == "week")
             {
@@ -421,20 +440,22 @@ namespace ljp_itsolutions.Controllers
                 .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate && 
                            (o.PaymentStatus == "Paid" || o.PaymentStatus == "Paid (Digital)" || o.PaymentStatus == "Completed"));
 
-            var salesData = await query
+            var orders = await query.ToListAsync();
+
+            var viewModelList = orders
                 .GroupBy(o => type == "year" ? new DateTime(o.OrderDate.Year, o.OrderDate.Month, 1) : o.OrderDate.Date)
-                .Select(g => new { 
+                .Select(g => new SalesTrendViewModel { 
                     Date = g.Key, 
                     TotalSales = g.Sum(o => o.FinalAmount),
                     Count = g.Count(),
-                    AvgValue = g.Average(o => o.FinalAmount)
+                    AvgValue = g.Any() ? (double)g.Average(o => o.FinalAmount) : 0
                 })
                 .OrderBy(g => g.Date)
-                .ToListAsync();
+                .ToList();
 
             ViewBag.SelectedType = type;
             ViewBag.SelectedValue = value;
-            return View(salesData.Select(s => (dynamic)new { s.Date, s.TotalSales, s.Count, s.AvgValue }).ToList());
+            return View(viewModelList);
         }
 
         [HttpGet]
@@ -445,13 +466,18 @@ namespace ljp_itsolutions.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ExportSalesTrends(string type = "month", string value = "")
+        public async Task<IActionResult> ExportSalesTrends(string type = "week", string value = "")
         {
             DateTime startDate = DateTime.Today;
+            DateTime endDate = DateTime.Today;
+            string label = "";
+
             if (type == "year")
             {
                 if (!int.TryParse(value, out int year)) year = DateTime.Today.Year;
                 startDate = new DateTime(year, 1, 1);
+                endDate = startDate.AddYears(1).AddDays(-1);
+                label = $"Year {year}";
             }
             else if (type == "week")
             {
@@ -462,13 +488,17 @@ namespace ljp_itsolutions.Controllers
                         startDate = new DateTime(y, 1, 1).AddDays((w - 1) * 7);
                 }
                 while (startDate.DayOfWeek != DayOfWeek.Monday) startDate = startDate.AddDays(-1);
+                endDate = startDate.AddDays(7).AddSeconds(-1);
+                label = $"Week {value}";
             }
             else
             {
                 if (!DateTime.TryParse(value + "-01", out startDate)) startDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                endDate = startDate.AddMonths(1).AddDays(-1);
+                label = startDate.ToString("MMMM yyyy");
             }
 
-            byte[] buffer = await _analyticsService.GenerateSalesTrendsCSVAsync(startDate);
+            byte[] buffer = await _analyticsService.GenerateSalesTrendsCSVAsync(startDate, endDate, label);
             return File(buffer, "text/csv", $"LJP_Sales_Trend_{type}_{value}.csv");
         }
     }

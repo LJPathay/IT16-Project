@@ -21,8 +21,9 @@ namespace ljp_itsolutions.Controllers
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IAnalyticsService _analyticsService;
         private readonly ICompositeViewEngine _viewEngine;
+        private readonly IOrderService _orderService;
 
-        public CashierController(ApplicationDbContext db, InMemoryStore store, IPayMongoService payMongoService, ILogger<CashierController> logger, IReceiptService receiptService, IServiceScopeFactory scopeFactory, IAnalyticsService analyticsService, ICompositeViewEngine viewEngine)
+        public CashierController(ApplicationDbContext db, InMemoryStore store, IPayMongoService payMongoService, ILogger<CashierController> logger, IReceiptService receiptService, IServiceScopeFactory scopeFactory, IAnalyticsService analyticsService, ICompositeViewEngine viewEngine, IOrderService orderService)
             : base(db)
         {
             _store = store;
@@ -32,6 +33,7 @@ namespace ljp_itsolutions.Controllers
             _scopeFactory = scopeFactory;
             _analyticsService = analyticsService;
             _viewEngine = viewEngine;
+            _orderService = orderService;
         }
 
         public class OrderRequest
@@ -57,46 +59,15 @@ namespace ljp_itsolutions.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ValidatePromoCode(string code)
+        public async Task<IActionResult> ValidatePromoCode(string code, int? customerId)
         {
             if (string.IsNullOrWhiteSpace(code)) return Json(new { success = false, message = "Empty code" });
 
-            var cleanCode = code.Replace(" ", "").Trim().ToLower();
-
-            var allPromotions = await _db.Promotions.Include(p => p.Orders).ToListAsync();
-            var promotion = allPromotions.FirstOrDefault(p => 
-                (p.PromotionName ?? "").Replace(" ", "").Equals(cleanCode, StringComparison.OrdinalIgnoreCase));
+            var promotion = await _orderService.ValidatePromotionAsync(code, customerId);
 
             if (promotion == null)
             {
-                return Json(new { success = false, message = "Invalid promotion code." });
-            }
-
-            if (!promotion.IsActive)
-            {
-                return Json(new { success = false, message = "This promotion is no longer active." });
-            }
-
-            if (promotion.ApprovalStatus != "Approved")
-            {
-                return Json(new { success = false, message = "This promotion is pending manager approval." });
-            }
-
-            var today = DateTime.Today; 
-            if (promotion.StartDate.Date > today)
-            {
-                return Json(new { success = false, message = $"This promotion starts on {promotion.StartDate:MMM dd, yyyy}." });
-            }
-
-            if (promotion.EndDate.Date < today)
-            {
-                return Json(new { success = false, message = "This promotion has expired." });
-            }
-
-            int currentUsages = promotion.Orders.Count;
-            if (promotion.MaxRedemptions.HasValue && currentUsages >= promotion.MaxRedemptions.Value)
-            {
-                return Json(new { success = false, message = "Promotion fully redeemed." });
+                return Json(new { success = false, message = "Invalid, expired, or fully redeemed promotion code." });
             }
 
             string discountLabel = promotion.DiscountType.ToLower() == "percentage" 
@@ -105,9 +76,10 @@ namespace ljp_itsolutions.Controllers
 
             return Json(new { 
                 success = true, 
-                discountType = promotion.DiscountType, 
-                discountValue = promotion.DiscountValue, 
-                message = $"Promo applied: {discountLabel}" 
+                message = $"Promo applied: {discountLabel}",
+                discountType = promotion.DiscountType,
+                discountValue = promotion.DiscountValue,
+                promoId = promotion.PromotionID
             });
         }
 
@@ -115,383 +87,49 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PlaceOrder([FromBody] OrderRequest request)
         {
-            var productIds = request.ProductIds;
-            var paymentMethod = request.PaymentMethod;
-            var customerId = request.CustomerId;
-            var promoCode = request.PromoCode;
+            if (request.ProductIds == null || !request.ProductIds.Any())
+                return Json(new { success = false, message = "No products selected." });
 
-            if (productIds == null || !productIds.Any())
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var cashierId))
+                return Challenge();
+
+            var currentShift = await _db.CashShifts.FirstOrDefaultAsync(s => s.CashierID == cashierId && !s.IsClosed);
+            if (currentShift == null)
+                return Json(new { success = false, message = "No open shift found. Please start a shift first." });
+
+            var svcRequest = new Services.OrderRequest
             {
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                    return Json(new { success = false, message = "No products selected." });
-                return RedirectToAction("Index", "POS");
+                ProductIds = request.ProductIds,
+                CustomerId = request.CustomerId,
+                PaymentMethod = request.PaymentMethod,
+                PromoCode = request.PromoCode,
+                PaymentStatus = request.PaymentMethod == "Paymongo" ? "Paid (Digital)" : "Paid"
+            };
+
+            var result = await _orderService.ProcessOrderAsync(svcRequest, cashierId);
+
+            if (!result.Success)
+                return Json(new { success = false, message = result.Message });
+
+            // Render receipt HTML for immediate printing/display in POS
+            var renderedReceipt = await RenderViewToStringAsync("ReceiptData", result.Order!);
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { 
+                    success = true, 
+                    message = result.Message, 
+                    orderId = result.Order!.OrderID,
+                    receiptHtml = renderedReceipt,
+                    warnings = result.Warnings
+                });
             }
-
-            var strategy = _db.Database.CreateExecutionStrategy();
-            return await strategy.ExecuteAsync<IActionResult>(async () => 
-            {
-                using var transaction = await _db.Database.BeginTransactionAsync();
-                try 
-                {
-                    //Get current user ID from claims
-                    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                    if (!Guid.TryParse(userIdClaim, out var cashierId))
-                        return Challenge();
-
-                    // Ensure active shift
-                    var currentShift = await _db.CashShifts.FirstOrDefaultAsync(s => s.CashierID == cashierId && !s.IsClosed);
-                    if (currentShift == null)
-                    {
-                        var msg = "No open shift found. Please start a shift first.";
-                        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                            return Json(new { success = false, message = msg });
-                        TempData["ErrorMessage"] = msg;
-                        return RedirectToAction("ShiftManagement");
-                    }
-
-                    //Create the order
-                    var order = new Order
-                    {
-                        OrderID = Guid.NewGuid(),
-                        OrderDate = DateTime.UtcNow,
-                        CashierID = cashierId,
-                        CustomerID = customerId,
-                        PaymentMethod = paymentMethod,
-                        PaymentStatus = paymentMethod == "Paymongo" ? "Paid (Digital)" : "Paid"
-                    };
-
-                    Promotion? promotion = null;
-                    if (!string.IsNullOrEmpty(promoCode))
-                    {
-                        var cleanPromo = promoCode.Replace(" ", "").Trim().ToLower();
-                        var allPromos = await _db.Promotions.Include(p => p.Orders).ToListAsync();
-                        promotion = allPromos.FirstOrDefault(p =>
-                            (p.PromotionName ?? "").Replace(" ", "").Equals(cleanPromo, StringComparison.OrdinalIgnoreCase) &&
-                            p.IsActive &&
-                            p.ApprovalStatus == "Approved" &&
-                            p.StartDate.Date <= DateTime.Today &&
-                            p.EndDate.Date >= DateTime.Today);
-
-                        if (promotion != null)
-                        {
-                            int currentUsages = promotion.Orders.Count;
-
-                            // 1. Check total redemption cap
-                            if (promotion.MaxRedemptions.HasValue && currentUsages >= promotion.MaxRedemptions.Value)
-                            {
-                                var msg = $"Sorry, this promotion has reached its maximum redemption limit ({promotion.MaxRedemptions.Value} uses).";
-                                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                                    return Json(new { success = false, message = msg });
-                                TempData["ErrorMessage"] = msg;
-                                return RedirectToAction("CreateOrder");
-                            }
-
-                            // 2. Check one-time-per-customer rule
-                            if (promotion.OneTimePerCustomer && customerId.HasValue)
-                            {
-                                bool alreadyUsed = promotion.Orders.Any(o => o.CustomerID == customerId.Value);
-                                if (alreadyUsed)
-                                {
-                                    var msg = "You have already used this promotion code. It can only be used once per customer.";
-                                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                                        return Json(new { success = false, message = msg });
-                                    TempData["ErrorMessage"] = msg;
-                                    return RedirectToAction("CreateOrder");
-                                }
-                            }
-
-                            order.PromotionID = promotion.PromotionID;
-                        }
-                    }
-
-                    // Group IDs to simplify quantity handling
-                    var productGroups = productIds.GroupBy(id => id);
-                    decimal total = 0;
-
-                    // ATOMIC PASS: Fetch, Validate, and Prepare Deductions
-                    var orderProducts = new List<(Product Product, int Quantity)>();
-                    var requiredIngredients = new Dictionary<int, (Ingredient Ingredient, decimal Quantity)>();
-                    var standaloneProducts = new Dictionary<int, (Product Product, int Quantity)>();
-
-                    foreach (var group in productGroups)
-                    {
-                        var product = await _db.Products
-                            .Include(p => p.Category)
-                            .Include(p => p.ProductRecipes)
-                            .ThenInclude(pr => pr.Ingredient)
-                            .FirstOrDefaultAsync(p => p.ProductID == group.Key);
-
-                        if (product == null) continue;
-                        int qty = group.Count();
-                        orderProducts.Add((product, qty));
-
-                        if (product.ProductRecipes != null && product.ProductRecipes.Any())
-                        {
-                            foreach (var recipe in product.ProductRecipes)
-                            {
-                                if (requiredIngredients.ContainsKey(recipe.IngredientID))
-                                {
-                                    var existing = requiredIngredients[recipe.IngredientID];
-                                    requiredIngredients[recipe.IngredientID] = (existing.Ingredient, existing.Quantity + (recipe.QuantityRequired * qty));
-                                }
-                                else
-                                {
-                                    requiredIngredients[recipe.IngredientID] = (recipe.Ingredient, (recipe.QuantityRequired * qty));
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (standaloneProducts.ContainsKey(product.ProductID))
-                            {
-                                var existing = standaloneProducts[product.ProductID];
-                                standaloneProducts[product.ProductID] = (existing.Product, existing.Quantity + qty);
-                            }
-                            else
-                            {
-                                standaloneProducts[product.ProductID] = (product, qty);
-                            }
-                        }
-                    }
-
-                    // VALIDATE & DEDUCT IN ONE GO 
-                    foreach (var entry in requiredIngredients)
-                    {
-                        if (entry.Value.Ingredient.StockQuantity < entry.Value.Quantity)
-                        {
-                            var msg = $"Insufficient {entry.Value.Ingredient.Name}. Need {entry.Value.Quantity}{entry.Value.Ingredient.Unit}, only {entry.Value.Ingredient.StockQuantity:0.##} left.";
-                            await transaction.RollbackAsync();
-                            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return Json(new { success = false, message = msg });
-                            TempData["ErrorMessage"] = msg;
-                            return RedirectToAction("CreateOrder");
-                        }
-                        
-                        var globalThresholdSetting = await _db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == "LowStockThreshold");
-                        decimal globalThreshold = 5; 
-                        if (globalThresholdSetting != null && decimal.TryParse(globalThresholdSetting.SettingValue, out var gVal))
-                        {
-                            globalThreshold = gVal;
-                        }
-
-                        // Deduct
-                        entry.Value.Ingredient.StockQuantity -= entry.Value.Quantity;
-                        
-                        // Log and Notify
-                        decimal threshold = entry.Value.Ingredient.LowStockThreshold > 0 
-                            ? (decimal)entry.Value.Ingredient.LowStockThreshold 
-                            : globalThreshold;
-
-                        if (entry.Value.Ingredient.StockQuantity <= threshold)
-                        {
-                            _db.Notifications.Add(new Notification
-                            {
-                                Title = "Low Ingredient Stock",
-                                Message = $"{entry.Value.Ingredient.Name} needs restocking ({entry.Value.Ingredient.StockQuantity:0.##} {entry.Value.Ingredient.Unit}).",
-                                Type = "danger",
-                                IconClass = "fas fa-cube",
-                                CreatedAt = DateTime.UtcNow,
-                                TargetUrl = "/Manager/Inventory"
-                            });
-                        }
-                    }
-
-                    foreach (var entry in standaloneProducts)
-                    {
-                        if (entry.Value.Product.StockQuantity < entry.Value.Quantity)
-                        {
-                            var msg = $"Insufficient {entry.Value.Product.ProductName}. Need {entry.Value.Quantity}, only {entry.Value.Product.StockQuantity} left.";
-                            await transaction.RollbackAsync();
-                            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest") return Json(new { success = false, message = msg });
-                            TempData["ErrorMessage"] = msg;
-                            return RedirectToAction("CreateOrder");
-                        }
-                        
-                        // Deduct
-                        entry.Value.Product.StockQuantity -= entry.Value.Quantity;
-                    }
-
-                    // Create Order Details and Logs
-                    foreach (var item in orderProducts)
-                    {
-                        var detail = new OrderDetail
-                        {
-                            OrderID = order.OrderID,
-                            ProductID = item.Product.ProductID,
-                            Quantity = item.Quantity,
-                            UnitPrice = item.Product.Price,
-                            Subtotal = item.Product.Price * item.Quantity
-                        };
-                        order.OrderDetails.Add(detail);
-                        total += detail.Subtotal;
-
-                        // Log ingredient usage if applicable
-                        if (item.Product.ProductRecipes != null && item.Product.ProductRecipes.Any())
-                        {
-                            foreach (var recipe in item.Product.ProductRecipes)
-                            {
-                                _db.InventoryLogs.Add(new InventoryLog
-                                {
-                                    IngredientID = recipe.IngredientID,
-                                    ProductID = item.Product.ProductID,
-                                    QuantityChange = -(recipe.QuantityRequired * item.Quantity),
-                                    ChangeType = "Recipe Deduction",
-                                    LogDate = DateTime.UtcNow,
-                                    Remarks = $"Used for {item.Product.ProductName} (Order #{order.OrderID.ToString().Substring(0, 8)})"
-                                });
-                            }
-                        }
-                        else 
-                        {
-                            _db.InventoryLogs.Add(new InventoryLog
-                            {
-                                ProductID = item.Product.ProductID,
-                                QuantityChange = -item.Quantity,
-                                ChangeType = "Sale",
-                                LogDate = DateTime.UtcNow,
-                                Remarks = $"Order #{order.OrderID.ToString().Substring(0, 8)}"
-                            });
-                        }
-                    }
-
-                    // Calculate Promotion Discount
-                    decimal discount = 0;
-                    if (promotion != null)
-                    {
-                        if (string.Equals(promotion.DiscountType, "Percentage", StringComparison.OrdinalIgnoreCase))
-                            discount = total * (promotion.DiscountValue / 100);
-                        else 
-                            discount = promotion.DiscountValue;
-                        
-                        if (discount > total) discount = total;
-                        order.PromotionID = promotion.PromotionID;
-                        
-                        if (promotion.IsOneTimeReward) promotion.IsActive = false;
-                    }
-
-                    // Reward Point Redemption
-                    if (request.RedeemPoints && order.CustomerID.HasValue)
-                    {
-                        var customer = await _db.Customers.FindAsync(order.CustomerID.Value);
-                        if (customer != null && customer.Points >= 5)
-                        {
-                            customer.Points -= 5;
-                            discount += 50;
-                        }
-                    }
-
-                    if (discount > total) discount = total;
-
-                    // Fetch dynamic tax rate
-                    var taxSetting = await _db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == "TaxRate");
-                    decimal taxRateValue = 0.05m;
-                    if (taxSetting != null && decimal.TryParse(taxSetting.SettingValue, out var parsedTax))
-                    {
-                        taxRateValue = parsedTax / 100m;
-                    }
-
-                    decimal taxableAmount = total - discount;
-                    decimal taxAmount = taxableAmount * taxRateValue;
-
-                    order.TotalAmount = total;
-                    order.DiscountAmount = discount;
-                    order.FinalAmount = taxableAmount + taxAmount;
-
-                    // High Value Notification
-                    if (order.FinalAmount >= 500)
-                    {
-                        _db.Notifications.Add(new Notification
-                        {
-                            Title = "High Value Order",
-                            Message = $"Order #{order.OrderID.ToString().Substring(0, 8)} for ₱{order.FinalAmount:N2} received!",
-                            Type = "success",
-                            IconClass = "fas fa-star",
-                            CreatedAt = DateTime.UtcNow,
-                            TargetUrl = "/Manager/Transactions"
-                        });
-                    }
-
-                    // Payment Record
-                    order.Payments.Add(new Payment
-                    {
-                        OrderID = order.OrderID,
-                        PaymentDate = DateTime.UtcNow,
-                        AmountPaid = order.FinalAmount,
-                        PaymentMethod = paymentMethod,
-                        PaymentStatus = "Success"
-                    });
-
-                    // Loyalty Points Earning (1 pt per ₱100 spent)
-                    if (order.CustomerID.HasValue)
-                    {
-                        var customer = await _db.Customers.FindAsync(order.CustomerID.Value);
-                        if (customer != null)
-                        {
-                            // Base points: 1 point per ₱100
-                            decimal basePoints = order.FinalAmount / 100m;
-                            
-                            decimal multiplier = 1.0m;
-                            if (customer.Points >= 500) multiplier = 1.5m;
-                            else if (customer.Points >= 300) multiplier = 1.25m;
-                            else if (customer.Points >= 100) multiplier = 1.1m;
-                            
-                            int earnedPoints = (int)Math.Floor(basePoints * multiplier);
-                            if (earnedPoints > 0)
-                            {
-                                customer.Points += earnedPoints;
-                                await LogAudit($"Loyalty Points Earned", $"Customer: {customer.FullName}, Final Amount: ₱{order.FinalAmount:N2}, Earned: {earnedPoints} pts");
-                            }
-                        }
-                    }
-
-                    _db.Orders.Add(order);
-                    await _db.SaveChangesAsync();
-                    await transaction.CommitAsync();
-
-                    // Optimized: Returning receipt HTML directly for "instant" load
-                    var orderWithDetails = await _db.Orders
-                        .Include(o => o.OrderDetails).ThenInclude(d => d.Product)
-                        .Include(o => o.Cashier)
-                        .Include(o => o.Payments)
-                        .FirstOrDefaultAsync(o => o.OrderID == order.OrderID);
-
-                    string receiptHtml = "";
-                    if (orderWithDetails != null) {
-                        try {
-                            receiptHtml = await RenderViewToStringAsync("_ReceiptPartial", orderWithDetails);
-                        } catch (Exception ex) {
-                            _logger.LogError(ex, "Failed to render receipt HTML for Order {OrderId}", order.OrderID);
-                        }
-                    }
-
-                    // Fire-and-forget background tasks (Post-Commit)
-                    _ = Task.Run(async () => {
-                        try {
-                            using (var scope = _scopeFactory.CreateScope()) {
-                                var scopedReceiptService = scope.ServiceProvider.GetRequiredService<IReceiptService>();
-                            }
-                        } catch (Exception ex) {
-                            _logger.LogError(ex, "Background processing failed for order {OrderId}", order.OrderID);
-                        }
-                    });
-
-                    await LogAudit($"Placed Order #{order.OrderID.ToString().Substring(0, 8)}", $"Total: ₱{order.FinalAmount:N2}, Items: {order.OrderDetails.Count}");
-
-                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                        return Json(new { success = true, orderId = order.OrderID, receiptHtml = receiptHtml });
-
-                    TempData["SuccessMessage"] = "Order placed successfully!";
-                    return RedirectToAction("Receipt", new { id = order.OrderID });
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    _logger.LogError(ex, "PlaceOrder failed for user {UserId}", User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                        return Json(new { success = false, message = "Server error placing order." });
-                    throw;
-                }
-            });
+            return RedirectToAction("Receipt", new { id = result.Order?.OrderID });
         }
+
+
+
 
         public async Task<IActionResult> TransactionHistory()
         {
@@ -512,328 +150,38 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreatePayMongoOrder([FromBody] PayMongoOrderRequest request)
         {
-            var strategy = _db.Database.CreateExecutionStrategy();
-            return await strategy.ExecuteAsync<IActionResult>(async () => 
+            if (request.ProductIds == null || !request.ProductIds.Any())
+                return BadRequest("No products selected.");
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var cashierId))
+                return Unauthorized();
+
+            var currentShift = await _db.CashShifts.FirstOrDefaultAsync(s => s.CashierID == cashierId && !s.IsClosed);
+            if (currentShift == null)
+                return BadRequest("No open shift found. Please start a shift first.");
+
+            var svcRequest = new Services.OrderRequest
             {
-                using var transaction = await _db.Database.BeginTransactionAsync();
-                try 
-                {
-                    if (request.ProductIds == null || !request.ProductIds.Any())
-                        return BadRequest("No products selected.");
+                ProductIds = request.ProductIds,
+                CustomerId = request.CustomerId,
+                PaymentMethod = "E-Wallet (Paymongo)",
+                PromoCode = request.PromoCode,
+                PaymentStatus = "Pending"
+            };
 
-                    //  Get current user ID
-                    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                    if (!Guid.TryParse(userIdClaim, out var cashierId))
-                        return Unauthorized();
+            var result = await _orderService.ProcessOrderAsync(svcRequest, cashierId);
 
-                    // Ensure active shift
-                    var currentShift = await _db.CashShifts.FirstOrDefaultAsync(s => s.CashierID == cashierId && !s.IsClosed);
-                    if (currentShift == null)
-                    {
-                        return BadRequest("No open shift found. Please start a shift first.");
-                    }
+            if (!result.Success)
+                return BadRequest(result.Message);
 
-                    // Create the order
-                    var order = new Order
-                    {
-                        OrderID = Guid.NewGuid(),
-                        OrderDate = DateTime.UtcNow,
-                        CashierID = cashierId,
-                        CustomerID = request.CustomerId,
-                        PaymentMethod = "E-Wallet (Paymongo)",
-                        PaymentStatus = "Pending"
-                    };
+            // Create real PayMongo QR Ph code
+            var qrCodeUrl = await _payMongoService.CreateQrPhPaymentAsync(result.Order!.FinalAmount, $"Order #{result.Order.OrderID.ToString().Substring(0, 8)}", result.Order.OrderID.ToString());
 
-                    Promotion? promotion = null;
-                    if (!string.IsNullOrEmpty(request.PromoCode))
-                    {
-                        var cleanPromo = request.PromoCode.Replace(" ", "").Trim().ToLower();
-                        var allPromos = await _db.Promotions.Include(p => p.Orders).ToListAsync();
-                        promotion = allPromos.FirstOrDefault(p =>
-                            (p.PromotionName ?? "").Replace(" ", "").Equals(cleanPromo, StringComparison.OrdinalIgnoreCase) &&
-                            p.IsActive &&
-                            p.ApprovalStatus == "Approved" &&
-                            p.StartDate.Date <= DateTime.Today &&
-                            p.EndDate.Date >= DateTime.Today);
+            if (string.IsNullOrEmpty(qrCodeUrl))
+                return StatusCode(500, "Failed to generate PayMongo QR code.");
 
-                        if (promotion != null)
-                        {
-                            int currentUsages = promotion.Orders.Count;
-
-                            // 1. Check total redemption cap
-                            if (promotion.MaxRedemptions.HasValue && currentUsages >= promotion.MaxRedemptions.Value)
-                            {
-                                return BadRequest($"Sorry, this promotion reached its maximum redemption limit ({promotion.MaxRedemptions.Value} uses).");
-                            }
-
-                            // 2. Check one-time-per-customer rule
-                            if (promotion.OneTimePerCustomer && request.CustomerId.HasValue)
-                            {
-                                bool alreadyUsed = promotion.Orders.Any(o => o.CustomerID == request.CustomerId.Value);
-                                if (alreadyUsed)
-                                {
-                                    return BadRequest("You have already used this promotion code.");
-                                }
-                            }
-
-                            order.PromotionID = promotion.PromotionID;
-                        }
-                    }
-
-                    // Group IDs to simplify quantity handling
-                    var productGroups = request.ProductIds.GroupBy(id => id);
-                    decimal total = 0;
-
-                    // ATOMIC PASS: Fetch, Validate, and Prepare Deductions
-                    var orderProducts = new List<(Product Product, int Quantity)>();
-                    var requiredIngredients = new Dictionary<int, (Ingredient Ingredient, decimal Quantity)>();
-                    var standaloneProducts = new Dictionary<int, (Product Product, int Quantity)>();
-
-                    foreach (var group in productGroups)
-                    {
-                        var product = await _db.Products
-                            .Include(p => p.Category)
-                            .Include(p => p.ProductRecipes)
-                            .ThenInclude(pr => pr.Ingredient)
-                            .FirstOrDefaultAsync(p => p.ProductID == group.Key);
-
-                        if (product == null) continue;
-                        int qty = group.Count();
-                        orderProducts.Add((product, qty));
-
-                        if (product.ProductRecipes != null && product.ProductRecipes.Any())
-                        {
-                            foreach (var recipe in product.ProductRecipes)
-                            {
-                                if (requiredIngredients.ContainsKey(recipe.IngredientID))
-                                {
-                                    var existing = requiredIngredients[recipe.IngredientID];
-                                    requiredIngredients[recipe.IngredientID] = (existing.Ingredient, existing.Quantity + (recipe.QuantityRequired * qty));
-                                }
-                                else
-                                {
-                                    requiredIngredients[recipe.IngredientID] = (recipe.Ingredient, (recipe.QuantityRequired * qty));
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (standaloneProducts.ContainsKey(product.ProductID))
-                            {
-                                var existing = standaloneProducts[product.ProductID];
-                                standaloneProducts[product.ProductID] = (existing.Product, existing.Quantity + qty);
-                            }
-                            else
-                            {
-                                standaloneProducts[product.ProductID] = (product, qty);
-                            }
-                        }
-                    }
-
-                    // VALIDATE & DEDUCT IN ONE GO 
-                    foreach (var entry in requiredIngredients)
-                    {
-                        if (entry.Value.Ingredient.StockQuantity < entry.Value.Quantity)
-                        {
-                            return BadRequest($"Insufficient {entry.Value.Ingredient.Name}. Need {entry.Value.Quantity}{entry.Value.Ingredient.Unit}, only {entry.Value.Ingredient.StockQuantity:0.##} left.");
-                        }
-                        
-                        var globalThresholdSetting = await _db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == "LowStockThreshold");
-                        decimal globalThreshold = 5; 
-                        if (globalThresholdSetting != null && decimal.TryParse(globalThresholdSetting.SettingValue, out var gVal))
-                        {
-                            globalThreshold = gVal;
-                        }
-
-                        // Deduct
-                        entry.Value.Ingredient.StockQuantity -= entry.Value.Quantity;
-                        
-                        // Log and Notify
-                        decimal threshold = entry.Value.Ingredient.LowStockThreshold > 0 
-                            ? (decimal)entry.Value.Ingredient.LowStockThreshold 
-                            : globalThreshold;
-
-                        if (entry.Value.Ingredient.StockQuantity <= threshold)
-                        {
-                            _db.Notifications.Add(new Notification
-                            {
-                                Title = "Low Ingredient Stock",
-                                Message = $"{entry.Value.Ingredient.Name} needs restocking ({entry.Value.Ingredient.StockQuantity:0.##} {entry.Value.Ingredient.Unit}).",
-                                Type = "danger",
-                                IconClass = "fas fa-cube",
-                                CreatedAt = DateTime.UtcNow,
-                                TargetUrl = "/Manager/Inventory"
-                            });
-                        }
-                    }
-
-                    foreach (var entry in standaloneProducts)
-                    {
-                        if (entry.Value.Product.StockQuantity < entry.Value.Quantity)
-                        {
-                            return BadRequest($"Insufficient {entry.Value.Product.ProductName}. Need {entry.Value.Quantity}, only {entry.Value.Product.StockQuantity} left.");
-                        }
-                        
-                        // Deduct
-                        entry.Value.Product.StockQuantity -= entry.Value.Quantity;
-                    }
-
-                    // Create Order Details and Logs
-                    foreach (var item in orderProducts)
-                    {
-                        var detail = new OrderDetail
-                        {
-                            OrderID = order.OrderID,
-                            ProductID = item.Product.ProductID,
-                            Quantity = item.Quantity,
-                            UnitPrice = item.Product.Price,
-                            Subtotal = item.Product.Price * item.Quantity
-                        };
-                        order.OrderDetails.Add(detail);
-                        total += detail.Subtotal;
-
-                        // Log ingredient usage if applicable
-                        if (item.Product.ProductRecipes != null && item.Product.ProductRecipes.Any())
-                        {
-                            foreach (var recipe in item.Product.ProductRecipes)
-                            {
-                                _db.InventoryLogs.Add(new InventoryLog
-                                {
-                                    IngredientID = recipe.IngredientID,
-                                    ProductID = item.Product.ProductID,
-                                    QuantityChange = -(recipe.QuantityRequired * item.Quantity),
-                                    ChangeType = "Recipe Deduction",
-                                    LogDate = DateTime.UtcNow,
-                                    Remarks = $"Used for {item.Product.ProductName} (Order #{order.OrderID.ToString().Substring(0, 8)})"
-                                });
-                            }
-                        }
-                        else 
-                        {
-                            _db.InventoryLogs.Add(new InventoryLog
-                            {
-                                ProductID = item.Product.ProductID,
-                                QuantityChange = -item.Quantity,
-                                ChangeType = "Sale",
-                                LogDate = DateTime.UtcNow,
-                                Remarks = $"Order #{order.OrderID.ToString().Substring(0, 8)}"
-                            });
-                        }
-                    }
-
-                    // Calculate Promotion Discount
-                    decimal discount = 0;
-                    if (promotion != null)
-                    {
-                        if (string.Equals(promotion.DiscountType, "Percentage", StringComparison.OrdinalIgnoreCase))
-                            discount = total * (promotion.DiscountValue / 100);
-                        else 
-                            discount = promotion.DiscountValue;
-                        
-                        if (discount > total) discount = total;
-                        order.PromotionID = promotion.PromotionID;
-                        
-                        if (promotion.IsOneTimeReward) promotion.IsActive = false;
-                    }
-
-                    // Reward Point Redemption
-                    if (request.RedeemPoints && order.CustomerID.HasValue)
-                    {
-                        var customer = await _db.Customers.FindAsync(order.CustomerID.Value);
-                        if (customer != null && customer.Points >= 5)
-                        {
-                            customer.Points -= 5;
-                            discount += 50;
-                            await LogAudit($"Redeemed 5 Points", $"Customer: {customer.FullName}, Discount: ₱50.00");
-                        }
-                    }
-
-                    // Automatic 5% Elite Patron Discount
-                    if (discount == 0 && order.CustomerID.HasValue)
-                    {
-                        var customer = await _db.Customers.FindAsync(order.CustomerID.Value);
-                        if (customer != null && customer.Points > 1000)
-                        {
-                            discount = total * 0.05m;
-                        }
-                    }
-
-                    if (discount > total) discount = total;
-
-                    // Fetch dynamic tax rate
-                    var taxSetting = await _db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == "TaxRate");
-                    decimal taxRateValue = 0.05m;
-                    if (taxSetting != null && decimal.TryParse(taxSetting.SettingValue, out var parsedTax))
-                    {
-                        taxRateValue = parsedTax / 100m;
-                    }
-
-                    decimal taxableAmount = total - discount;
-                    decimal taxAmount = taxableAmount * taxRateValue;
-
-                    order.TotalAmount = total;
-                    order.DiscountAmount = discount;
-                    order.FinalAmount = taxableAmount + taxAmount;
-
-                    // Trigger Notification for Price Order (Digital)
-                    if (order.FinalAmount >= 500)
-                    {
-                        _db.Notifications.Add(new Notification
-                        {
-                            Title = "High Value Order (Digital)",
-                            Message = $"Online Order #{order.OrderID.ToString().Substring(0, 8)} for ₱{order.FinalAmount:N2} pending payment.",
-                            Type = "info",
-                            IconClass = "fas fa-star",
-                            CreatedAt = DateTime.UtcNow,
-                            TargetUrl = "/Manager/Transactions"
-                        });
-                    }
-
-                    // Customer Loyalty Points EARNING (1 pt per ₱100 spent, across all categories)
-                    if (order.CustomerID.HasValue)
-                    {
-                        var customer = await _db.Customers.FindAsync(order.CustomerID.Value);
-                        if (customer != null)
-                        {
-                            // Base points: 1 point per ₱100
-                            decimal basePoints = order.FinalAmount / 100m;
-                            
-                            // Tier-based multipliers (Gold: 1.5x, Silver: 1.25x, Bronze: 1.1x)
-                            decimal multiplier = 1.0m;
-                            if (customer.Points >= 500) multiplier = 1.5m;
-                            else if (customer.Points >= 300) multiplier = 1.25m;
-                            else if (customer.Points >= 100) multiplier = 1.1m;
-                            
-                            int earnedPoints = (int)Math.Floor(basePoints * multiplier);
-                            if (earnedPoints > 0)
-                            {
-                                customer.Points += earnedPoints;
-                                await LogAudit($"Loyalty Points Earned (Digital)", $"Customer: {customer.FullName}, Final Amount: ₱{order.FinalAmount:N2}, Earned: {earnedPoints} pts");
-                            }
-                        }
-                    }
-
-                    // Create real PayMongo QR Ph code
-                    var qrCodeUrl = await _payMongoService.CreateQrPhPaymentAsync(order.FinalAmount, $"Order #{order.OrderID.ToString().Substring(0, 8)}", order.OrderID.ToString());
-
-                    if (string.IsNullOrEmpty(qrCodeUrl))
-                    {
-                        return StatusCode(500, "Failed to generate PayMongo QR code.");
-                    }
-
-                    _db.Orders.Add(order);
-                    await _db.SaveChangesAsync();
-                    await transaction.CommitAsync();
-
-                    return Ok(new { qrCodeUrl, orderId = order.OrderID });
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    _logger.LogError(ex, "CreatePayMongoOrder failed");
-                    return StatusCode(500, "Internal Server Error during PayMongo order initialization.");
-                }
-            });
+            return Ok(new { qrCodeUrl, orderId = result.Order.OrderID, warnings = result.Warnings });
         }
 
         public class PayMongoOrderRequest

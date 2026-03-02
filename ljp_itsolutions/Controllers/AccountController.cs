@@ -11,9 +11,8 @@ using Microsoft.AspNetCore.Identity;
 
 namespace ljp_itsolutions.Controllers
 {
-    public class AccountController : Controller
+    public class AccountController : BaseController
     {
-        private readonly ljp_itsolutions.Data.ApplicationDbContext _db;
         private readonly ljp_itsolutions.Services.IEmailSender _emailSender;
         private readonly ljp_itsolutions.Services.IPhotoService _photoService;
         private readonly Microsoft.AspNetCore.Identity.IPasswordHasher<ljp_itsolutions.Models.User> _hasher;
@@ -23,8 +22,8 @@ namespace ljp_itsolutions.Controllers
             ljp_itsolutions.Services.IEmailSender emailSender, 
             ljp_itsolutions.Services.IPhotoService photoService,
             Microsoft.AspNetCore.Identity.IPasswordHasher<ljp_itsolutions.Models.User> hasher)
+            : base(db)
         {
-            _db = db;
             _emailSender = emailSender;
             _photoService = photoService;
             _hasher = hasher;
@@ -283,6 +282,26 @@ namespace ljp_itsolutions.Controllers
         }
 
         [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Notifications()
+        {
+            var userId = GetCurrentUserId();
+            var userRole = HttpContext.Session.GetString("UserRole") ?? User.FindFirstValue(ClaimTypes.Role) ?? "-";
+
+            var query = _db.Notifications
+                .Where(n => n.UserID == userId || (n.UserID == null && (
+                    (userRole == "Manager" && (n.Title.Contains("Needed") || n.Title.Contains("Stock") || n.Title.Contains("Order"))) ||
+                    (userRole == "MarketingStaff" && (n.Title.Contains("Approved") || n.Title.Contains("Rejected"))) ||
+                    ((userRole == "Admin" || userRole == "SuperAdmin") && 
+                     (n.Title.Contains("Needed") || n.Title.Contains("Stock") || n.Title.Contains("Order") || n.Title.Contains("Approved") || n.Title.Contains("Rejected")))
+                )))
+                .OrderByDescending(n => n.CreatedAt);
+
+            var notifications = await query.ToListAsync();
+            return View(notifications);
+        }
+
+        [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateProfile(string fullName, string email, string profilePictureUrl, IFormFile? profilePictureFile)
@@ -405,13 +424,20 @@ namespace ljp_itsolutions.Controllers
 
         [Authorize]
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAllRead()
         {
             var userId = GetCurrentUserId();
-            if (userId == null) return Unauthorized();
+            var userRole = HttpContext.Session.GetString("UserRole") ?? User.FindFirstValue(ClaimTypes.Role) ?? "-";
 
-            var unread = await _db.Notifications.Where(n => n.UserID == userId && !n.IsRead).ToListAsync();
+            var unread = await _db.Notifications.Where(n => !n.IsRead && (
+                n.UserID == userId || (n.UserID == null && (
+                    (userRole == "Manager" && (n.Title.Contains("Needed") || n.Title.Contains("Stock") || n.Title.Contains("Order"))) ||
+                    (userRole == "MarketingStaff" && (n.Title.Contains("Approved") || n.Title.Contains("Rejected"))) ||
+                    ((userRole == "Admin" || userRole == "SuperAdmin") && 
+                     (n.Title.Contains("Needed") || n.Title.Contains("Stock") || n.Title.Contains("Order") || n.Title.Contains("Approved") || n.Title.Contains("Rejected")))
+                ))
+            )).ToListAsync();
+
             foreach (var n in unread) n.IsRead = true;
             await _db.SaveChangesAsync();
             return Ok();
@@ -419,12 +445,21 @@ namespace ljp_itsolutions.Controllers
 
         [Authorize]
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAsRead(int id)
         {
             var userId = GetCurrentUserId();
-            var notification = await _db.Notifications.FindAsync(id);
-            if (notification != null && notification.UserID == userId)
+            var userRole = HttpContext.Session.GetString("UserRole") ?? User.FindFirstValue(ClaimTypes.Role) ?? "-";
+
+            var notification = await _db.Notifications.FirstOrDefaultAsync(n => n.NotificationID == id && (
+                n.UserID == userId || (n.UserID == null && (
+                    (userRole == "Manager" && (n.Title.Contains("Needed") || n.Title.Contains("Stock") || n.Title.Contains("Order"))) ||
+                    (userRole == "MarketingStaff" && (n.Title.Contains("Approved") || n.Title.Contains("Rejected"))) ||
+                    ((userRole == "Admin" || userRole == "SuperAdmin") && 
+                     (n.Title.Contains("Needed") || n.Title.Contains("Stock") || n.Title.Contains("Order") || n.Title.Contains("Approved") || n.Title.Contains("Rejected")))
+                ))
+            ));
+
+            if (notification != null)
             {
                 notification.IsRead = true;
                 await _db.SaveChangesAsync();
@@ -432,35 +467,6 @@ namespace ljp_itsolutions.Controllers
             return Ok();
         }
 
-        private async Task LogAudit(string action, string? details = null, Guid? userId = null)
-        {
-            try
-            {
-                var auditLog = new AuditLog
-                {
-                    Action = action,
-                    Details = details,
-                    Timestamp = DateTime.UtcNow,
-                    UserID = userId ?? GetCurrentUserId()
-                };
-                _db.AuditLogs.Add(auditLog);
-                await _db.SaveChangesAsync();
-            }
-            catch { /* Fail silently */ }
-        }
 
-        private Guid? GetCurrentUserId()
-        {
-            if (User.Identity?.IsAuthenticated != true) return null;
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (Guid.TryParse(userIdStr, out var userId)) return userId;
-
-            var username = User.Identity?.Name;
-            if (!string.IsNullOrEmpty(username))
-            {
-                return _db.Users.FirstOrDefault(u => u.Username == username)?.UserID;
-            }
-            return null;
-        }
     }
 }

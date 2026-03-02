@@ -167,7 +167,7 @@
                                                     category = "Login";
                                                 }
                                             }
-                                            <span class="badge rounded-pill @pillClass px-3">@category</span>
+                                            <span class="badge rounded-pill @pillClass px-3" style="@(category == "Login" ? "background-color: #a855f7; color: white;" : "") @(category == "Audit" ? "background-color: #f1f5f9; color: #64748b;" : "")">@category</span>
                                         </td>
                                         <td><span class="small text-slate-700">@log.Action</span></td>
                                         <td class="pe-4 text-end">

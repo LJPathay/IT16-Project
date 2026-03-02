@@ -36,31 +36,51 @@
     <!-- Quick Stats -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm p-3 tx-stat-card">
-                <div class="text-muted small fw-bold mb-1 uppercase" style="font-size:0.7rem; letter-spacing:.1em;">TOTAL</div>
-                <div class="fw-bolder h4 mb-0 text-dark" id="stat-total">@totalCount</div>
-                <div class="text-muted x-small mt-1">Transactions</div>
+            <div class="kpi-card-premium brand-primary transition-hover">
+                <div class="kpi-content">
+                    <p class="kpi-title">TOTAL TRANSACTIONS</p>
+                    <span class="kpi-main-val" id="stat-total">@totalCount</span>
+                    <div class="kpi-trend text-muted">Processed Orders</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i class="fas fa-receipt"></i>
+                </div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm p-3 tx-stat-card">
-                <div class="text-muted small fw-bold mb-1 uppercase" style="font-size:0.7rem; letter-spacing:.1em;">ACTIONABLE</div>
-                <div class="fw-bolder h4 mb-0 text-success" id="stat-paid">@actionableCount</div>
-                <div class="text-muted x-small mt-1">Can Void / Refund</div>
+            <div class="kpi-card-premium brand-success transition-hover">
+                <div class="kpi-content">
+                    <p class="kpi-title">ACTIONABLE</p>
+                    <span class="kpi-main-val" id="stat-paid">@actionableCount</span>
+                    <div class="kpi-trend text-success">Void/Refund Available</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i class="fas fa-edit"></i>
+                </div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm p-3 tx-stat-card">
-                <div class="text-muted small fw-bold mb-1 uppercase" style="font-size:0.7rem; letter-spacing:.1em;">VOIDED</div>
-                <div class="fw-bolder h4 mb-0 text-danger" id="stat-voided">@voidedCount</div>
-                <div class="text-muted x-small mt-1">Cancelled orders</div>
+            <div class="kpi-card-premium brand-danger transition-hover">
+                <div class="kpi-content">
+                    <p class="kpi-title">VOIDED</p>
+                    <span class="kpi-main-val" id="stat-voided">@voidedCount</span>
+                    <div class="kpi-trend text-danger">Cancelled Logic</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i class="fas fa-ban"></i>
+                </div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card border-0 shadow-sm p-3 tx-stat-card">
-                <div class="text-muted small fw-bold mb-1 uppercase" style="font-size:0.7rem; letter-spacing:.1em;">REFUNDED</div>
-                <div class="fw-bolder h4 mb-0 text-info" id="stat-refunded">@refundedCount</div>
-                <div class="text-muted x-small mt-1">Returned orders</div>
+            <div class="kpi-card-premium brand-indigo transition-hover">
+                <div class="kpi-content">
+                    <p class="kpi-title">REFUNDED</p>
+                    <span class="kpi-main-val" id="stat-refunded">@refundedCount</span>
+                    <div class="kpi-trend text-primary">Returned Funds</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i class="fas fa-undo"></i>
+                </div>
             </div>
         </div>
     </div>

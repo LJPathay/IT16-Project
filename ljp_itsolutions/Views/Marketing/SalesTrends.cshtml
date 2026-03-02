@@ -1,4 +1,4 @@
-@model IEnumerable<dynamic>
+@model IEnumerable<ljp_itsolutions.Controllers.MarketingController.SalesTrendViewModel>
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Strategic Revenue Intelligence";
@@ -6,28 +6,36 @@
 
 <div class="container-fluid py-2">
     <!-- Header/Action Row -->
-    <div class="row g-3 mb-4 align-items-center">
-        <div class="col-md-6">
-            <h6 class="fw-bold mb-0 text-dark">Revenue Velocity Index</h6>
-            <p class="text-muted x-small mb-0">Temporal analysis of gross transaction value and growth acceleration</p>
+    <div class="row mb-4 align-items-center g-3">
+        <div class="col-lg-5">
+            <h5 class="fw-bold mb-0 text-dark">Revenue Velocity Index</h5>
+            <p class="text-muted x-small mb-0">Temporal analysis of transaction performance and growth acceleration</p>
         </div>
-        <div class="col-md-6 d-flex justify-content-md-end gap-2">
+        <div class="col-lg-7 d-flex justify-content-lg-end gap-2 align-items-center flex-wrap">
             <form id="filterForm" method="get" class="d-flex gap-2 align-items-center">
-                <select name="type" id="typeFilter" class="form-select form-select-sm rounded-pill shadow-sm border bg-white x-small fw-bold px-3" onchange="updateDateInput()" style="width: 100px;">
-                    <option value="week" selected="@(ViewBag.SelectedType == "week")">Weekly</option>
-                    <option value="month" selected="@(ViewBag.SelectedType == "month")">Monthly</option>
-                    <option value="year" selected="@(ViewBag.SelectedType == "year")">Yearly</option>
-                </select>
-                <div class="input-group input-group-sm shadow-sm rounded-pill overflow-hidden border bg-white" style="max-width: 240px;" id="dateInputContainer">
-                    <span class="input-group-text bg-transparent border-0 ps-3">
-                        <i class="far fa-calendar-alt text-muted"></i>
-                    </span>
-                    <input type="month" name="value" id="valueFilter" class="form-control border-0 shadow-none ps-2 py-2 x-small fw-bold" value="@ViewBag.SelectedValue">
+                <div class="position-relative">
+                    <select name="type" id="typeFilter" class="form-select form-select-sm rounded-pill shadow-sm border bg-white x-small fw-bold ps-3 pe-4" onchange="updateDateInput()" style="width: 110px; height: 45px; -webkit-appearance: none; cursor: pointer;">
+                        <option value="week" selected="@(ViewBag.SelectedType == "week")">Weekly</option>
+                        <option value="month" selected="@(ViewBag.SelectedType == "month")">Monthly</option>
+                        <option value="year" selected="@(ViewBag.SelectedType == "year")">Yearly</option>
+                    </select>
+                    <i class="fas fa-chevron-down position-absolute" style="right: 15px; top: 50%; transform: translateY(-50%); font-size: 0.7rem; color: #64748b; pointer-events: none;"></i>
                 </div>
-                <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm btn-sm fw-bold x-small">GENERATE INTEL</button>
+
+                <div class="input-group input-group-sm shadow-sm rounded-pill overflow-hidden border bg-white" style="width: 220px; height: 45px;" id="dateInputContainer">
+                    <span class="input-group-text bg-transparent border-0 ps-3">
+                        <i class="far fa-calendar-alt text-muted x-small"></i>
+                    </span>
+                    <input type="month" name="value" id="valueFilter" class="form-control border-0 shadow-none ps-2 py-2 x-small fw-bold" value="@ViewBag.SelectedValue" style="height: 100%;">
+                </div>
+
+                <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold x-small d-flex align-items-center justify-content-center" style="height: 45px; min-width: 140px; background-color: #d97706; border-color: #d97706;">
+                    <i class="fas fa-sync-alt me-2"></i>GENERATE INTEL
+                </button>
             </form>
-            <button class="btn btn-outline-primary rounded-pill px-4 shadow-sm btn-sm fw-bold x-small" onclick="exportData()">
-                <i class="fas fa-file-export me-1"></i> EXPORT
+            <button class="btn btn-outline-primary rounded-pill px-4 shadow-sm fw-bold x-small d-flex align-items-center gap-2" style="height: 45px; border-color: #3b82f6; color: #3b82f6; border-width: 2px;" onclick="exportData()">
+                <i class="fas fa-file-export"></i> 
+                <span>EXPORT</span>
             </button>
         </div>
     </div>
@@ -173,19 +181,27 @@
             }
         });
 
-        function updateDateInput() {
-            const type = document.getElementById('typeFilter').value;
-            const input = document.getElementById('valueFilter');
+        const filterForm = document.getElementById('filterForm');
+        const typeFilter = document.getElementById('typeFilter');
+        const valueFilter = document.getElementById('valueFilter');
+
+        function updateDateInput(isInitial = false) {
+            const type = typeFilter.value;
+            const input = valueFilter;
             const today = new Date();
             
+            // Store current value to re-assign after type change
+            const currentValue = input.value;
+
             if (type === 'year') {
                 input.type = 'number';
                 input.placeholder = 'YYYY';
-                if (!input.value || input.value.includes('-')) input.value = today.getFullYear();
+                if (!currentValue || currentValue.includes('-')) {
+                    input.value = today.getFullYear();
+                }
             } else if (type === 'week') {
                 input.type = 'week';
-                // Approximate current week
-                if (!input.value || !input.value.includes('-W')) {
+                if (!currentValue || !currentValue.includes('-W')) {
                      const d = new Date();
                      d.setHours(0,0,0,0);
                      d.setDate(d.getDate() + 4 - (d.getDay()||7));
@@ -195,16 +211,29 @@
                 }
             } else {
                 input.type = 'month';
-                if (!input.value || input.value.split('-').length !== 2) input.value = today.toISOString().slice(0, 7);
+                if (!currentValue || currentValue.split('-').length !== 2) {
+                    input.value = today.toISOString().slice(0, 7);
+                }
+            }
+
+            // Only auto-submit if it's NOT the initial load to prevent refreshes
+            if (!isInitial) {
+                filterForm.submit();
             }
         }
 
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', updateDateInput);
+        // Initialize on load with flag
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDateInput(true);
+        });
+
+        // Add auto-submit behavior
+        typeFilter.addEventListener('change', () => updateDateInput(false));
+        valueFilter.addEventListener('change', () => filterForm.submit());
 
         function exportData() {
-            const type = document.getElementById('typeFilter').value;
-            const value = document.getElementById('valueFilter').value;
+            const type = typeFilter.value;
+            const value = valueFilter.value;
             window.location.href = `@Url.Action("ExportSalesTrends", "Marketing")?type=${type}&value=${value}`;
         }
     </script>

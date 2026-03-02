@@ -522,3 +522,43 @@ html {
   background-color: #f8fafc;
   cursor: pointer;
 }
+
+/* Global Pagination Styling - Standardized Blue */
+.pagination .page-link {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  margin: 0 4px;
+  border-radius: 10px !important;
+  padding: 0.5rem 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 38px;
+}
+
+.pagination .page-link:hover {
+  background-color: #f1f5f9;
+  color: #3b82f6;
+}
+
+.pagination .page-item.active .page-link {
+  background: #3b82f6 !important;
+  color: white !important;
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+.pagination .page-item.disabled .page-link {
+  background-color: transparent;
+  opacity: 0.5;
+}
+
+.pagination-sm .page-link {
+  min-width: 32px;
+  height: 32px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}

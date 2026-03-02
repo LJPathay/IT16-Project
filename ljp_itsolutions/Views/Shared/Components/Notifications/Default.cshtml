@@ -53,24 +53,34 @@
             }
         </div>
         <div class="p-2 text-center bg-light rounded-bottom border-top">
-            <a href="#" class="small text-decoration-none fw-semibold">View All Notifications</a>
+            <a href="@Url.Action("Notifications", "Account")" class="small text-decoration-none fw-semibold">View All Notifications</a>
         </div>
     </ul>
 </div>
 
 <script>
     function markAllNotificationsAsRead() {
-        $.post('/Account/MarkAllRead', function() {
-            $('#notificationDropdown .badge').remove();
+        $.post('@Url.Action("MarkAllRead", "Account")', function() {
+            $('#notificationDropdown .badge').fadeOut(200, function() { $(this).remove(); });
             $('#notificationDropdown h6').text('Notifications');
             $('#notificationDropdown .text-primary').remove(); 
+            
+            // UI feedback: replace list with empty state
+            $('.notification-list').html(`
+                <li class="p-4 text-center text-muted">
+                    <i class="far fa-bell-slash mb-2 fa-2x opacity-50"></i>
+                    <p class="mb-0 small">No new notifications</p>
+                </li>
+            `);
         });
     }
 
     function handleNotificationClick(event, id, url) {
+        if (url && url.includes('javascript:void(0)')) return;
+        
         event.preventDefault();
-        $.post('/Account/MarkAsRead', { id: id }, function() {
-            if (url && url !== '#' && url !== window.location.href) {
+        $.post('@Url.Action("MarkAsRead", "Account")', { id: id }, function() {
+            if (url && url !== '#' && url !== '' && !url.includes('javascript:void(0)')) {
                 window.location.href = url;
             } else {
                 location.reload();

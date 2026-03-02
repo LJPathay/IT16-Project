@@ -171,14 +171,14 @@ namespace ljp_itsolutions.Services
             return Encoding.UTF8.GetBytes(csv.ToString());
         }
 
-        public async Task<byte[]> GenerateSalesTrendsCSVAsync(DateTime month)
+        public async Task<byte[]> GenerateSalesTrendsCSVAsync(DateTime start, DateTime end, string periodLabel)
         {
-            var start = new DateTime(month.Year, month.Month, 1);
-            var end = start.AddMonths(1).AddDays(-1);
-
             var salesData = await _db.Orders
                 .Where(o => o.OrderDate >= start && o.OrderDate <= end && 
                            (o.PaymentStatus == "Paid" || o.PaymentStatus == "Paid (Digital)" || o.PaymentStatus == "Completed"))
+                .ToListAsync();
+
+            var groupedData = salesData
                 .GroupBy(o => o.OrderDate.Date)
                 .Select(g => new { 
                     Date = g.Key, 
@@ -186,14 +186,14 @@ namespace ljp_itsolutions.Services
                     OrderCount = g.Count()
                 })
                 .OrderBy(g => g.Date)
-                .ToListAsync();
+                .ToList();
 
             var csv = new StringBuilder();
             csv.Append('\uFEFF');
-            csv.AppendLine($"SALES TREND REPORT - {month:MMMM yyyy}");
+            csv.AppendLine($"SALES TREND REPORT - {periodLabel}");
             csv.AppendLine("Date,Order Count,Total Revenue");
 
-            foreach (var s in salesData)
+            foreach (var s in groupedData)
             {
                 csv.AppendLine($"{s.Date:yyyy-MM-dd},{s.OrderCount},\"{s.TotalSales:N2}\"");
             }

@@ -363,8 +363,11 @@ namespace ljp_itsolutions.Controllers
 
         public async Task<IActionResult> Marketing()
         {
+            // Load full dashboard model (charts, VIP, tiers, labels)
+            var dashboardData = await _analyticsService.GetMarketingDashboardDataAsync();
+
             var performance = await _db.Orders
-                .Where(o => o.PromotionID != null)
+                .Where(o => o.PromotionID != null && o.Promotion != null)
                 .GroupBy(o => o.Promotion!.PromotionName)
                 .Select(g => new { Name = g.Key, Count = g.Count(), Revenue = g.Sum(o => o.FinalAmount) })
                 .ToListAsync();
@@ -373,16 +376,16 @@ namespace ljp_itsolutions.Controllers
             ViewBag.ActivePromos = await _db.Promotions.CountAsync(p => p.IsActive);
             ViewBag.TotalPromoUses = await _db.Orders.CountAsync(o => o.PromotionID != null);
             ViewBag.TotalPromoRevenue = await _db.Orders.Where(o => o.PromotionID != null).SumAsync(o => o.FinalAmount);
-            ViewBag.AvgDiscount = await _db.Orders.Where(o => o.PromotionID != null).AnyAsync() 
-                ? await _db.Orders.Where(o => o.PromotionID != null).AverageAsync(o => o.DiscountAmount) 
-                : 0;
+            ViewBag.AvgDiscount = await _db.Orders.Where(o => o.PromotionID != null).AnyAsync()
+                ? await _db.Orders.Where(o => o.PromotionID != null).AverageAsync(o => o.DiscountAmount)
+                : 0m;
 
             // Chart Data
             ViewBag.PromoLabels = performance.Select(p => p.Name).ToList();
             ViewBag.PromoRevenue = performance.Select(p => p.Revenue).ToList();
             ViewBag.PromoCounts = performance.Select(p => p.Count).ToList();
 
-            return View();
+            return View(dashboardData);
         }
 
         public async Task<IActionResult> Transactions()

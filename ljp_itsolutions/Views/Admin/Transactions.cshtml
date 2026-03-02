@@ -125,7 +125,7 @@
                 Showing <span id="start-index">0</span>-<span id="end-index">0</span> of <span id="total-count">0</span> transactions
             </div>
             <nav aria-label="Transaction navigation">
-                <ul class="pagination pagination-sm mb-0 gap-1 pagination-custom" id="pagination-container">
+                <ul class="pagination pagination-sm mb-0 gap-1" id="pagination-container">
                     <!-- Pagination injected by JS -->
                 </ul>
             </nav>
@@ -406,39 +406,6 @@
         z-index: 10;
     }
     
-    /* Modern Pagination Design */
-    .pagination-custom .page-item { margin: 0 2px; }
-    .pagination-custom .page-link {
-        width: 38px;
-        height: 38px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px !important;
-        font-weight: 700;
-        color: #0f172a !important;
-        border: none;
-        transition: all 0.2s ease;
-        background-color: #ffffff;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-    }
-    
-    .pagination-custom .page-item.active .page-link {
-        background-color: #e67e22 !important; /* Orange from image */
-        color: #0f172a !important;
-    }
-    
-    .pagination-custom .page-item.disabled .page-link {
-        background-color: #f1f5f9 !important;
-        color: #0f172a !important;
-        opacity: 0.5;
-    }
-    
-    .pagination-custom .page-item:not(.active):not(.disabled):hover .page-link {
-        background-color: #f8fafc;
-        transform: translateY(-1px);
-    }
-
     /* Custom Scrollbar */
     .table-responsive::-webkit-scrollbar {
         width: 6px;

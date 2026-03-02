@@ -22,41 +22,38 @@
     <!-- Summary KPIs -->
     <div class="row g-4 mb-4">
         <div class="col-md-4">
-            <div class="kpi-card h-100 border-0 shadow-sm" style="border-left: 5px solid #3b82f6 !important;">
-                <div class="d-flex align-items-center w-100 gap-3">
-                    <div class="kpi-card-icon bg-blue-light" style="background: #eff6ff; color: #3b82f6;">
-                        <i class="fas fa-history fa-lg"></i>
-                    </div>
-                    <div class="text-start">
-                        <p class="kpi-card-label mb-0">Total Activity</p>
-                        <h3 class="kpi-card-value">@totalLogs</h3>
-                    </div>
+            <div class="kpi-card-premium brand-primary transition-hover">
+                <div class="kpi-content">
+                    <p class="kpi-title">Total Activity</p>
+                    <span class="kpi-main-val">@totalLogs</span>
+                    <div class="kpi-trend text-muted">System-wide Actions</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i class="fas fa-history"></i>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="kpi-card h-100 border-0 shadow-sm" style="border-left: 5px solid #10b981 !important;">
-                <div class="d-flex align-items-center w-100 gap-3">
-                    <div class="kpi-card-icon bg-green-light" style="background: #ecfdf5; color: #10b981;">
-                        <i class="fas fa-user-check fa-lg"></i>
-                    </div>
-                    <div class="text-start">
-                        <p class="kpi-card-label mb-0">Login Events</p>
-                        <h3 class="kpi-card-value">@logins</h3>
-                    </div>
+            <div class="kpi-card-premium brand-success transition-hover">
+                <div class="kpi-content">
+                    <p class="kpi-title">Login Events</p>
+                    <span class="kpi-main-val">@logins</span>
+                    <div class="kpi-trend text-success">Active Sessions</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i class="fas fa-user-check"></i>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="kpi-card h-100 border-0 shadow-sm" style="border-left: 5px solid #ef4444 !important;">
-                <div class="d-flex align-items-center w-100 gap-3">
-                    <div class="kpi-card-icon bg-red-light" style="background: #fef2f2; color: #ef4444;">
-                        <i class="fas fa-shield-virus fa-lg"></i>
-                    </div>
-                    <div class="text-start">
-                        <p class="kpi-card-label mb-0">Security Alerts</p>
-                        <h3 class="kpi-card-value">@alerts</h3>
-                    </div>
+            <div class="kpi-card-premium brand-danger transition-hover">
+                <div class="kpi-content">
+                    <p class="kpi-title">Security Alerts</p>
+                    <span class="kpi-main-val">@alerts</span>
+                    <div class="kpi-trend text-danger">Points of Interest</div>
+                </div>
+                <div class="kpi-icon-box">
+                    <i class="fas fa-shield-virus"></i>
                 </div>
             </div>
         </div>
