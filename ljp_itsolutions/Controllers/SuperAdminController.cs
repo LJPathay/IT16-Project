@@ -197,15 +197,19 @@ namespace ljp_itsolutions.Controllers
                 var keys = new[] { 
                     "SystemName", "Timezone", "Currency", "DateFormat", 
                     "SessionTimeout", "PasswordMinLength", "RequireSpecialChars", "RequireNumbers", "TwoFactorAuth",
-                    "CompanyName", "TaxRate", "LowStockThreshold", "BusinessHourStart", "BusinessHourEnd",
+                    "CompanyName", "TaxRate", "LowStockThreshold", "CriticalStockThreshold", "SystemTagline",
                     "SmtpServer", "SmtpPort", "EmailNotifications", "LowStockAlerts", "DailyReports",
-                    "MaintenanceMode", "LogRetentionDays", "AllowPublicRegistration"
+                    "MaintenanceMode", "LogRetentionDays", "AllowPublicRegistration", "AllowPaymentBypass"
                 };
+
+                // Handle regular keys
                 foreach (var key in keys) {
-                    string value = form.ContainsKey(key) ? form[key].ToString() : "";
-                    bool isCheckbox = key.Contains("Require") || key.Contains("TwoFactor") || key.Contains("Notifications") || key.Contains("Alerts") || key.Contains("DailyReports");
-                    if (isCheckbox)
-                        value = (!string.IsNullOrEmpty(value) && (value.ToLower() == "true" || value.ToLower() == "on")) ? "true" : "false";
+                    string value = form.ContainsKey(key) ? form[key].ToString() : "false";
+                    
+                    // Specific toggle handling
+                    if (form[key] == "on" || form[key] == "true") value = "true";
+                    else if (new[] { "MaintenanceMode", "TwoFactorAuth", "RequireNumbers", "RequireSpecialChars", "EmailNotifications", "LowStockAlerts", "DailyReports", "AllowPublicRegistration", "AllowPaymentBypass" }.Contains(key)) 
+                        value = "false";
 
                     var setting = await _db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == key);
                     if (setting == null) {
@@ -213,12 +217,20 @@ namespace ljp_itsolutions.Controllers
                         _db.SystemSettings.Add(setting);
                     } else setting.SettingValue = value;
                 }
+
+                // Handle Role Maintenance List
+                var maintRolesValue = string.Join(",", form.Keys.Where(k => k.StartsWith("MaintRole_") && form[k] == "true").Select(k => k.Replace("MaintRole_", "")));
+                var maintSetting = await _db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == "MaintenanceRoles");
+                if (maintSetting == null) {
+                    _db.SystemSettings.Add(new SystemSetting { SettingKey = "MaintenanceRoles", SettingValue = maintRolesValue });
+                } else maintSetting.SettingValue = maintRolesValue;
+
                 await _db.SaveChangesAsync();
                 await LogAudit("Updated system settings");
-                TempData["Success"] = "Settings updated.";
-            } catch (Exception ex) { TempData["Error"] = ex.Message; }
+                TempData["SuccessMessage"] = "System configuration updated successfully.";
+            } catch (Exception ex) { TempData["ErrorMessage"] = ex.Message; }
             return RedirectToAction("SystemSettings");
-        }
+        }        
 
         // --- Backups ---
         public IActionResult Backups()

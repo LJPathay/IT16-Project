@@ -4,11 +4,8 @@
 }
 
 <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="d-flex gap-2">
-            <button class="btn btn-white shadow-sm border-0" onclick="location.href='@Url.Action("ExportTransactions", "Cashier")'"><i class="fas fa-download me-2 text-primary"></i>Export CSV</button>
-            <button class="btn btn-primary shadow-sm px-4" onclick="location.href='@Url.Action("Index", "POS")'"><i class="fas fa-plus me-2"></i>New Order</button>
-        </div>
+    <div class="d-flex justify-content-end align-items-center mb-4">
+        <button class="btn btn-white shadow-sm border-0" onclick="location.href='@Url.Action("ExportTransactions", "Cashier")'"><i class="fas fa-download me-2 text-primary"></i>Export CSV</button>
     </div>
 
     <div class="card border-0 shadow-sm mb-4" style="border-radius: 20px; overflow: hidden;">

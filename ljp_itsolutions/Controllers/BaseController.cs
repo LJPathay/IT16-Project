@@ -31,6 +31,17 @@ namespace ljp_itsolutions.Controllers
             catch { /* Fail silently */ }
         }
 
+        protected string GetSetting(string key, string defaultVal = "")
+        {
+            return _db.SystemSettings.FirstOrDefault(s => s.SettingKey == key)?.SettingValue ?? defaultVal;
+        }
+
+        protected bool GetBoolSetting(string key)
+        {
+            var val = GetSetting(key);
+            return !string.IsNullOrEmpty(val) && (val.ToLower() == "true" || val.ToLower() == "on");
+        }
+
         protected Guid? GetCurrentUserId()
         {
             if (User.Identity?.IsAuthenticated != true) return null;

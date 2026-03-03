@@ -115,7 +115,18 @@ namespace ljp_itsolutions.Controllers
                 ModelState.AddModelError(string.Empty, "Account is deactivated. Please contact administrator.");
                 return View(model);
             }
- 
+
+            // MAINTENANCE MODE CHECK (Role-Specific)
+            if (GetBoolSetting("MaintenanceMode") && user.Role != UserRoles.SuperAdmin)
+            {
+                var restrictedRoles = GetSetting("MaintenanceRoles", "").Split(',');
+                if (restrictedRoles.Contains(user.Role))
+                {
+                    ModelState.AddModelError(string.Empty, $"System is under maintenance for {user.Role} accounts. Please contact support.");
+                    return View(model);
+                }
+            }
+
             // Reset lockout on success
             user.AccessFailedCount = 0;
             user.LockoutEnd = null;
@@ -230,10 +241,29 @@ namespace ljp_itsolutions.Controllers
                 return View(model);
             }
 
-            // Complexity Check
-            if (model.NewPassword.Length < 8 || !model.NewPassword.Any(char.IsUpper) || !model.NewPassword.Any(char.IsDigit))
+            // Dynamic Complexity Check
+            int minLen = int.TryParse(GetSetting("PasswordMinLength", "8"), out int l) ? l : 8;
+            bool reqNumbers = GetBoolSetting("RequireNumbers");
+            bool reqSpecial = GetBoolSetting("RequireSpecialChars");
+
+            if (model.NewPassword.Length < minLen)
             {
-                ModelState.AddModelError(string.Empty, "Password must be at least 8 characters long and contain at least one uppercase letter and one number.");
+                ModelState.AddModelError(string.Empty, $"Password must be at least {minLen} characters long.");
+                return View(model);
+            }
+            if (!model.NewPassword.Any(char.IsUpper))
+            {
+                ModelState.AddModelError(string.Empty, "Password must contain at least one uppercase letter.");
+                return View(model);
+            }
+            if (reqNumbers && !model.NewPassword.Any(char.IsDigit))
+            {
+                ModelState.AddModelError(string.Empty, "Password must contain at least one number.");
+                return View(model);
+            }
+            if (reqSpecial && !model.NewPassword.Any(c => !char.IsLetterOrDigit(c)))
+            {
+                ModelState.AddModelError(string.Empty, "Password must contain at least one special character.");
                 return View(model);
             }
 
@@ -399,9 +429,29 @@ namespace ljp_itsolutions.Controllers
                 TempData["Error"] = "Incorrect current password.";
                 return RedirectToAction(nameof(Profile));
             }
-            if (model.NewPassword.Length < 8 || !model.NewPassword.Any(char.IsUpper) || !model.NewPassword.Any(char.IsDigit))
+            // Dynamic Complexity Check
+            int minLen = int.TryParse(GetSetting("PasswordMinLength", "8"), out int l) ? l : 8;
+            bool reqNumbers = GetBoolSetting("RequireNumbers");
+            bool reqSpecial = GetBoolSetting("RequireSpecialChars");
+
+            if (model.NewPassword.Length < minLen)
             {
-                TempData["Error"] = "Password must be at least 8 characters long and contain at least one uppercase letter and one number.";
+                TempData["Error"] = $"Password must be at least {minLen} characters long.";
+                return RedirectToAction(nameof(Profile));
+            }
+            if (!model.NewPassword.Any(char.IsUpper))
+            {
+                TempData["Error"] = "Password must contain at least one uppercase letter.";
+                return RedirectToAction(nameof(Profile));
+            }
+            if (reqNumbers && !model.NewPassword.Any(char.IsDigit))
+            {
+                TempData["Error"] = "Password must contain at least one number.";
+                return RedirectToAction(nameof(Profile));
+            }
+            if (reqSpecial && !model.NewPassword.Any(c => !char.IsLetterOrDigit(c)))
+            {
+                TempData["Error"] = "Password must contain at least one special character.";
                 return RedirectToAction(nameof(Profile));
             }
 

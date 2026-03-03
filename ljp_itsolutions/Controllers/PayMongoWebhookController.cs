@@ -145,7 +145,6 @@ namespace ljp_itsolutions.Controllers
                                      try {
                                          using (var scope = _scopeFactory.CreateScope()) {
                                              var scopedReceiptService = scope.ServiceProvider.GetRequiredService<IReceiptService>();
-                                             // await scopedReceiptService.SendOrderReceiptAsync(order.OrderID); // Removed per user request
                                          }
                                      } catch (Exception ex) {
                                          _logger.LogError(ex, "Background webhook receipt sending failed for order {OrderId}", order.OrderID);

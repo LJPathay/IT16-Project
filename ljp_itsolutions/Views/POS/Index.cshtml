@@ -86,7 +86,7 @@
             <h4><i class="fas fa-shopping-bag me-2 text-primary"></i>Current Order</h4>
             <div class="d-flex gap-2">
                 <button class="btn btn-sm btn-outline-danger" onclick="clearCart()">Clear</button>
-                <button class="btn btn-sm btn-light d-lg-none" onclick="toggleCart()"><i class="fas fa-times"></i></button>
+                <button class="btn btn-sm btn-light" onclick="toggleCart()"><i class="fas fa-times"></i></button>
             </div>
         </div>
 
@@ -297,47 +297,61 @@
 
 <!-- Reward Picker Modal -->
 <div class="modal fade" id="rewardPickerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 1.25rem;">
-            <div class="modal-header border-0 pb-0">
-                <h6 class="modal-title fw-bold">Select Reward</h6>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 1.5rem;">
+            <div class="modal-header border-0 pb-2 px-4 pt-4">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark">Select Your Reward</h5>
+                    <p class="text-muted small mb-0">Choose a reward to apply to this order</p>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-3">
-                <div class="d-grid gap-2">
+            <div class="modal-body p-4">
+                <div class="d-grid gap-3">
                     <!-- Bronze -->
-                    <button type="button" class="btn btn-outline-dark text-start p-3 border-2 rounded-4 reward-option" id="tier1Option" onclick="selectRewardTier(1)">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="fw-bold">Bronze Reward</div>
-                                <div class="x-small text-muted">Redeem 5 Points</div>
-                            </div>
-                            <div class="fs-5 fw-bold text-primary">₱50</div>
+                    <div class="reward-card reward-bronze" id="tier1Option" onclick="selectRewardTier(1)">
+                        <div class="reward-icon">
+                            <i class="fas fa-medal"></i>
                         </div>
-                    </button>
-                    <!-- Silver -->
-                    <button type="button" class="btn btn-outline-dark text-start p-3 border-2 rounded-4 reward-option" id="tier2Option" onclick="selectRewardTier(2)">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="fw-bold">Silver Reward</div>
-                                <div class="x-small text-muted">Redeem 10 Points</div>
-                            </div>
-                            <div class="fs-5 fw-bold text-success">₱110</div>
+                        <div class="reward-info">
+                            <span class="reward-name">Bronze Reward</span>
+                            <span class="reward-cost">Redeem 5 Points</span>
                         </div>
-                    </button>
-                    <!-- Gold -->
-                    <button type="button" class="btn btn-outline-dark text-start p-3 border-2 rounded-4 reward-option" id="tier3Option" onclick="selectRewardTier(3)">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="fw-bold">Gold Reward</div>
-                                <div class="x-small text-muted">Redeem 20 Points</div>
-                            </div>
-                            <div class="fs-5 fw-bold text-warning">₱250</div>
+                        <div class="reward-value">
+                            ₱50
                         </div>
-                    </button>
+                    </div>
                     
-                    <button type="button" class="btn btn-light mt-2 py-2 x-small fw-bold border" onclick="selectRewardTier(0)">
-                        Remove Reward
+                    <!-- Silver -->
+                    <div class="reward-card reward-silver" id="tier2Option" onclick="selectRewardTier(2)">
+                        <div class="reward-icon">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <div class="reward-info">
+                            <span class="reward-name">Silver Reward</span>
+                            <span class="reward-cost">Redeem 10 Points</span>
+                        </div>
+                        <div class="reward-value">
+                            ₱110
+                        </div>
+                    </div>
+
+                    <!-- Gold -->
+                    <div class="reward-card reward-gold" id="tier3Option" onclick="selectRewardTier(3)">
+                        <div class="reward-icon">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <div class="reward-info">
+                            <span class="reward-name">Gold Reward</span>
+                            <span class="reward-cost">Redeem 20 Points</span>
+                        </div>
+                        <div class="reward-value">
+                            ₱250
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-light mt-2 py-3 fw-bold border-0 rounded-4 text-muted" onclick="selectRewardTier(0)" style="background: #f8fafc;">
+                        <i class="fas fa-times-circle me-2"></i>Remove Applied Reward
                     </button>
                 </div>
             </div>
@@ -362,9 +376,11 @@
         function toggleCart() {
             const drawer = document.getElementById('cartDrawer');
             const overlay = document.getElementById('cartOverlay');
+            const btn = document.getElementById('cartToggleBtn');
             
             drawer.classList.toggle('show');
             overlay.classList.toggle('show');
+            btn.classList.toggle('hide');
         }
 
         function addToCart(id, name, price) {
@@ -944,11 +960,8 @@
             setPayment('Cash');
             renderCart();
             
-            // Clean up any stray backdrops
-            document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = '';
-            document.body.style.paddingRight = '';
+            // Full page reload to ensure fresh state and updated stock from server
+            window.location.reload();
         }
 
         document.getElementById('receiptModal').addEventListener('hidden.bs.modal', function () {

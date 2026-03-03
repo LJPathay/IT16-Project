@@ -192,6 +192,7 @@ namespace ljp_itsolutions.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        // Creating a User
         public async Task<IActionResult> CreateUser([FromBody] User user)
         {
             if (string.IsNullOrEmpty(user.Username))
@@ -200,7 +201,7 @@ namespace ljp_itsolutions.Controllers
             if (_db.Users.Any(u => u.Username == user.Username))
                 return BadRequest("Username already exists.");
 
-            // SECURITY: Prevent creating a SuperAdmin from this endpoint
+            // Prevent creating a SuperAdmin from this endpoint
             if (user.Role == UserRoles.SuperAdmin)
                 return Forbid("Admin cannot create a SuperAdmin account.");
 
@@ -228,6 +229,7 @@ namespace ljp_itsolutions.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        // Edit User
         public async Task<IActionResult> EditUser([FromBody] JsonElement data)
         {
             try

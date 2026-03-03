@@ -370,7 +370,7 @@ namespace ljp_itsolutions.Controllers
 
         public async Task<IActionResult> Marketing()
         {
-            // Load full dashboard model (charts, VIP, tiers, labels)
+            // Load full dashboard model 
             var dashboardData = await _analyticsService.GetMarketingDashboardDataAsync();
 
             var performance = await _db.Orders
@@ -623,7 +623,6 @@ namespace ljp_itsolutions.Controllers
                     _db.Notifications.Add(notification);
 
                     // Email Alert
-                    // Send alert in background
                     _ = Task.Run(async () => {
                         try {
                             using (var scope = _scopeFactory.CreateScope()) {
