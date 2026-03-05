@@ -116,15 +116,18 @@
                                                 data-phone="@customer.PhoneNumber"
                                                 data-email="@customer.Email"
                                                 data-points="@customer.Points">
-                                            Edit
+                                             @(User.IsInRole("Admin") || User.IsInRole("SuperAdmin") ? "Edit Profile" : "View Profile")
                                         </button>
-                                        <form asp-action="DeleteCustomer" method="post" onsubmit="return confirm('Remove this customer record?');">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@customer.CustomerID" />
-                                            <button type="submit" class="btn btn-sm btn-light text-danger border rounded-pill px-3">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
+                                        @if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+                                        {
+                                            <form asp-action="DeleteCustomer" method="post" onsubmit="return confirm('Remove this customer record?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@customer.CustomerID" />
+                                                <button type="submit" class="btn btn-sm btn-light text-danger border rounded-pill px-3">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -234,8 +237,13 @@
                         <input type="email" name="Email" id="edit-email" class="form-control rounded-3" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Points</label>
-                        <input type="number" name="Points" id="edit-points" class="form-control rounded-3" required />
+                        <label class="form-label small fw-bold text-muted">Loyalty Balance (Points)</label>
+                        <input type="number" name="Points" id="edit-points" class="form-control rounded-3" required 
+                               @(User.IsInRole("Admin") || User.IsInRole("SuperAdmin") ? "" : "readonly") />
+                        @if (!(User.IsInRole("Admin") || User.IsInRole("SuperAdmin")))
+                        {
+                            <div class="x-small text-muted mt-1 opacity-75">Only administrators can manually adjust loyalty points.</div>
+                        }
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-0">

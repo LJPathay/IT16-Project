@@ -307,7 +307,12 @@ namespace ljp_itsolutions.Controllers
             existing.FullName = customer.FullName;
             existing.PhoneNumber = customer.PhoneNumber;
             existing.Email = customer.Email;
-            existing.Points = customer.Points;
+            
+            // Only Admins or SuperAdmins can manually adjust points
+            if (User.IsInRole("Admin") || User.IsInRole("SuperAdmin"))
+            {
+                existing.Points = customer.Points;
+            }
 
             await _db.SaveChangesAsync();
             await LogAudit($"Edited Customer: {customer.FullName}");
@@ -319,6 +324,13 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteCustomer(int id)
         {
+            // Only Admins or SuperAdmins can delete customers
+            if (!User.IsInRole("Admin") && !User.IsInRole("SuperAdmin"))
+            {
+                TempData["ErrorMessage"] = "Unauthorized. Only administrators can remove customer profiles.";
+                return RedirectToAction(nameof(Customers));
+            }
+
             var customer = await _db.Customers.Include(c => c.Orders).FirstOrDefaultAsync(c => c.CustomerID == id);
             if (customer == null) return NotFound();
 

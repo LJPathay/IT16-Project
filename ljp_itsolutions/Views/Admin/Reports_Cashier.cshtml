@@ -21,26 +21,40 @@
 
     <!-- Key Metrics Cards -->
     <div class="row g-3 mb-4">
-        <!-- Today's Sales -->
+        <!-- Revenue Card -->
         <div class="col-lg-3 col-md-6">
             <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden" style="border-left: 3px solid #10b981 !important;">
                 <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <p class="text-muted x-small fw-bold text-uppercase tracking-wider mb-0" id="revenueTitle">Today's Revenue</p>
+                        <div class="dropdown">
+                            <button class="btn btn-link link-muted p-0 border-0" data-bs-toggle="dropdown">
+                                <i class="fas fa-filter x-small"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 x-small">
+                                <li><a class="dropdown-item py-2" href="#" onclick="updateRevenue('daily', '@Model.TodaysSales.ToString("N2")')">Daily View</a></li>
+                                <li><a class="dropdown-item py-2" href="#" onclick="updateRevenue('weekly', '@Model.WeeklySales.ToString("N2")')">Weekly View</a></li>
+                                <li><a class="dropdown-item py-2" href="#" onclick="updateRevenue('monthly', '@Model.MonthlySales.ToString("N2")')">Monthly View</a></li>
+                            </ul>
+                        </div>
+                    </div>
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
-                            <p class="text-muted x-small fw-bold text-uppercase tracking-wider mb-1">Today's Revenue</p>
-                            <h4 class="fw-bold mb-1">₱@Model.TodaysSales.ToString("N2")</h4>
-                            @if (Model.YesterdaysSales > 0)
-                            {
-                                var percentChange = ((Model.TodaysSales - Model.YesterdaysSales) / Model.YesterdaysSales) * 100;
-                                <div class="d-flex align-items-center gap-1">
-                                    <span class="text-@(percentChange >= 0 ? "success" : "danger") x-small fw-bold">
-                                        <i class="fas @(percentChange >= 0 ? "fa-caret-up" : "fa-caret-down") me-1"></i>@Math.Abs(percentChange).ToString("N1")%
-                                    </span>
-                                    <span class="text-muted xx-small">vs yesterday</span>
-                                </div>
-                            } else {
-                                <div class="text-muted xx-small italic opacity-50">No previous day data</div>
-                            }
+                            <h4 class="fw-bold mb-1" id="revenueValue">₱@Model.TodaysSales.ToString("N2")</h4>
+                            <div id="revenueSubtext">
+                                @if (Model.YesterdaysSales > 0)
+                                {
+                                    var percentChange = ((Model.TodaysSales - Model.YesterdaysSales) / Model.YesterdaysSales) * 100;
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span class="text-@(percentChange >= 0 ? "success" : "danger") x-small fw-bold">
+                                            <i class="fas @(percentChange >= 0 ? "fa-caret-up" : "fa-caret-down") me-1"></i>@Math.Abs(percentChange).ToString("N1")%
+                                        </span>
+                                        <span class="text-muted xx-small">vs yesterday</span>
+                                    </div>
+                                } else {
+                                    <div class="text-muted xx-small italic opacity-50">No previous day data</div>
+                                }
+                            </div>
                         </div>
                         <div class="bg-success bg-opacity-10 rounded-3 p-2 text-success">
                             <i class="fas fa-peso-sign"></i>
@@ -263,7 +277,25 @@
                     }
                 }
             });
-        });
+        function updateRevenue(period, value) {
+            const titleEl = document.getElementById('revenueTitle');
+            const valueEl = document.getElementById('revenueValue');
+            const subtextEl = document.getElementById('revenueSubtext');
+            
+            valueEl.textContent = '₱' + value;
+            
+            if (period === 'daily') {
+                titleEl.textContent = "Today's Revenue";
+                subtextEl.style.opacity = '1';
+            } else if (period === 'weekly') {
+                titleEl.textContent = "Weekly Consolidate";
+                subtextEl.style.opacity = '0';
+            } else {
+                titleEl.textContent = "Monthly Consolidate";
+                subtextEl.style.opacity = '0';
+            }
+            event.preventDefault();
+        }
     </script>
 }
 

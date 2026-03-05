@@ -219,7 +219,12 @@ namespace ljp_itsolutions.Services
                     }
 
                     order.DiscountAmount = discount;
-                    order.FinalAmount = Math.Max(0, order.TotalAmount - order.DiscountAmount);
+                    // Calculate Tax and Final Amount
+                    decimal taxRate = await GetTaxRateAsync();
+                    decimal taxBase = Math.Max(0, order.TotalAmount - order.DiscountAmount);
+                    decimal taxAmount = taxBase * taxRate;
+                    
+                    order.FinalAmount = taxBase + taxAmount;
 
                     // Loyalty Points handling (Earn points for current purchase)
                     if (request.CustomerId.HasValue)

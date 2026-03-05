@@ -64,15 +64,19 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
-                                        <div class="avatar-xs rounded-circle bg-light d-flex align-items-center justify-content-center border" style="width: 28px; height: 28px; font-size: 0.7rem;">
-                                            <i class="fas @(log.UserID == null ? "fa-robot" : "fa-user") opacity-50"></i>
-                                        </div>
-                                        <div>
-                                            <p class="mb-0 small fw-bold text-dark">@((log.User?.FullName) ?? "System Process")</p>
-                                            <p class="text-muted x-small mb-0">@(log.User?.Role ?? "Internal")</p>
-                                        </div>
-                                    </div>
-                                </td>
+                                         <div class="avatar-xs rounded-circle bg-light d-flex align-items-center justify-content-center border" style="width: 32px; height: 32px; font-size: 0.7rem; overflow: hidden;">
+                                             @if (log.User != null && !string.IsNullOrEmpty(log.User.ProfilePictureUrl)) {
+                                                 <img src="@log.User.ProfilePictureUrl" class="w-100 h-100 object-fit-cover shadow-sm">
+                                             } else {
+                                                 <i class="fas @(log.UserID == null ? "fa-robot" : "fa-user") opacity-50"></i>
+                                             }
+                                         </div>
+                                         <div>
+                                             <p class="mb-0 small fw-bold text-dark">@((log.User?.FullName) ?? "System Process")</p>
+                                             <p class="text-muted x-small mb-0">@(log.User?.Role ?? "Internal")</p>
+                                         </div>
+                                     </div>
+                                 </td>
                                 <td>
                                     <span class="small fw-medium text-dark activity-text">@log.Action</span>
                                 </td>

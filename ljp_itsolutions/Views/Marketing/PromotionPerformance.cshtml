@@ -22,7 +22,7 @@
                 <thead>
                     <tr>
                         <th>Campaign Initiative</th>
-                        <th class="text-center">Lifecycle Status</th>
+                        <th class="text-center">STATUS</th>
                         <th class="text-center">Engagement</th>
                         <th class="text-end">Gross Value</th>
                         <th class="text-end">Equity Utilization</th>
@@ -35,7 +35,7 @@
                         foreach (var campaign in Model)
                         {
                             var isEnded = campaign.EndDate < DateTime.Now;
-                            var statusClass = campaign.IsActive ? (isEnded ? "bg-slate-400" : "bg-emerald-500") : "bg-slate-400";
+                            var statusClass = campaign.IsActive ? (isEnded ? "badge-secondary" : "badge-success") : "badge-secondary";
                             var statusText = campaign.IsActive ? (isEnded ? "COMPLETED" : "OPERATIONAL") : "TERMINATED";
                             var utilizationPercent = campaign.TotalSalesValue > 0 ? (campaign.TotalDiscountGiven * 100 / campaign.TotalSalesValue) : 0;
 
@@ -54,7 +54,13 @@
                                     </div>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge rounded-pill @statusClass px-3 xx-small fw-bold text-white">@statusText</span>
+                                    @{
+                                        var badgeColorClass = campaign.IsActive ? (isEnded ? "secondary" : "success") : "danger";
+                                        var badgeIcon = campaign.IsActive ? (isEnded ? "fa-clock" : "fa-play-circle") : "fa-stop-circle";
+                                    }
+                                    <span class="badge rounded-pill bg-@badgeColorClass bg-opacity-10 text-@badgeColorClass border border-@badgeColorClass border-opacity-10 px-3 py-1 xx-small fw-bold">
+                                        <i class="fas @badgeIcon me-1"></i>@statusText
+                                    </span>
                                 </td>
                                 <td class="text-center">
                                     <span class="fw-bold text-dark small">@campaign.UsageCount</span>

@@ -4,9 +4,16 @@
     ViewData["Subtitle"] = "Manager-level control for voiding, refunding, and syncing orders";
     var orders = Model.ToList();
     var totalCount = orders.Count;
-    var actionableCount = orders.Count(o => o.PaymentStatus == "Paid" || o.PaymentStatus == "Paid (Digital)");
+    var totalValue = orders.Sum(o => o.FinalAmount);
+
+    var actionableCount = orders.Count(o => o.PaymentStatus == "Paid" || o.PaymentStatus == "Paid (Digital)" || o.PaymentStatus == "Completed");
+    var actionableValue = orders.Where(o => o.PaymentStatus == "Paid" || o.PaymentStatus == "Paid (Digital)" || o.PaymentStatus == "Completed").Sum(o => o.FinalAmount);
+
     var voidedCount = orders.Count(o => o.PaymentStatus == "Voided");
+    var voidedValue = orders.Where(o => o.PaymentStatus == "Voided").Sum(o => o.FinalAmount);
+
     var refundedCount = orders.Count(o => o.PaymentStatus == "Refunded");
+    var refundedValue = orders.Where(o => o.PaymentStatus == "Refunded").Sum(o => o.FinalAmount);
 }
 
 @section Styles {
@@ -28,6 +35,7 @@
         .page-bar { background: #fff; border-top: 1px solid #f0f0f0; }
         .tx-stat-card { border-radius: 1rem; border: 1px solid rgba(0,0,0,0.05); transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .tx-stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08) !important; }
+        .kpi-sub-val { font-size: 0.75rem; font-weight: 600; opacity: 0.8; }
     </style>
 }
 
@@ -38,9 +46,10 @@
         <div class="col-6 col-md-3">
             <div class="kpi-card-premium brand-primary transition-hover">
                 <div class="kpi-content">
-                    <p class="kpi-title">TOTAL TRANSACTIONS</p>
+                    <p class="kpi-title">TOTAL PIPELINE</p>
                     <span class="kpi-main-val" id="stat-total">@totalCount</span>
-                    <div class="kpi-trend text-muted">Processed Orders</div>
+                    <div class="kpi-sub-val text-primary mt-1">₱@totalValue.ToString("N2")</div>
+                    <div class="kpi-trend text-muted xx-small">Gross Volume</div>
                 </div>
                 <div class="kpi-icon-box">
                     <i class="fas fa-receipt"></i>
@@ -50,21 +59,23 @@
         <div class="col-6 col-md-3">
             <div class="kpi-card-premium brand-success transition-hover">
                 <div class="kpi-content">
-                    <p class="kpi-title">ACTIONABLE</p>
+                    <p class="kpi-title">SETTLED (NET)</p>
                     <span class="kpi-main-val" id="stat-paid">@actionableCount</span>
-                    <div class="kpi-trend text-success">Void/Refund Available</div>
+                    <div class="kpi-sub-val text-success mt-1">₱@actionableValue.ToString("N2")</div>
+                    <div class="kpi-trend text-success xx-small">Net Realized Revenue</div>
                 </div>
                 <div class="kpi-icon-box">
-                    <i class="fas fa-edit"></i>
+                    <i class="fas fa-check-double"></i>
                 </div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="kpi-card-premium brand-danger transition-hover">
                 <div class="kpi-content">
-                    <p class="kpi-title">VOIDED</p>
+                    <p class="kpi-title">VOIDED LOSS</p>
                     <span class="kpi-main-val" id="stat-voided">@voidedCount</span>
-                    <div class="kpi-trend text-danger">Cancelled Logic</div>
+                    <div class="kpi-sub-val text-danger mt-1">₱@voidedValue.ToString("N2")</div>
+                    <div class="kpi-trend text-danger xx-small">Revenue Forfeited</div>
                 </div>
                 <div class="kpi-icon-box">
                     <i class="fas fa-ban"></i>
@@ -74,12 +85,13 @@
         <div class="col-6 col-md-3">
             <div class="kpi-card-premium brand-indigo transition-hover">
                 <div class="kpi-content">
-                    <p class="kpi-title">REFUNDED</p>
+                    <p class="kpi-title">REFUND IMPACT</p>
                     <span class="kpi-main-val" id="stat-refunded">@refundedCount</span>
-                    <div class="kpi-trend text-primary">Returned Funds</div>
+                    <div class="kpi-sub-val text-indigo mt-1">₱@refundedValue.ToString("N2")</div>
+                    <div class="kpi-trend text-primary xx-small">Capital Returned</div>
                 </div>
                 <div class="kpi-icon-box">
-                    <i class="fas fa-undo"></i>
+                    <i class="fas fa-hand-holding-usd"></i>
                 </div>
             </div>
         </div>
@@ -139,7 +151,7 @@
                     @foreach (var order in Model)
                     {
                         var statusClass = "other";
-                        if (order.PaymentStatus == "Paid" || order.PaymentStatus == "Paid (Digital)") { statusClass = "paid"; }
+                        if (order.PaymentStatus == "Paid" || order.PaymentStatus == "Paid (Digital)" || order.PaymentStatus == "Completed") { statusClass = "paid"; }
                         else if (order.PaymentStatus == "Voided") { statusClass = "voided"; }
                         else if (order.PaymentStatus == "Refunded") { statusClass = "refunded"; }
 
@@ -164,7 +176,7 @@
                             </td>
                             <td class="py-3 fw-bolder text-dark">₱@order.FinalAmount.ToString("N2")</td>
                             <td class="py-3">
-                                @if (order.PaymentStatus == "Paid" || order.PaymentStatus == "Paid (Digital)")
+                                @if (order.PaymentStatus == "Paid" || order.PaymentStatus == "Paid (Digital)" || order.PaymentStatus == "Completed")
                                 {
                                     <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">
                                         <i class="fas fa-check-circle me-1"></i>PAID
@@ -191,7 +203,7 @@
                             </td>
                             <td class="text-end pe-4 py-3 sticky-action">
                                 <div class="d-flex justify-content-end gap-2">
-                                    @if (order.PaymentStatus == "Paid" || order.PaymentStatus == "Paid (Digital)")
+                                    @if (order.PaymentStatus == "Paid" || order.PaymentStatus == "Paid (Digital)" || order.PaymentStatus == "Completed")
                                     {
                                         <button class="btn btn-sm btn-outline-danger px-3 rounded-pill void-btn"
                                                 data-id="@order.OrderID"

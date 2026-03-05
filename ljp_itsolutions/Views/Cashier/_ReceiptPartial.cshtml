@@ -20,14 +20,17 @@
                 <span class="value">@receiptNo</span>
             </div>
             <div class="receipt-row">
-                <span class="label">Manager :</span>
+                <span class="label">Issued By :</span>
                 <span class="value">@cashierName</span>
             </div>
             <div class="receipt-row mt-2">
                 <span class="value text-uppercase">@Model.OrderDate.ToString("dd/MM/yyyy HH:mm:ss")</span>
             </div>
             <div class="receipt-row">
-                <span class="label">Address</span>
+                <span class="label">Store Location:</span>
+            </div>
+            <div class="receipt-row">
+                <span class="value">Guerrero Ponce St., Davao City</span>
             </div>
             
             <div class="receipt-row mt-2">
@@ -60,6 +63,24 @@
         <!-- Totals -->
         <div class="receipt-totals px-4">
             <div class="separator text-center">------------------------------------------</div>
+            <div class="item-cost-row py-1">
+                <span class="cost-label">Subtotal</span>
+                <span class="dots border-dark"></span>
+                <span class="cost-value">₱@Model.TotalAmount.ToString("N2")</span>
+            </div>
+            @if (Model.DiscountAmount > 0)
+            {
+                <div class="item-cost-row py-1 text-success font-weight-bold">
+                    <span class="cost-label">Discount</span>
+                    <span class="dots border-dark"></span>
+                    <span class="cost-value">-₱@Model.DiscountAmount.ToString("N2")</span>
+                </div>
+            }
+            <div class="item-cost-row py-1">
+                <span class="cost-label">Tax</span>
+                <span class="dots border-dark"></span>
+                <span class="cost-value">₱@((Model.FinalAmount - (Model.TotalAmount - Model.DiscountAmount)).ToString("N2"))</span>
+            </div>
             <div class="item-cost-row fw-bold py-1">
                 <span class="cost-label">Total</span>
                 <span class="dots border-dark"></span>

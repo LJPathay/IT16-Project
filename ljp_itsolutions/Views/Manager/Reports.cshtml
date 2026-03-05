@@ -105,7 +105,10 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script>
+        Chart.register(ChartDataLabels);
+
         document.addEventListener("DOMContentLoaded", function () {
             const chartOptions = {
                 responsive: true,
@@ -113,7 +116,75 @@
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { boxWidth: 12, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } }
+                        labels: { 
+                            boxWidth: 12, 
+                            usePointStyle: true, 
+                            pointStyle: 'circle', 
+                            font: { size: 11, weight: 'bold' },
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (data.labels.length && data.datasets.length) {
+                                    const dataset = data.datasets[0];
+                                    const total = dataset.data.reduce((a, b) => a + b, 0);
+                                    return data.labels.map((label, i) => {
+                                        const value = dataset.data[i];
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                        const text = chart.config.type === 'doughnut' ? `${label} (${percentage}%)` : label;
+                                        return {
+                                            text: text,
+                                            fillStyle: Array.isArray(dataset.backgroundColor) ? dataset.backgroundColor[i] : dataset.backgroundColor,
+                                            strokeStyle: Array.isArray(dataset.backgroundColor) ? dataset.backgroundColor[i] : dataset.backgroundColor,
+                                            lineWidth: 0,
+                                            index: i
+                                        };
+                                    });
+                                }
+                                return [];
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#1e293b',
+                        bodyColor: '#475569',
+                        borderColor: '#e2e8f0',
+                        borderWidth: 1,
+                        padding: 12,
+                        boxPadding: 6,
+                        usePointStyle: true,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed !== null) {
+                                    if (context.dataset.label === 'Units Sold') {
+                                        label += context.parsed + ' units';
+                                    } else {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((context.raw / total) * 100).toFixed(1);
+                                        label += '₱' + context.parsed.toLocaleString() + ' (' + percentage + '%)';
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                    datalabels: {
+                        display: true,
+                        color: (context) => context.chart.config.type === 'doughnut' ? '#fff' : '#475569',
+                        anchor: (context) => context.chart.config.type === 'doughnut' ? 'center' : 'end',
+                        align: (context) => context.chart.config.type === 'doughnut' ? 'center' : 'top',
+                        font: { weight: 'bold', size: 10 },
+                        formatter: (value, context) => {
+                            if (context.chart.config.type === 'doughnut') {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                if (total === 0) return '';
+                                const percentage = (value / total * 100).toFixed(1);
+                                if (percentage < 3) return ''; // Hide if too small
+                                return percentage + '%';
+                            }
+                            return value;
+                        }
                     }
                 }
             };
@@ -156,11 +227,13 @@
                         backgroundColor: [
                             '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
                         ],
-                        borderWidth: 0,
-                        cutout: '70%'
+                        borderWidth: 2,
+                        borderColor: '#fff',
+                        cutout: '70%',
+                        hoverOffset: 15
                     }]
                 },
-                options: chartOptions
+                options: { ...chartOptions }
             });
         });
 

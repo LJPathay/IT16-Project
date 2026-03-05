@@ -2,26 +2,29 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Global System Configuration";
+    ViewData["Subtitle"] = "Master controls for system-wide policies, localization, and security.";
     string GetVal(string key, string defaultVal = "") => Model.ContainsKey(key) ? Model[key] : defaultVal;
     bool GetBool(string key) => Model.ContainsKey(key) && (Model[key].ToLower() == "true" || Model[key].ToLower() == "on");
 }
 
 <div class="container-fluid py-4">
-    <form asp-action="UpdateSettings" method="post">
+    <form asp-action="UpdateSettings" method="post" id="settingsForm">
         @Html.AntiForgeryToken()
-        
-        <div class="d-flex justify-content-between align-items-center mb-5 bg-white p-4 rounded-4 shadow-sm border-left-premium">
-            <div>
-                <h4 class="fw-900 text-dark mb-1">Global System Configuration</h4>
-                <p class="text-muted small mb-0"><i class="fas fa-globe-americas me-1 text-primary"></i> Master controls for system-wide policies, localization, and security.</p>
+
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6">
+                <h4 class="fw-900 text-dark mb-0">System Parameters</h4>
+                <p class="text-muted small mb-0">Manage global policies and security thresholds</p>
             </div>
-            <div class="d-flex gap-3">
-                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="location.reload()">
-                    <i class="fas fa-undo me-2"></i>Reset
-                </button>
-                <button type="submit" class="btn btn-primary rounded-pill px-5 shadow-sm fw-bold">
-                    <i class="fas fa-save me-2"></i>Apply Changes
-                </button>
+            <div class="col-md-6 text-end">
+                <div class="d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-light border rounded-pill px-4 shadow-none btn-sm" onclick="location.reload()">
+                        <i class="fas fa-undo me-2 text-muted"></i>Reset
+                    </button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold btn-sm">
+                        <i class="fas fa-save me-2"></i>Apply Changes
+                    </button>
+                </div>
             </div>
         </div>
 

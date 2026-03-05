@@ -368,6 +368,7 @@
         let totalAmount = 0;
         let selectedCustomerEmail = null;
         let currentOrderId = null;
+        let activePromo = null;
         const TAX_RATE = @(ViewBag.TaxRate ?? 0.05);
 
         // Removed cart loss protection to stop "Reload site?" warning as requested
@@ -406,6 +407,9 @@
 
         function clearCart() {
             cart = [];
+            activePromo = null;
+            document.getElementById('promoCode').value = '';
+            document.getElementById('promoStatus').style.display = 'none';
             renderCart();
         }
 
@@ -512,11 +516,24 @@
 
             if (discountFromPoints > subtotal) discountFromPoints = subtotal;
 
-            const tax = (subtotal - discountFromPoints) * TAX_RATE;
-            totalAmount = (subtotal - discountFromPoints) + tax;
+            let promoDiscount = 0;
+            if (activePromo) {
+                if (activePromo.discountType === 'Percentage') {
+                    promoDiscount = (subtotal - discountFromPoints) * (activePromo.discountValue / 100);
+                } else {
+                    promoDiscount = activePromo.discountValue;
+                }
+            }
+
+            if (promoDiscount > (subtotal - discountFromPoints)) promoDiscount = (subtotal - discountFromPoints);
+
+            const taxBase = Math.max(0, subtotal - discountFromPoints - promoDiscount);
+            const tax = taxBase * TAX_RATE;
+            totalAmount = taxBase + tax;
 
             document.getElementById('subtotal').innerText = `₱${subtotal.toFixed(2)}`;
             
+            // Loyalty Reward Row
             let pointsLabel = document.getElementById('pointsDiscountRow');
             if (redemptionTier > 0) {
                 if (!pointsLabel) {
@@ -530,6 +547,22 @@
                 }
             } else if (pointsLabel) {
                 pointsLabel.remove();
+            }
+
+            // Promo Discount Row
+            let promoLabel = document.getElementById('promoDiscountRow');
+            if (promoDiscount > 0) {
+                if (!promoLabel) {
+                    const row = document.createElement('div');
+                    row.id = 'promoDiscountRow';
+                    row.className = 'summary-row text-success fw-bold';
+                    row.innerHTML = `<span>Promo Discount</span><span>-₱${promoDiscount.toFixed(2)}</span>`;
+                    document.querySelector('.summary-row.total').before(row);
+                } else {
+                    promoLabel.querySelector('span:last-child').innerText = `-₱${promoDiscount.toFixed(2)}`;
+                }
+            } else if (promoLabel) {
+                promoLabel.remove();
             }
 
             document.getElementById('tax').innerText = `₱${tax.toFixed(2)}`;
@@ -595,6 +628,8 @@
             
             if (!code) {
                 status.style.display = 'none';
+                activePromo = null;
+                renderCart();
                 return;
             }
 
@@ -609,13 +644,19 @@
                 if (data.success) {
                     status.innerText = data.message;
                     status.className = 'text-success mt-1 small d-block';
+                    activePromo = data;
+                    renderCart();
                 } else {
                     status.innerText = data.message || 'Invalid code';
                     status.className = 'text-danger mt-1 small d-block';
+                    activePromo = null;
+                    renderCart();
                 }
             } catch (err) {
                 status.innerText = 'Connection error. Could not validate code.';
                 status.className = 'text-danger mt-1 small d-block';
+                activePromo = null;
+                renderCart();
             }
         }
 

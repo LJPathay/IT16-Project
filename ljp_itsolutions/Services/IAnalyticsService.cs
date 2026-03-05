@@ -124,6 +124,8 @@ namespace ljp_itsolutions.Services
     {
         public decimal TodaysSales { get; set; }
         public decimal YesterdaysSales { get; set; }
+        public decimal WeeklySales { get; set; }
+        public decimal MonthlySales { get; set; }
         public int TodaysTransactions { get; set; }
         public decimal AvgTransactionValue { get; set; }
         public string TopItemName { get; set; } = string.Empty;

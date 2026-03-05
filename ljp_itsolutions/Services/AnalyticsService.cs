@@ -508,12 +508,26 @@ namespace ljp_itsolutions.Services
         public async Task<AdminCashierReportsData> GetAdminCashierReportsDataAsync()
         {
             var today = DateTime.Today;
-            var yesterdaysSales = await _db.Orders
-                .Where(o => o.OrderDate >= today.AddDays(-1) && o.OrderDate < today && (o.PaymentStatus == "Completed" || o.PaymentStatus == "Paid" || o.PaymentStatus == "Paid (Digital)"))
+            var weekStart = today.AddDays(-6);
+            var monthStart = new DateTime(today.Year, today.Month, 1);
+
+            var salesQuery = _db.Orders
+                .Where(o => o.PaymentStatus == "Completed" || o.PaymentStatus == "Paid" || o.PaymentStatus == "Paid (Digital)");
+
+            var yesterdaysSales = await salesQuery
+                .Where(o => o.OrderDate >= today.AddDays(-1) && o.OrderDate < today)
                 .SumAsync(o => (decimal?)o.FinalAmount) ?? 0;
 
-            var todaysOrders = await _db.Orders
-                .Where(o => o.OrderDate >= today && (o.PaymentStatus == "Completed" || o.PaymentStatus == "Paid" || o.PaymentStatus == "Paid (Digital)"))
+            var weeklySales = await salesQuery
+                .Where(o => o.OrderDate >= weekStart)
+                .SumAsync(o => (decimal?)o.FinalAmount) ?? 0;
+
+            var monthlySales = await salesQuery
+                .Where(o => o.OrderDate >= monthStart)
+                .SumAsync(o => (decimal?)o.FinalAmount) ?? 0;
+
+            var todaysOrders = await salesQuery
+                .Where(o => o.OrderDate >= today)
                 .Select(o => new { o.FinalAmount, o.OrderDate })
                 .ToListAsync();
 
@@ -563,6 +577,8 @@ namespace ljp_itsolutions.Services
             {
                 TodaysSales = todaysSales,
                 YesterdaysSales = yesterdaysSales,
+                WeeklySales = weeklySales,
+                MonthlySales = monthlySales,
                 TodaysTransactions = todaysTransactions,
                 AvgTransactionValue = avgTransactionValue,
                 TopItemName = topItem?.ProductName ?? "N/A",
@@ -771,26 +787,54 @@ namespace ljp_itsolutions.Services
 
         public async Task<SuperAdminDashboardData> GetSuperAdminDashboardDataAsync()
         {
-            var auditLogs = await _db.AuditLogs.Include(a => a.User).OrderByDescending(a => a.Timestamp).Take(10).ToListAsync();
+            var now = DateTime.UtcNow;
+            var thirtyDaysAgo = now.AddDays(-30);
+            
+            var auditLogs = await _db.AuditLogs
+                .Include(a => a.User)
+                .OrderByDescending(a => a.Timestamp)
+                .Take(10)
+                .ToListAsync();
+
             var userCount = await _db.Users.CountAsync();
             var activeUsers = await _db.Users.CountAsync(u => u.IsActive);
             
-            var failedLoginsCount = await _db.AuditLogs.CountAsync(a => a.Action.Contains("Failed login"));
-            var lockedOutUsersCount = await _db.Users.CountAsync(u => u.LockoutEnd != null && u.LockoutEnd > DateTime.UtcNow);
+            // User Growth (last 30 days)
+            var usersThirtyDaysAgo = await _db.Users.CountAsync(u => u.CreatedAt < thirtyDaysAgo);
+            double growth = 0;
+            if (usersThirtyDaysAgo > 0)
+            {
+                growth = ((double)userCount - usersThirtyDaysAgo) / usersThirtyDaysAgo * 100;
+            }
+            else if (userCount > 0)
+            {
+                growth = 100;
+            }
+            
+            // Security Metrics
+            var failedLoginsRecent = await _db.AuditLogs.CountAsync(a => (a.Action.Contains("Failed login") || a.Action.Contains("Login Failed")) && a.Timestamp >= now.AddDays(-1));
+            var totalFailedLogins = await _db.AuditLogs.CountAsync(a => a.Action.Contains("Failed login") || a.Action.Contains("Login Failed"));
+            var lockedOutUsersCount = await _db.Users.CountAsync(u => u.LockoutEnd != null && u.LockoutEnd > now);
 
             var securityAlerts = new List<string>();
-            if (failedLoginsCount > 10) securityAlerts.Add("High volume of failed login attempts detected.");
-            if (lockedOutUsersCount > 0) securityAlerts.Add($"{lockedOutUsersCount} user accounts are currently locked.");
+            if (failedLoginsRecent > 15) securityAlerts.Add("Anomalous failed login volume detected in last 24h.");
+            if (lockedOutUsersCount > 0) securityAlerts.Add($"{lockedOutUsersCount} accounts are restricted due to security lockouts.");
+
+            // System Health / Uptime (Dynamic based on security events)
+            double healthScore = 99.99;
+            if (failedLoginsRecent > 20) healthScore -= 0.05;
+            if (lockedOutUsersCount > 5) healthScore -= 0.10;
+            if (securityAlerts.Any()) healthScore -= 0.02;
 
             return new SuperAdminDashboardData
             {
                 AuditLogs = auditLogs,
                 UserCount = userCount,
                 ActiveUsers = activeUsers,
-                FailedLoginsCount = failedLoginsCount,
+                FailedLoginsCount = failedLoginsRecent,
                 LockedOutUsersCount = lockedOutUsersCount,
-                SystemUptime = "99.98%",
-                GrowthIndex = "+5.2%",
+                SystemUptime = healthScore.ToString("F2") + "%",
+                GrowthIndex = (growth >= 0 ? "+" : "") + growth.ToString("N1") + "%",
                 SecurityAlerts = securityAlerts
             };
         }

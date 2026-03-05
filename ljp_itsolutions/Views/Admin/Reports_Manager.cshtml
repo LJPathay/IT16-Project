@@ -201,7 +201,10 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script>
+        Chart.register(ChartDataLabels);
+
         document.addEventListener("DOMContentLoaded", function () {
             // Trend Chart
             const trendCtx = document.getElementById('revenueTrendChart').getContext('2d');
@@ -217,19 +220,43 @@
                         borderWidth: 3,
                         tension: 0.4,
                         fill: true,
-                        pointRadius: 0,
-                        pointHoverRadius: 5
+                        pointRadius: 2,
+                        pointHoverRadius: 6,
+                        pointHitRadius: 20,
+                        pointBackgroundColor: '#d97706',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#1e293b',
+                            bodyColor: '#475569',
+                            borderColor: '#e2e8f0',
+                            borderWidth: 1,
+                            padding: 12,
+                            boxPadding: 6,
+                            usePointStyle: true,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Revenue: ₱' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
                     scales: {
                         y: { 
                             beginAtZero: true, 
                             grid: { color: 'rgba(0,0,0,0.05)' },
-                            ticks: { font: { size: 10 } }
+                            ticks: { 
+                                font: { size: 10 },
+                                callback: (v) => '₱' + v.toLocaleString()
+                            }
                         },
                         x: { grid: { display: false }, ticks: { font: { size: 10 } } }
                     }
@@ -245,8 +272,10 @@
                     datasets: [{
                         data: @Html.Raw(Json.Serialize(Model.CategoryData)),
                         backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-                        borderWidth: 0,
-                        cutout: '70%'
+                        borderWidth: 2,
+                        borderColor: '#fff',
+                        cutout: '70%',
+                        hoverOffset: 15
                     }]
                 },
                 options: {
@@ -255,8 +284,47 @@
                     plugins: { 
                         legend: { 
                             position: 'bottom',
-                            labels: { boxWidth: 10, usePointStyle: true, font: { size: 10 } }
-                        } 
+                            labels: { 
+                                boxWidth: 10, 
+                                usePointStyle: true, 
+                                font: { size: 10, weight: 'bold' },
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        const dataset = data.datasets[0];
+                                        const total = dataset.data.reduce((a, b) => a + b, 0);
+                                        return data.labels.map((label, i) => {
+                                            const value = dataset.data[i];
+                                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                            return {
+                                                text: `${label} (${percentage}%)`,
+                                                fillStyle: dataset.backgroundColor[i],
+                                                strokeStyle: dataset.backgroundColor[i],
+                                                lineWidth: 0,
+                                                index: i
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#1e293b',
+                            bodyColor: '#475569',
+                            borderColor: '#e2e8f0',
+                            borderWidth: 1,
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.raw / total) * 100).toFixed(1);
+                                    return context.label + ': ' + context.parsed.toLocaleString() + ' (' + percentage + '%)';
+                                }
+                            }
+                        },
+                        datalabels: { display: false }
                     }
                 }
             });

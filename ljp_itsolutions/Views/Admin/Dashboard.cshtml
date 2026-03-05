@@ -85,13 +85,13 @@
     <div class="row g-4 mb-4">
         <!-- Sales Trend Column -->
         <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
                 <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
                     <h6 class="fw-bold mb-0">Sales & Throughput Velocity</h6>
                     <button class="btn btn-link btn-sm text-decoration-none p-0 text-muted">Details <i class="fas fa-chevron-right ms-1 small"></i></button>
                 </div>
                 <div class="card-body p-4">
-                    <div style="height: 350px;">
+                    <div style="height: 300px;">
                         <canvas id="salesTrendsChart"></canvas>
                     </div>
                 </div>
@@ -100,12 +100,12 @@
 
         <!-- Composition Column -->
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
                 <div class="card-header bg-white py-3 px-4">
                     <h6 class="fw-bold mb-0">Identity Distribution</h6>
                 </div>
                 <div class="card-body p-4">
-                    <div style="height: 250px;">
+                    <div style="height: 300px;" class="d-flex flex-column align-items-center justify-content-center">
                         <canvas id="userRolesChart"></canvas>
                     </div>
                 </div>
@@ -305,7 +305,26 @@
                             labels: {
                                 usePointStyle: true,
                                 padding: 20,
-                                font: { size: 11, weight: 'bold' }
+                                font: { size: 11, weight: 'bold' },
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        const dataset = data.datasets[0];
+                                        const total = dataset.data.reduce((a, b) => a + b, 0);
+                                        return data.labels.map((label, i) => {
+                                            const value = dataset.data[i];
+                                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                            return {
+                                                text: `${label} (${percentage}%)`,
+                                                fillStyle: dataset.backgroundColor[i],
+                                                strokeStyle: dataset.backgroundColor[i],
+                                                lineWidth: 0,
+                                                index: i
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
                             }
                         },
                         tooltip: {
@@ -314,9 +333,15 @@
                             titleFont: { size: 14 },
                             bodyFont: { size: 13 },
                             callbacks: {
-                                label: (ctx) => ` ${ctx.label}: ${ctx.parsed} Users`
+                                label: (ctx) => {
+                                    const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                    const value = ctx.parsed;
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return ` ${ctx.label}: ${value} Users (${percentage}%)`;
+                                }
                             }
-                        }
+                        },
+                        datalabels: { display: false }
                     }
                 }
             });
