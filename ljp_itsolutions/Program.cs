@@ -27,14 +27,17 @@ builder.Services.AddRateLimiter(options =>
             return System.Threading.RateLimiting.RateLimitPartition.GetNoLimiter("stat");
         }
 
-        return System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+        // SlidingWindowLimiter: no reset blind spot — tracks requests continuously
+        // across overlapping segments so rapid bursts can never slip between windows.
+        return System.Threading.RateLimiting.RateLimitPartition.GetSlidingWindowLimiter(
             partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            factory: partition => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            factory: partition => new System.Threading.RateLimiting.SlidingWindowRateLimiterOptions
             {
                 AutoReplenishment = true,
-                PermitLimit = 40,
-                QueueLimit = 0,
-                Window = TimeSpan.FromSeconds(10)
+                PermitLimit = 30,       // max 30 page requests …
+                Window = TimeSpan.FromSeconds(10), // … per 10-second sliding window
+                SegmentsPerWindow = 5,  // window split into 5 × 2s micro-segments
+                QueueLimit = 0
             });
     });
 
@@ -148,6 +151,71 @@ app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// ── Visitor Access Log ──────────────────────────────────────────────────────
+// Logs every page visit to the AuditLog table
+var _visitThrottle = new System.Collections.Concurrent.ConcurrentDictionary<string, DateTime>();
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? string.Empty;
+    var isStaticAsset = path.EndsWith(".js") || path.EndsWith(".css") || path.EndsWith(".png")
+                     || path.EndsWith(".jpg") || path.EndsWith(".jpeg") || path.EndsWith(".ico")
+                     || path.EndsWith(".woff") || path.EndsWith(".woff2") || path.EndsWith(".map")
+                     || path.StartsWith("/lib/") || path.StartsWith("/_framework/");
+
+    if (!isStaticAsset)
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var now = DateTime.UtcNow;
+        var throttleKey = ip + path;
+        var shouldLog = !_visitThrottle.TryGetValue(throttleKey, out var lastLogged)
+                        || (now - lastLogged).TotalSeconds > 5;
+
+        if (shouldLog)
+        {
+            _visitThrottle[throttleKey] = now;
+            // Clean up old entries every ~500 visits to avoid unbounded growth
+            if (_visitThrottle.Count > 500)
+            {
+                var stale = _visitThrottle.Where(kv => (now - kv.Value).TotalMinutes > 5).Select(kv => kv.Key).ToList();
+                foreach (var k in stale) _visitThrottle.TryRemove(k, out _);
+            }
+
+            try
+            {
+                var isAuthenticated = context.User.Identity?.IsAuthenticated ?? false;
+                var username = isAuthenticated ? (context.User.Identity?.Name ?? "Authenticated") : "Anonymous Visitor";
+                var role = isAuthenticated ? (context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Unknown") : "Guest";
+                var method = context.Request.Method;
+                var userAgent = context.Request.Headers.UserAgent.ToString();
+
+                Guid? userId = null;
+                if (isAuthenticated)
+                {
+                    var userIdStr = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                    if (Guid.TryParse(userIdStr, out var parsedId)) userId = parsedId;
+                }
+
+                using var scope = app.Services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<ljp_itsolutions.Data.ApplicationDbContext>();
+                db.AuditLogs.Add(new ljp_itsolutions.Models.AuditLog
+                {
+                    Action = $"[{method}] {path}",
+                    Details = $"User: {username} | Role: {role}",
+                    Timestamp = now,
+                    UserID = userId,
+                    IpAddress = ip,
+                    UserAgent = userAgent
+                });
+                await db.SaveChangesAsync();
+            }
+            catch { /* Never break the request pipeline if logging fails */ }
+        }
+    }
+
+    await next();
+});
+// ───────────────────────────────────────────────────────────────────────────
 
 app.MapStaticAssets();
 

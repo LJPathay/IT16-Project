@@ -90,5 +90,11 @@ namespace ljp_itsolutions.Models
         public string? Details { get; set; }
 
         public DateTime Timestamp { get; set; } = DateTime.Now;
+
+        [StringLength(50)]
+        public string? IpAddress { get; set; }
+
+        [StringLength(500)]
+        public string? UserAgent { get; set; }
     }
 }

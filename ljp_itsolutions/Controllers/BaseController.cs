@@ -23,7 +23,9 @@ namespace ljp_itsolutions.Controllers
                     Action = action,
                     Details = details,
                     Timestamp = DateTime.UtcNow,
-                    UserID = userId ?? GetCurrentUserId()
+                    UserID = userId ?? GetCurrentUserId(),
+                    IpAddress = HttpContext?.Connection?.RemoteIpAddress?.ToString(),
+                    UserAgent = HttpContext?.Request?.Headers.UserAgent.ToString()
                 };
                 _db.AuditLogs.Add(auditLog);
                 await _db.SaveChangesAsync();
