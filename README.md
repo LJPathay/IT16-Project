@@ -41,7 +41,7 @@ add paymongo secret API and webhook api to appsettings.json
 dotnet ef database update --project ljp_itsolutions.csproj
 dotnet run
 
- # ROLES
+# ROLES
  - Super Admin
  - Admin
  - Manager

@@ -87,33 +87,39 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PlaceOrder([FromBody] OrderRequest request)
         {
+            // DEFENSE NOTE: 1. Basic Validation - Ensure the cart isn't empty before proceeding.
             if (request.ProductIds == null || !request.ProductIds.Any())
                 return Json(new { success = false, message = "No products selected." });
 
+            // DEFENSE NOTE: 2. Identity Check - Securely extract the cashier's ID from their session token.
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(userIdClaim, out var cashierId))
                 return Challenge();
 
+            // DEFENSE NOTE: 3. Shift Verification - We enforce that transactions can only be processed if the cashier has an open register (shift).
             var currentShift = await _db.CashShifts.FirstOrDefaultAsync(s => s.CashierID == cashierId && !s.IsClosed);
             if (currentShift == null)
                 return Json(new { success = false, message = "No open shift found. Please start a shift first." });
 
+            // DEFENSE NOTE: 4. Prepare Service Payload - Maps the incoming JSON request to our internal Service layer Request object.
             var svcRequest = new Services.OrderRequest
             {
                 ProductIds = request.ProductIds,
                 CustomerId = request.CustomerId,
                 PaymentMethod = request.PaymentMethod,
                 PromoCode = request.PromoCode,
+                // Automatically differentiates the Status if it's a digital payment method
                 PaymentStatus = request.PaymentMethod == "Paymongo" ? "Paid (Digital)" : "Paid",
                 RedemptionTier = request.RedemptionTier
             };
 
+            // DEFENSE NOTE: 5. Execute Business Logic - We hand off off all actual database saving, inventory deduction, error checking, and math to the protected OrderService.
             var result = await _orderService.ProcessOrderAsync(svcRequest, cashierId);
 
             if (!result.Success)
                 return Json(new { success = false, message = result.Message });
 
-            // Render receipt HTML for immediate printing/display in POS
+            // DEFENSE NOTE: 6. Generate View - Render the receipt HTML server-side so the frontend can instantly print it.
             var renderedReceipt = await RenderViewToStringAsync("ReceiptData", result.Order!);
 
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
@@ -148,9 +154,11 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreatePayMongoOrder([FromBody] PayMongoOrderRequest request)
         {
+            // DEFENSE NOTE: 1. Cart Validation - Protects against payload tampering.
             if (request.ProductIds == null || !request.ProductIds.Any())
                 return BadRequest("No products selected.");
 
+            // DEFENSE NOTE: 2. Identity & Shift Verification
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(userIdClaim, out var cashierId))
                 return Unauthorized();
@@ -159,6 +167,7 @@ namespace ljp_itsolutions.Controllers
             if (currentShift == null)
                 return BadRequest("No open shift found. Please start a shift first.");
 
+            // DEFENSE NOTE: 3. Prepare Service Request - Notice PaymentStatus is initially set to "Pending" because they haven't scanned the QR yet.
             var svcRequest = new Services.OrderRequest
             {
                 ProductIds = request.ProductIds,
@@ -169,17 +178,20 @@ namespace ljp_itsolutions.Controllers
                 RedemptionTier = request.RedemptionTier
             };
 
+            // DEFENSE NOTE: 4. Process Initial Order Database Entry
             var result = await _orderService.ProcessOrderAsync(svcRequest, cashierId);
 
             if (!result.Success)
                 return BadRequest(result.Message);
 
+            // DEFENSE NOTE: 5. Connect to Payment Gateway - Sends the final calculated amount (from the backend, preventing frontend price hacking) to PayMongo to generate a live QR code.
             // Create real PayMongo QR Ph code
             var qrCodeUrl = await _payMongoService.CreateQrPhPaymentAsync(result.Order!.FinalAmount, $"Order #{result.Order.OrderID.ToString().Substring(0, 8)}", result.Order.OrderID.ToString());
 
             if (string.IsNullOrEmpty(qrCodeUrl))
                 return StatusCode(500, "Failed to generate PayMongo QR code.");
 
+            // DEFENSE NOTE: 6. Return response to POS to display the QR Code.
             return Ok(new { qrCodeUrl, orderId = result.Order.OrderID, warnings = result.Warnings });
         }
 
