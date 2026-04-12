@@ -106,23 +106,34 @@ namespace ljp_itsolutions.Controllers
                 ModelState.AddModelError(string.Empty, "Invalid credentials");
                 return View(model);
             }
-            /// Brute-Force Lockout System
+            /// Adaptive Brute-Force Lockout Policy (Infrastructure Standard)
             var verify = _hasher.VerifyHashedPassword(user, user.Password, model.Password);
             if (verify == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
             {
                 user.AccessFailedCount++;
-                if (user.AccessFailedCount >= 5)
+                string lockoutMsg = "Invalid credentials";
+
+                if (user.AccessFailedCount >= 15)
+                {
+                    user.IsActive = false;
+                    user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+                    lockoutMsg = "Account has been suspended due to security risks. Please contact your administrator.";
+                    await LogSecurity("AccountSuspended", $"User {user.Username} suspended: 15+ failed attempts.", "Critical", user.UserID);
+                }
+                else if (user.AccessFailedCount >= 10)
+                {
+                    user.LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(30);
+                    lockoutMsg = "Account is locked for 30 minutes due to multiple failed attempts.";
+                }
+                else if (user.AccessFailedCount >= 5)
                 {
                     user.LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(5);
-                    ModelState.AddModelError(string.Empty, "Account is temporarily locked due to too many failed attempts. Please try again in 5 minutes.");
-                }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "Invalid credentials");
+                    lockoutMsg = "Account is temporarily locked for 5 minutes.";
                 }
                 
                 await _db.SaveChangesAsync();
-                await LogSecurity("LoginFailure", $"Failed login attempt for user: {user.Username}", "Warning", user.UserID);
+                await LogSecurity("LoginFailure", $"Failed login attempt #{user.AccessFailedCount} for user: {user.Username}", "Warning", user.UserID);
+                ModelState.AddModelError(string.Empty, lockoutMsg);
                 return View(model);
             }
  

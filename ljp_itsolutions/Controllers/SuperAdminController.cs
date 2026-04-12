@@ -127,6 +127,14 @@ namespace ljp_itsolutions.Controllers
             user.Username = updatedUser.Username;
             user.Email = updatedUser.Email;
             user.Role = updatedUser.Role;
+            
+            // If reactivating, clear security lockouts
+            if (!user.IsActive && updatedUser.IsActive)
+            {
+                user.AccessFailedCount = 0;
+                user.LockoutEnd = null;
+            }
+            
             user.IsActive = updatedUser.IsActive;
             await _db.SaveChangesAsync();
             await LogSecurity("UserUpdated", $"Updated user: {user.Username}", "Info", user.UserID);
@@ -179,6 +187,8 @@ namespace ljp_itsolutions.Controllers
             if (user != null)
             {
                 user.IsActive = true;
+                user.AccessFailedCount = 0;
+                user.LockoutEnd = null;
                 await _db.SaveChangesAsync();
                 await LogSecurity("UserRestored", $"Restored user: {user.Username}", "Info", user.UserID);
                 TempData["Success"] = "User restored successfully.";
