@@ -10,17 +10,22 @@ namespace ljp_itsolutions.Controllers
         {
             if (User.Identity?.IsAuthenticated == true)
             {
-                var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? HttpContext.Session.GetString("UserRole");
+                var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? HttpContext.Session.GetString(AppConstants.SessionKeys.UserRole);
+                
                 if (string.Equals(role, UserRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase))
-                    return RedirectToAction("Dashboard", "SuperAdmin");
+                    return RedirectToAction(AppConstants.Actions.Dashboard, AppConstants.Controllers.SuperAdmin);
+                
                 if (string.Equals(role, UserRoles.Admin, StringComparison.OrdinalIgnoreCase))
-                    return RedirectToAction("Dashboard", "Admin");
+                    return RedirectToAction(AppConstants.Actions.Dashboard, AppConstants.Controllers.Admin);
+                
                 if (string.Equals(role, UserRoles.Manager, StringComparison.OrdinalIgnoreCase))
-                    return RedirectToAction("Dashboard", "Manager");
+                    return RedirectToAction(AppConstants.Actions.Dashboard, AppConstants.Controllers.Manager);
+                
                 if (string.Equals(role, UserRoles.Cashier, StringComparison.OrdinalIgnoreCase))
-                    return RedirectToAction("Index", "POS");
+                    return RedirectToAction(AppConstants.Actions.Index, AppConstants.Controllers.POS);
+                
                 if (string.Equals(role, UserRoles.MarketingStaff, StringComparison.OrdinalIgnoreCase))
-                    return RedirectToAction("Dashboard", "Marketing");
+                    return RedirectToAction(AppConstants.Actions.Dashboard, AppConstants.Controllers.Marketing);
             }
             return View();
         }

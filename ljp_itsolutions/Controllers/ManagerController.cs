@@ -46,10 +46,16 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> IntakeStock(int IngredientID, decimal Quantity, string Remarks, DateTime? IntakeDate, DateTime? ExpiryDate)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "Invalid data submitted.";
+                return RedirectToAction(AppConstants.Actions.Inventory);
+            }
+
             if (Quantity <= 0)
             {
-                TempData["ErrorMessage"] = "Intake quantity must be greater than zero.";
-                return RedirectToAction("Inventory");
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "Intake quantity must be greater than zero.";
+                return RedirectToAction(AppConstants.Actions.Inventory);
             }
 
             var actualDate = IntakeDate ?? DateTime.UtcNow;
@@ -63,10 +69,10 @@ namespace ljp_itsolutions.Controllers
             if (ingredient != null)
             {
                 await LogAudit($"Stock Intake: Added {Quantity} {ingredient.Unit} to {ingredient.Name} on {actualDate:yyyy-MM-dd}");
-                TempData["SuccessMessage"] = $"Stock updated! Added {Quantity} {ingredient.Unit} to {ingredient.Name}.";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = $"Stock updated! Added {Quantity} {ingredient.Unit} to {ingredient.Name}.";
             }
             
-            return RedirectToAction("Inventory");
+            return RedirectToAction(AppConstants.Actions.Inventory);
         }
 
         public async Task<IActionResult> Products()
@@ -252,8 +258,8 @@ namespace ljp_itsolutions.Controllers
 
             await _db.SaveChangesAsync();
             await LogAudit($"Edited Product: {existingProduct.ProductName}");
-            TempData["SuccessMessage"] = "Product updated successfully!";
-            return RedirectToAction("Products");
+            TempData[AppConstants.SessionKeys.SuccessMessage] = "Product updated successfully!";
+            return RedirectToAction(AppConstants.Actions.Products);
         }
 
         [HttpPost]
@@ -267,9 +273,9 @@ namespace ljp_itsolutions.Controllers
                 _db.Products.Update(product);
                 await _db.SaveChangesAsync();
                 await LogAudit($"Archived Product: {product.ProductName}");
-                TempData["SuccessMessage"] = $"Product '{product.ProductName}' archived successfully!";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = $"Product '{product.ProductName}' archived successfully!";
             }
-            return RedirectToAction("Products");
+            return RedirectToAction(AppConstants.Actions.Products);
         }
 
         [HttpPost]
@@ -283,9 +289,9 @@ namespace ljp_itsolutions.Controllers
                 _db.Ingredients.Update(ingredient);
                 await _db.SaveChangesAsync();
                 await LogAudit($"Archived Ingredient: {ingredient.Name}");
-                TempData["SuccessMessage"] = $"Ingredient '{ingredient.Name}' archived successfully!";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = $"Ingredient '{ingredient.Name}' archived successfully!";
             }
-            return RedirectToAction("Inventory");
+            return RedirectToAction(AppConstants.Actions.Inventory);
         }
 
         [HttpPost]
@@ -314,9 +320,9 @@ namespace ljp_itsolutions.Controllers
                 _db.Products.Remove(product);
                 await _db.SaveChangesAsync();
                 await LogAudit($"Deleted Product: {prodName}");
-                TempData["SuccessMessage"] = "Product deleted successfully!";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = "Product deleted successfully!";
             }
-            return RedirectToAction("Products");
+            return RedirectToAction(AppConstants.Actions.Products);
         }
 
         public async Task<IActionResult> Inventory()

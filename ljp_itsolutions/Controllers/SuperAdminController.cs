@@ -12,16 +12,14 @@ namespace ljp_itsolutions.Controllers
     [Authorize(Roles = UserRoles.SuperAdmin)]
     public class SuperAdminController : BaseController
     {
-        private readonly InMemoryStore _store;
         private readonly IPasswordHasher<ljp_itsolutions.Models.User> _hasher;
         private readonly IReceiptService _receiptService;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IAnalyticsService _analyticsService;
 
-        public SuperAdminController(InMemoryStore store, ljp_itsolutions.Data.ApplicationDbContext db, IPasswordHasher<ljp_itsolutions.Models.User> hasher, IReceiptService receiptService, IServiceScopeFactory scopeFactory, IAnalyticsService analyticsService)
+        public SuperAdminController(ljp_itsolutions.Data.ApplicationDbContext db, IPasswordHasher<ljp_itsolutions.Models.User> hasher, IReceiptService receiptService, IServiceScopeFactory scopeFactory, IAnalyticsService analyticsService)
             : base(db)
         {
-            _store = store;
             _hasher = hasher;
             _receiptService = receiptService;
             _scopeFactory = scopeFactory;
@@ -119,8 +117,8 @@ namespace ljp_itsolutions.Controllers
 
             if (user.Role == UserRoles.SuperAdmin || updatedUser.Role == UserRoles.SuperAdmin)
             {
-                TempData["Error"] = "Restricted access: SuperAdmin accounts cannot be modified here.";
-                return RedirectToAction("Users");
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "Restricted access: SuperAdmin accounts cannot be modified here.";
+                return RedirectToAction(AppConstants.Actions.Users);
             }
 
             user.FullName = updatedUser.FullName;
@@ -138,8 +136,8 @@ namespace ljp_itsolutions.Controllers
             user.IsActive = updatedUser.IsActive;
             await _db.SaveChangesAsync();
             await LogSecurity("UserUpdated", $"Updated user: {user.Username}", "Info", user.UserID);
-            TempData["Success"] = "User updated successfully.";
-            return RedirectToAction("Users");
+            TempData[AppConstants.SessionKeys.SuccessMessage] = "User updated successfully.";
+            return RedirectToAction(AppConstants.Actions.Users);
         }
 
         [HttpPost]
@@ -224,37 +222,54 @@ namespace ljp_itsolutions.Controllers
                     "MaintenanceMode", "LogRetentionDays", "AllowPublicRegistration", "AllowPaymentBypass"
                 };
 
+                var toggleKeys = new HashSet<string> { "MaintenanceMode", "TwoFactorAuth", "RequireNumbers", "RequireSpecialChars", "EmailNotifications", "LowStockAlerts", "DailyReports", "AllowPublicRegistration", "AllowPaymentBypass" };
+
                 // Handle regular keys
                 foreach (var key in keys) {
-                    string value = form.ContainsKey(key) ? form[key].ToString() : "false";
-                    
-                    // Specific toggle handling
-                    if (form[key] == "on" || form[key] == "true") value = "true";
-                    else if (new[] { "MaintenanceMode", "TwoFactorAuth", "RequireNumbers", "RequireSpecialChars", "EmailNotifications", "LowStockAlerts", "DailyReports", "AllowPublicRegistration", "AllowPaymentBypass" }.Contains(key)) 
-                        value = "false";
-
-                    var setting = await _db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == key);
-                    if (setting == null) {
-                        setting = new SystemSetting { SettingKey = key, SettingValue = value };
-                        _db.SystemSettings.Add(setting);
-                    } else setting.SettingValue = value;
+                    string value = GetSettingValueFromForm(form, key, toggleKeys);
+                    await UpdateSingleSetting(key, value);
                 }
 
                 // Handle Role Maintenance List
-                var maintRolesValue = string.Join(",", form.Keys.Where(k => k.StartsWith("MaintRole_") && form[k] == "true").Select(k => k.Replace("MaintRole_", "")));
-                var maintSetting = await _db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == "MaintenanceRoles");
-                if (maintSetting == null) {
-                    _db.SystemSettings.Add(new SystemSetting { SettingKey = "MaintenanceRoles", SettingValue = maintRolesValue });
-                } else maintSetting.SettingValue = maintRolesValue;
+                await UpdateMaintenanceRoles(form);
 
                 await _db.SaveChangesAsync();
                 await LogAudit("Updated system settings");
-                TempData["SuccessMessage"] = "System configuration updated successfully.";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = "System configuration updated successfully.";
             } catch (Exception) { 
-                TempData["ErrorMessage"] = "A system error occurred while updating settings. Please contact your administrator."; 
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "A system error occurred while updating settings. Please contact your administrator."; 
             }
-            return RedirectToAction("SystemSettings");
-        }        
+            return RedirectToAction(AppConstants.Actions.SystemSettings);
+        }
+
+        private static string GetSettingValueFromForm(IFormCollection form, string key, HashSet<string> toggleKeys)
+        {
+            if (!form.ContainsKey(key)) return toggleKeys.Contains(key) ? "false" : "false";
+            string rawValue = form[key].ToString();
+            if (rawValue == "on" || rawValue == "true") return "true";
+            return rawValue;
+        }
+
+        private async Task UpdateSingleSetting(string key, string value)
+        {
+            var setting = await _db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == key);
+            if (setting == null) {
+                _db.SystemSettings.Add(new SystemSetting { SettingKey = key, SettingValue = value });
+            } else {
+                setting.SettingValue = value;
+            }
+        }
+
+        private async Task UpdateMaintenanceRoles(IFormCollection form)
+        {
+            var maintRolesValue = string.Join(",", form.Keys.Where(k => k.StartsWith("MaintRole_") && form[k] == "true").Select(k => k.Replace("MaintRole_", "")));
+            var maintSetting = await _db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == "MaintenanceRoles");
+            if (maintSetting == null) {
+                _db.SystemSettings.Add(new SystemSetting { SettingKey = "MaintenanceRoles", SettingValue = maintRolesValue });
+            } else {
+                maintSetting.SettingValue = maintRolesValue;
+            }
+        }
 
         // --- Backups ---
         public IActionResult Backups()
@@ -325,7 +340,7 @@ namespace ljp_itsolutions.Controllers
             return View(logs);
         }
 
-        private bool ValidatePasswordComplexity(string password, User user, out string errorMessage)
+        private static bool ValidatePasswordComplexity(string password, User user, out string errorMessage)
         {
             int minLen = 16;
             errorMessage = string.Empty;

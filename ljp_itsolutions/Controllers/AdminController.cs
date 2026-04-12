@@ -11,24 +11,18 @@ namespace ljp_itsolutions.Controllers
     [Authorize(Roles = "Admin,SuperAdmin")] 
     public class AdminController : BaseController
     {
-        private readonly InMemoryStore _store;
         private readonly IPasswordHasher<ljp_itsolutions.Models.User> _hasher;
-        private readonly IReceiptService _receiptService;
         private readonly IInventoryService _inventoryService;
         private readonly IAnalyticsService _analyticsService;
-        private readonly IServiceScopeFactory _scopeFactory;
 
-        public AdminController(InMemoryStore store, ljp_itsolutions.Data.ApplicationDbContext db, 
-            IPasswordHasher<ljp_itsolutions.Models.User> hasher, IReceiptService receiptService, 
-            IInventoryService inventoryService, IAnalyticsService analyticsService, IServiceScopeFactory scopeFactory)
+        public AdminController(ljp_itsolutions.Data.ApplicationDbContext db, 
+            IPasswordHasher<ljp_itsolutions.Models.User> hasher,
+            IInventoryService inventoryService, IAnalyticsService analyticsService)
             : base(db)
         {
-            _store = store;
             _hasher = hasher;
-            _receiptService = receiptService;
             _inventoryService = inventoryService;
             _analyticsService = analyticsService;
-            _scopeFactory = scopeFactory;
         }
 
 
@@ -57,11 +51,11 @@ namespace ljp_itsolutions.Controllers
         }
 
         [HttpGet]
-        public IActionResult ManageUsers() => RedirectToAction("Users");
+        public IActionResult ManageUsers() => RedirectToAction(AppConstants.Actions.Users);
 
         public IActionResult Index()
         {
-            return RedirectToAction("Dashboard");
+            return RedirectToAction(AppConstants.Actions.Dashboard);
         }
 
         public async Task<IActionResult> Reports()
@@ -73,7 +67,7 @@ namespace ljp_itsolutions.Controllers
         public async Task<IActionResult> Reports_Cashier()
         {
             var data = await _analyticsService.GetAdminCashierReportsDataAsync();
-            return View("Reports_Cashier", data);
+            return View(AppConstants.Actions.Reports_Cashier, data);
         }
 
         public async Task<IActionResult> Reports_Marketing()
@@ -147,10 +141,10 @@ namespace ljp_itsolutions.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUser(string id)
         {
-            if (string.IsNullOrEmpty(id)) return BadRequest();
+            if (string.IsNullOrEmpty(id) || !Guid.TryParse(id, out var guidId)) return BadRequest();
             
             var user = await _db.Users
-                .Where(u => u.UserID.ToString() == id)
+                .Where(u => u.UserID == guidId)
                 .Select(u => new 
                 {
                     u.UserID,
@@ -339,10 +333,16 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> IntakeStock(int IngredientID, decimal Quantity, string Remarks, DateTime? IntakeDate, DateTime? ExpiryDate)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "Invalid data submitted.";
+                return RedirectToAction(AppConstants.Actions.InventoryOverview);
+            }
+
             if (Quantity <= 0)
             {
-                TempData["ErrorMessage"] = "Intake quantity must be greater than zero.";
-                return RedirectToAction("InventoryOverview");
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "Intake quantity must be greater than zero.";
+                return RedirectToAction(AppConstants.Actions.InventoryOverview);
             }
 
             var actualDate = IntakeDate ?? DateTime.UtcNow;
@@ -356,10 +356,10 @@ namespace ljp_itsolutions.Controllers
             if (ingredient != null)
             {
                 await LogAudit($"Stock Intake (Admin): Added {Quantity} {ingredient.Unit} to {ingredient.Name} on {actualDate:yyyy-MM-dd}");
-                TempData["SuccessMessage"] = $"Stock updated! Added {Quantity} {ingredient.Unit} to {ingredient.Name}.";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = $"Stock updated! Added {Quantity} {ingredient.Unit} to {ingredient.Name}.";
             }
             
-            return RedirectToAction("InventoryOverview");
+            return RedirectToAction(AppConstants.Actions.InventoryOverview);
         }
 
         [HttpPost]
@@ -397,7 +397,7 @@ namespace ljp_itsolutions.Controllers
             return File(buffer, "text/csv", $"LJP_User_Directory_{DateTime.Now:yyyyMMdd}.csv");
         }
 
-        private bool ValidatePasswordComplexity(string password, User user, out string errorMessage)
+        private static bool ValidatePasswordComplexity(string password, User user, out string errorMessage)
         {
             int minLen = 16;
             errorMessage = string.Empty;

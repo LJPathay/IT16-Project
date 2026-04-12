@@ -32,10 +32,11 @@ namespace ljp_itsolutions.Data
         public DbSet<ArchivedUser> ArchivedUsers { get; set; }
         public DbSet<UserPasswordHistory> UserPasswordHistories { get; set; }
         public DbSet<SecurityLog> SecurityLogs { get; set; }
+        public DbSet<TrustedDevice> TrustedDevices { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder builder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            builder.Entity<User>(b =>
+            modelBuilder.Entity<User>(b =>
             {
                 b.HasKey(u => u.UserID);
                 b.Property(u => u.Username).IsRequired().HasMaxLength(50);
@@ -47,14 +48,14 @@ namespace ljp_itsolutions.Data
                 b.Property(u => u.ReduceMotion).HasDefaultValue(false);
             });
 
-            builder.Entity<Order>(b =>
+            modelBuilder.Entity<Order>(b =>
             {
                 b.HasKey(o => o.OrderID);
                 b.Property(o => o.OrderDate).HasDefaultValueSql("GETUTCDATE()");
                 b.HasOne(o => o.Cashier).WithMany().HasForeignKey(o => o.CashierID).OnDelete(DeleteBehavior.Restrict);
             });
 
-            builder.Entity<OrderDetail>(b =>
+            modelBuilder.Entity<OrderDetail>(b =>
             {
                 b.HasKey(od => od.OrderDetailID);
                 b.HasOne(od => od.Order).WithMany(o => o.OrderDetails).HasForeignKey(od => od.OrderID);
@@ -62,17 +63,17 @@ namespace ljp_itsolutions.Data
                 b.Property(od => od.Subtotal).HasPrecision(18, 2);
             });
 
-            builder.Entity<Product>(b =>
+            modelBuilder.Entity<Product>(b =>
             {
                 b.Property(p => p.Price).HasPrecision(18, 2);
             });
 
-            builder.Entity<ArchivedProduct>(b =>
+            modelBuilder.Entity<ArchivedProduct>(b =>
             {
                 b.Property(p => p.Price).HasPrecision(18, 2);
             });
 
-            builder.Entity<Order>(b =>
+            modelBuilder.Entity<Order>(b =>
             {
                 b.Property(o => o.TotalAmount).HasPrecision(18, 2);
                 b.Property(o => o.DiscountAmount).HasPrecision(18, 2);
@@ -80,44 +81,44 @@ namespace ljp_itsolutions.Data
                 b.Property(o => o.RefundedAmount).HasPrecision(18, 2);
             });
 
-            builder.Entity<Payment>(b =>
+            modelBuilder.Entity<Payment>(b =>
             {
                 b.Property(p => p.AmountPaid).HasPrecision(18, 2);
             });
 
-            builder.Entity<Promotion>(b =>
+            modelBuilder.Entity<Promotion>(b =>
             {
                 b.Property(p => p.DiscountValue).HasPrecision(18, 2);
             });
             
-            builder.Entity<Ingredient>(b =>
+            modelBuilder.Entity<Ingredient>(b =>
             {
                 b.Property(i => i.StockQuantity).HasPrecision(18, 3);
                 b.Property(i => i.LowStockThreshold).HasPrecision(18, 3);
             });
 
-            builder.Entity<ProductRecipe>(b =>
+            modelBuilder.Entity<ProductRecipe>(b =>
             {
                 b.Property(pr => pr.QuantityRequired).HasPrecision(18, 5); // Allow small amounts like 0.005 kg
             });
 
-            builder.Entity<Expense>(b =>
+            modelBuilder.Entity<Expense>(b =>
             {
                 b.Property(e => e.Amount).HasPrecision(18, 2);
             });
 
-            builder.Entity<InventoryLog>(b =>
+            modelBuilder.Entity<InventoryLog>(b =>
             {
                 b.Property(l => l.QuantityChange).HasPrecision(18, 3);
             });
 
-            builder.Entity<RecipeTemplateIngredient>(b =>
+            modelBuilder.Entity<RecipeTemplateIngredient>(b =>
             {
                 b.Property(r => r.Quantity).HasPrecision(18, 3);
             });
 
             // Seed Categories
-            builder.Entity<Category>().HasData(
+            modelBuilder.Entity<Category>().HasData(
                 new Category { CategoryID = 1, CategoryName = "Coffee" },
                 new Category { CategoryID = 2, CategoryName = "Tea" },
                 new Category { CategoryID = 3, CategoryName = "Pastry" }
@@ -125,7 +126,7 @@ namespace ljp_itsolutions.Data
 
             // Seed Admin User (Password is '123' - pre-hashed for Identity V3)
             var adminId = Guid.Parse("4f7b6d1a-5b6c-4d8e-a9f2-0a1b2c3d4e5f");
-            builder.Entity<User>().HasData(
+            modelBuilder.Entity<User>().HasData(
                 new User
                 {
                     UserID = adminId,
@@ -138,7 +139,7 @@ namespace ljp_itsolutions.Data
                 }
             );
             // Seed Products
-            builder.Entity<Product>().HasData(
+            modelBuilder.Entity<Product>().HasData(
                 new Product { ProductID = 1, ProductName = "Espresso Blend", CategoryID = 1, Price = 3.50m, StockQuantity = 50, ImageURL = null, IsAvailable = true },
                 new Product { ProductID = 2, ProductName = "Caramel Macchiato", CategoryID = 1, Price = 5.25m, StockQuantity = 30, ImageURL = null, IsAvailable = true },
                 new Product { ProductID = 3, ProductName = "Earl Grey Tea", CategoryID = 2, Price = 4.00m, StockQuantity = 20, ImageURL = null, IsAvailable = true },
@@ -147,7 +148,7 @@ namespace ljp_itsolutions.Data
             );
 
             // Seed Ingredients
-            builder.Entity<Ingredient>().HasData(
+            modelBuilder.Entity<Ingredient>().HasData(
                 new Ingredient { IngredientID = 1, Name = "Espresso Beans", StockQuantity = 10, Unit = "kg", LowStockThreshold = 2 },
                 new Ingredient { IngredientID = 2, Name = "Fresh Milk", StockQuantity = 20, Unit = "L", LowStockThreshold = 5 },
                 new Ingredient { IngredientID = 3, Name = "Caramel Syrup", StockQuantity = 5000, Unit = "ml", LowStockThreshold = 1000 },
@@ -156,7 +157,7 @@ namespace ljp_itsolutions.Data
             );
 
             // Seed Product Recipes
-            builder.Entity<ProductRecipe>().HasData(
+            modelBuilder.Entity<ProductRecipe>().HasData(
                 // Espresso Blend uses 18g beans
                 new ProductRecipe { RecipeID = 1, ProductID = 1, IngredientID = 1, QuantityRequired = 0.018m },
                 // Caramel Macchiato: 18g beans, 250ml milk, 30ml caramel, 10ml fructose
@@ -167,16 +168,16 @@ namespace ljp_itsolutions.Data
             );
 
             // Seed Expenses
-            builder.Entity<Expense>().HasData(
-                new Expense { ExpenseID = 1, Title = "Electricity Bill - Jan", Amount = 150.00m, Description = "Monthly power consumption", Category = "Utilities", ExpenseDate = new DateTime(2026, 1, 30) },
-                new Expense { ExpenseID = 2, Title = "Milk Supply Restock", Amount = 85.50m, Description = "50L Fresh Milk", Category = "Supplies", ExpenseDate = new DateTime(2026, 2, 5) },
-                new Expense { ExpenseID = 3, Title = "Coffee Beans Cargo", Amount = 320.00m, Description = "20kg Arabica beans", Category = "Supplies", ExpenseDate = new DateTime(2026, 2, 8) }
+            modelBuilder.Entity<Expense>().HasData(
+                new Expense { ExpenseID = 1, Title = "Electricity Bill - Jan", Amount = 150.00m, Description = "Monthly power consumption", Category = "Utilities", ExpenseDate = new DateTime(2026, 1, 30, 0, 0, 0, DateTimeKind.Utc) },
+                new Expense { ExpenseID = 2, Title = "Milk Supply Restock", Amount = 85.50m, Description = "50L Fresh Milk", Category = "Supplies", ExpenseDate = new DateTime(2026, 2, 5, 0, 0, 0, DateTimeKind.Utc) },
+                new Expense { ExpenseID = 3, Title = "Coffee Beans Cargo", Amount = 320.00m, Description = "20kg Arabica beans", Category = "Supplies", ExpenseDate = new DateTime(2026, 2, 8, 0, 0, 0, DateTimeKind.Utc) }
             );
 
             // Seed Promotions
-            builder.Entity<Promotion>().HasData(
-                new Promotion { PromotionID = 1, PromotionName = "Early Bird Discount", DiscountType = "Percentage", DiscountValue = 10, StartDate = new DateTime(2026, 1, 1), EndDate = new DateTime(2026, 12, 31), IsActive = true },
-                new Promotion { PromotionID = 2, PromotionName = "Grand Opening Special", DiscountType = "Fixed", DiscountValue = 5, StartDate = new DateTime(2026, 2, 1), EndDate = new DateTime(2026, 2, 28), IsActive = true }
+            modelBuilder.Entity<Promotion>().HasData(
+                new Promotion { PromotionID = 1, PromotionName = "Early Bird Discount", DiscountType = "Percentage", DiscountValue = 10, StartDate = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), EndDate = new DateTime(2026, 12, 31, 0, 0, 0, DateTimeKind.Utc), IsActive = true },
+                new Promotion { PromotionID = 2, PromotionName = "Grand Opening Special", DiscountType = "Fixed", DiscountValue = 5, StartDate = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc), EndDate = new DateTime(2026, 2, 28, 0, 0, 0, DateTimeKind.Utc), IsActive = true }
             );
         }
     }

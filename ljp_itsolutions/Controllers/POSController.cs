@@ -7,27 +7,24 @@ using System.Security.Claims;
 namespace ljp_itsolutions.Controllers
 {
     [Authorize(Roles = "Cashier,Admin,Manager,SuperAdmin")]
-    public class POSController : Controller
+    public class PosController : BaseController
     {
-        private readonly ljp_itsolutions.Data.ApplicationDbContext _db;
-
-        public POSController(ljp_itsolutions.Data.ApplicationDbContext db)
+        public PosController(ljp_itsolutions.Data.ApplicationDbContext db) : base(db)
         {
-            _db = db;
         }
 
         public async Task<IActionResult> Index()
         {
-            // Identity Verfication. 
+            // Identity Verification. 
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Challenge();
 
-            // Shift Validation. Should start a shift before accessing to POS. if not you will redirected to Shift Management page with an error message.
+            // Shift Validation. 
             var currentShift = await _db.CashShifts.FirstOrDefaultAsync(s => s.CashierID == userId && !s.IsClosed);
             if (currentShift == null)
             {
-                TempData["ErrorMessage"] = "No open shift found. Please start a shift first.";
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "No open shift found. Please start a shift first.";
                 return RedirectToAction("ShiftManagement", "Cashier");
             }
 

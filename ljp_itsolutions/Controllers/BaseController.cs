@@ -61,7 +61,9 @@ namespace ljp_itsolutions.Controllers
         protected bool GetBoolSetting(string key)
         {
             var val = GetSetting(key);
-            return !string.IsNullOrEmpty(val) && (val.ToLower() == "true" || val.ToLower() == "on");
+            return !string.IsNullOrEmpty(val) && 
+                   (string.Equals(val, "true", StringComparison.OrdinalIgnoreCase) || 
+                    string.Equals(val, "on", StringComparison.OrdinalIgnoreCase));
         }
 
         protected Guid? GetCurrentUserId()

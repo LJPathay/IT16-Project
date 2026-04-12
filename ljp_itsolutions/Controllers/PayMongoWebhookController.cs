@@ -53,7 +53,7 @@ namespace ljp_itsolutions.Controllers
 
             try
             {
-                var payload = JsonDocument.Parse(json);
+                using var payload = JsonDocument.Parse(json);
                 var root = payload.RootElement;
                 
                 // Extract event type
@@ -61,115 +61,137 @@ namespace ljp_itsolutions.Controllers
                 
                 if (eventType == "payment.paid" || eventType == "checkout_session.payment.paid")
                 {
-                    var dataObj = root.GetProperty("data").GetProperty("attributes").GetProperty("data");
-                    var attributes = dataObj.GetProperty("attributes");
-                    
-                    string? externalRef = null;
-
-                    // Check for external_reference in root attributes
-                    if (attributes.TryGetProperty("external_reference", out var refProperty) && refProperty.ValueKind != JsonValueKind.Null)
-                    {
-                        externalRef = refProperty.GetString();
-                    }
-                    // Check for external_reference in metadata
-                    else if (attributes.TryGetProperty("metadata", out var metaProp) && metaProp.TryGetProperty("external_reference", out var metaRefProp))
-                    {
-                        externalRef = metaRefProp.GetString();
-                    }
-
-
-                    if (!string.IsNullOrEmpty(externalRef) && Guid.TryParse(externalRef, out var orderId))
-                    {
-                        var order = await _db.Orders
-                            .Include(o => o.Payments)
-                            .FirstOrDefaultAsync(o => o.OrderID == orderId);
-
-                        if (order != null)
-                        {
-                            // CRITICAL SECURITY FIX: Verify payment amount
-                            if (attributes.TryGetProperty("amount", out var amountProp))
-                            {
-                                long amountInCentavos = amountProp.GetInt64();
-                                decimal amountInPesos = amountInCentavos / 100m;
-
-                                // Check if the amount paid matches the order total (FinalAmount)
-                                // We allow for a 1-peso tolerance to handle potential rounding issues in extremely rare cases, 
-                                // but ideally they should match exactly.
-                                if (Math.Abs(amountInPesos - order.FinalAmount) > 0.01m)
-                                {
-                                    _logger.LogWarning("PayMongo Webhook Amount Mismatch! Order: {OrderId}, Expected: {Expected}, Received: {Received}", 
-                                        orderId, order.FinalAmount, amountInPesos);
-                                    
-                                    await LogAudit($"PayMongo Security Alert: Amount mismatch for Order #{orderId.ToString().Substring(0, 8)}. Expected {order.FinalAmount}, Received {amountInPesos}");
-                                    return BadRequest("Amount Mismatch");
-                                }
-                            }
-                            else 
-                            {
-                                _logger.LogWarning("PayMongo Webhook Missing Amount! Order: {OrderId}", orderId);
-                                return BadRequest("Missing Amount in Payload");
-                            }
-
-                            order.PaymentStatus = "Paid"; 
-                            
-                            // Update or Add Payment record
-                            var payment = order.Payments.FirstOrDefault(p => p.PaymentMethod.Contains("Paymongo") || p.PaymentMethod == "E-Wallet");
-                            if (payment != null)
-                            {
-                                payment.PaymentStatus = "Completed";
-                                payment.ReferenceNumber = dataObj.GetProperty("id").GetString(); 
-                                payment.AmountPaid = order.FinalAmount; // Update with actual amount
-                            }
-                            else
-                            {
-                                _db.Payments.Add(new Payment
-                                {
-                                    OrderID = order.OrderID,
-                                    AmountPaid = order.FinalAmount,
-                                    PaymentMethod = "Paymongo E-Wallet",
-                                    PaymentStatus = "Completed",
-                                    PaymentDate = DateTime.Now,
-                                    ReferenceNumber = dataObj.GetProperty("id").GetString()
-                                });
-                            }
-                            
-                            
-                            await _db.SaveChangesAsync();
-                            await LogAudit($"PayMongo: Order #{orderId.ToString().Substring(0, 8)} confirmed paid.");
-                            _logger.LogInformation("Order {OrderId} marked as paid via webhook.", orderId);
-
-                            // Auto-send e-receipt if customer has an email
-                             if (order.CustomerID.HasValue)
-                             {
-                                 _ = Task.Run(async () => {
-                                     try {
-                                         using (var scope = _scopeFactory.CreateScope()) {
-                                             var scopedReceiptService = scope.ServiceProvider.GetRequiredService<IReceiptService>();
-                                         }
-                                     } catch (Exception ex) {
-                                         _logger.LogError(ex, "Background webhook receipt sending failed for order {OrderId}", order.OrderID);
-                                     }
-                                 });
-                             }
-                        }
-                    }
+                    await ProcessPaidEvent(root);
                 }
 
                 return Ok();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing PayMongo webhook.");
+                _logger.LogError(ex, "Error processing PayMongo webhook payload.");
                 return BadRequest();
             }
         }
 
+        private async Task ProcessPaidEvent(JsonDocument root)
+        {
+            // JsonDocument from outer scope might be disposed, but we're calling this within scope.
+            // Using RootElement because JsonDocument.Parse returns a disposable.
+            // We'll pass the root element instead for clarity.
+        }
+
+        // Overload for RootElement
+        private async Task ProcessPaidEvent(JsonElement root)
+        {
+            var dataObj = root.GetProperty("data").GetProperty("attributes").GetProperty("data");
+            var attributes = dataObj.GetProperty("attributes");
+            
+            string? externalRef = TryGetExternalReference(attributes);
+
+            if (!string.IsNullOrEmpty(externalRef) && Guid.TryParse(externalRef, out var orderId))
+            {
+                var order = await _db.Orders
+                    .Include(o => o.Payments)
+                    .FirstOrDefaultAsync(o => o.OrderID == orderId);
+
+                if (order != null)
+                {
+                    if (!VerifyPaymentAmount(order, attributes))
+                    {
+                        return; // Logged in helper
+                    }
+
+                    order.PaymentStatus = "Paid"; 
+                    
+                    UpdatePaymentRecords(order, dataObj);
+                    
+                    await _db.SaveChangesAsync();
+                    await LogAudit($"PayMongo: Order #{orderId.ToString().Substring(0, 8)} confirmed paid.");
+                    _logger.LogInformation("Order {OrderId} marked as paid via webhook.", orderId);
+
+                    TryTriggerReceiptEmail(order);
+                }
+            }
+        }
+
+        private string? TryGetExternalReference(JsonElement attributes)
+        {
+            if (attributes.TryGetProperty("external_reference", out var refProperty) && refProperty.ValueKind != JsonValueKind.Null)
+            {
+                return refProperty.GetString();
+            }
+            if (attributes.TryGetProperty("metadata", out var metaProp) && metaProp.TryGetProperty("external_reference", out var metaRefProp))
+            {
+                return metaRefProp.GetString();
+            }
+            return null;
+        }
+
+        private bool VerifyPaymentAmount(Order order, JsonElement attributes)
+        {
+            if (attributes.TryGetProperty("amount", out var amountProp))
+            {
+                long amountInCentavos = amountProp.GetInt64();
+                decimal amountInPesos = amountInCentavos / 100m;
+
+                if (Math.Abs(amountInPesos - order.FinalAmount) > 0.01m)
+                {
+                    _logger.LogWarning("PayMongo Webhook Amount Mismatch! Order: {OrderId}, Expected: {Expected}, Received: {Received}", 
+                        order.OrderID, order.FinalAmount, amountInPesos);
+                    
+                    _ = LogAudit($"PayMongo Security Alert: Amount mismatch for Order #{order.OrderID.ToString().Substring(0, 8)}. Expected {order.FinalAmount}, Received {amountInPesos}");
+                    return false;
+                }
+                return true;
+            }
+            _logger.LogWarning("PayMongo Webhook Missing Amount! Order: {OrderId}", order.OrderID);
+            return false;
+        }
+
+        private void UpdatePaymentRecords(Order order, JsonElement dataObj)
+        {
+            var payment = order.Payments.FirstOrDefault(p => p.PaymentMethod.Contains("Paymongo") || p.PaymentMethod == "E-Wallet");
+            string reference = dataObj.GetProperty("id").GetString() ?? "N/A";
+
+            if (payment != null)
+            {
+                payment.PaymentStatus = "Completed";
+                payment.ReferenceNumber = reference;
+                payment.AmountPaid = order.FinalAmount;
+            }
+            else
+            {
+                _db.Payments.Add(new Payment
+                {
+                    OrderID = order.OrderID,
+                    AmountPaid = order.FinalAmount,
+                    PaymentMethod = "Paymongo E-Wallet",
+                    PaymentStatus = "Completed",
+                    PaymentDate = DateTime.UtcNow,
+                    ReferenceNumber = reference
+                });
+            }
+        }
+
+        private void TryTriggerReceiptEmail(Order order)
+        {
+            if (order.CustomerID.HasValue)
+            {
+                _ = Task.Run(async () => {
+                    try {
+                        using var scope = _scopeFactory.CreateScope();
+                        // This would call the receipt service
+                    } catch (Exception ex) {
+                        _logger.LogError(ex, "Background webhook receipt sending failed for order {OrderId}", order.OrderID);
+                    }
+                });
+            }
+        }
 
         private bool VerifySignature(byte[] payloadBytes, string signatureHeader, string secret)
         {
             try
             {
-                // PayMongo signature
                 var parts = signatureHeader.Split(',');
                 var timestamp = parts.FirstOrDefault(p => p.StartsWith("t="))?.Substring(2);
                 var liveSignature = parts.FirstOrDefault(p => p.StartsWith("li="))?.Substring(3);
@@ -198,6 +220,7 @@ namespace ljp_itsolutions.Controllers
             }
             catch
             {
+                // PayMongo signature verification failed due to malformed header or cryptographic error.
                 return false;
             }
         }
@@ -209,13 +232,16 @@ namespace ljp_itsolutions.Controllers
                 var auditLog = new AuditLog
                 {
                     Action = action,
-                    Timestamp = DateTime.Now,
+                    Timestamp = DateTime.UtcNow,
                     UserID = null // System action
                 };
                 _db.AuditLogs.Add(auditLog);
                 await _db.SaveChangesAsync();
             }
-            catch { /* Fail silently */ }
+            catch 
+            { 
+                /* Fail silently for audit logs to avoid breaking the main webhook response */ 
+            }
         }
     }
 }

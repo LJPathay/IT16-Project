@@ -68,4 +68,23 @@ namespace ljp_itsolutions.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
+ 
+    public class TrustedDevice
+    {
+        [Key]
+        public int ID { get; set; }
+ 
+        public Guid UserID { get; set; }
+        [ForeignKey("UserID")]
+        public virtual User User { get; set; } = null!;
+ 
+        [Required]
+        public string DeviceToken { get; set; } = string.Empty;
+ 
+        [StringLength(50)]
+        public string? IPAddress { get; set; }
+ 
+        public DateTime Expiry { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
 }

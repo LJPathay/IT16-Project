@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ljp_itsolutions.Models
 {
@@ -14,5 +15,8 @@ namespace ljp_itsolutions.Models
 
         [Display(Name = "Remember me")]
         public bool RememberMe { get; set; }
+
+        [FromForm(Name = "g-recaptcha-response")]
+        public string? RecaptchaResponse { get; set; }
     }
 }

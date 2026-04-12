@@ -15,14 +15,12 @@ namespace ljp_itsolutions.Controllers
     [Authorize(Roles = "MarketingStaff,Admin,SuperAdmin")]
     public class MarketingController : BaseController
     {
-        private readonly IReceiptService _receiptService;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IAnalyticsService _analyticsService;
 
-        public MarketingController(ApplicationDbContext db, IReceiptService receiptService, IServiceScopeFactory scopeFactory, IAnalyticsService analyticsService)
+        public MarketingController(ApplicationDbContext db, IServiceScopeFactory scopeFactory, IAnalyticsService analyticsService)
             : base(db)
         {
-            _receiptService = receiptService;
             _scopeFactory = scopeFactory;
             _analyticsService = analyticsService;
         }
@@ -391,63 +389,7 @@ namespace ljp_itsolutions.Controllers
         //  Reports
         public async Task<IActionResult> SalesTrends(string type = "week", string value = "")
         {
-            DateTime startDate = DateTime.Today;
-            DateTime endDate = DateTime.Today;
-
-            if (string.IsNullOrEmpty(value))
-            {
-                if (type == "month") value = DateTime.Today.ToString("yyyy-MM");
-                else if (type == "week") value = DateTime.Today.ToString("yyyy-'W'WW"); 
-                else if (type == "year") value = DateTime.Today.ToString("yyyy");
-            }
-
-            if (type == "year")
-            {
-                if (int.TryParse(value, out int year))
-                {
-                    startDate = new DateTime(year, 1, 1);
-                }
-                else
-                {
-                    startDate = new DateTime(DateTime.Today.Year, 1, 1);
-                    value = DateTime.Today.Year.ToString();
-                }
-                endDate = startDate.AddYears(1).AddDays(-1);
-            }
-            else if (type == "week")
-            {
-                // Simple week handling: if value is YYYY-Www
-                if (!string.IsNullOrEmpty(value) && value.Contains("-W"))
-                {
-                    var parts = value.Split("-W");
-                    if (parts.Length == 2 && int.TryParse(parts[0], out int y) && int.TryParse(parts[1], out int w))
-                    {
-                        // Calculate first day of week
-                        startDate = new DateTime(y, 1, 1).AddDays((w - 1) * 7);
-                        while (startDate.DayOfWeek != DayOfWeek.Monday) startDate = startDate.AddDays(-1);
-                    }
-                }
-                else
-                {
-                    startDate = DateTime.Today;
-                    while (startDate.DayOfWeek != DayOfWeek.Monday) startDate = startDate.AddDays(-1);
-                    value = $"{startDate.Year}-W{System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(startDate, System.Globalization.DateTimeFormatInfo.CurrentInfo.CalendarWeekRule, DayOfWeek.Monday):D2}";
-                }
-                endDate = startDate.AddDays(7).AddSeconds(-1);
-            }
-            else // month
-            {
-                if (!string.IsNullOrEmpty(value) && DateTime.TryParse(value + "-01", out var parsedMonth))
-                {
-                    startDate = parsedMonth;
-                }
-                else
-                {
-                    startDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-                    value = DateTime.Today.ToString("yyyy-MM");
-                }
-                endDate = startDate.AddMonths(1).AddDays(-1);
-            }
+            var (startDate, endDate, finalValue) = CalculateDateRange(type, value);
 
             var query = _db.Orders
                 .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate && 
@@ -468,7 +410,7 @@ namespace ljp_itsolutions.Controllers
                 .ToList();
 
             ViewBag.SelectedType = type;
-            ViewBag.SelectedValue = value;
+            ViewBag.SelectedValue = finalValue;
             return View(viewModelList);
         }
 
@@ -482,38 +424,60 @@ namespace ljp_itsolutions.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportSalesTrends(string type = "week", string value = "")
         {
+            var (startDate, endDate, finalValue) = CalculateDateRange(type, value);
+            string label = type switch
+            {
+                "year" => $"Year {finalValue}",
+                "week" => $"Week {finalValue}",
+                _ => startDate.ToString("MMMM yyyy")
+            };
+
+            byte[] buffer = await _analyticsService.GenerateSalesTrendsCSVAsync(startDate, endDate, label);
+            return File(buffer, "text/csv", $"LJP_Sales_Trend_{type}_{finalValue}.csv");
+        }
+
+        private (DateTime Start, DateTime End, string FinalValue) CalculateDateRange(string type, string value)
+        {
             DateTime startDate = DateTime.Today;
-            DateTime endDate = DateTime.Today;
-            string label = "";
+            string finalValue = value;
+
+            if (string.IsNullOrEmpty(finalValue))
+            {
+                if (type == "month") finalValue = DateTime.Today.ToString("yyyy-MM");
+                else if (type == "week") finalValue = DateTime.Today.ToString("yyyy-'W'WW");
+                else if (type == "year") finalValue = DateTime.Today.Year.ToString();
+            }
 
             if (type == "year")
             {
-                if (!int.TryParse(value, out int year)) year = DateTime.Today.Year;
-                startDate = new DateTime(year, 1, 1);
-                endDate = startDate.AddYears(1).AddDays(-1);
-                label = $"Year {year}";
+                if (!int.TryParse(finalValue, out int year)) year = DateTime.Today.Year;
+                startDate = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                return (startDate, startDate.AddYears(1).AddDays(-1), year.ToString());
             }
-            else if (type == "week")
+            
+            if (type == "week")
             {
-                if (!string.IsNullOrEmpty(value) && value.Contains("-W"))
+                if (!string.IsNullOrEmpty(finalValue) && finalValue.Contains("-W"))
                 {
-                    var parts = value.Split("-W");
+                    var parts = finalValue.Split("-W");
                     if (parts.Length == 2 && int.TryParse(parts[0], out int y) && int.TryParse(parts[1], out int w))
-                        startDate = new DateTime(y, 1, 1).AddDays((w - 1) * 7);
+                    {
+                        startDate = new DateTime(y, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddDays((w - 1) * 7);
+                    }
                 }
                 while (startDate.DayOfWeek != DayOfWeek.Monday) startDate = startDate.AddDays(-1);
-                endDate = startDate.AddDays(7).AddSeconds(-1);
-                label = $"Week {value}";
-            }
-            else
-            {
-                if (!DateTime.TryParse(value + "-01", out startDate)) startDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-                endDate = startDate.AddMonths(1).AddDays(-1);
-                label = startDate.ToString("MMMM yyyy");
+                
+                var currentWeek = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(startDate, System.Globalization.DateTimeFormatInfo.CurrentInfo.CalendarWeekRule, DayOfWeek.Monday);
+                finalValue = $"{startDate.Year}-W{currentWeek:D2}";
+                
+                return (startDate, startDate.AddDays(7).AddSeconds(-1), finalValue);
             }
 
-            byte[] buffer = await _analyticsService.GenerateSalesTrendsCSVAsync(startDate, endDate, label);
-            return File(buffer, "text/csv", $"LJP_Sales_Trend_{type}_{value}.csv");
+            // Month default
+            if (!DateTime.TryParse(finalValue + "-01", out startDate)) 
+                startDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            
+            return (startDate, startDate.AddMonths(1).AddDays(-1), startDate.ToString("yyyy-MM"));
         }
     }
 }

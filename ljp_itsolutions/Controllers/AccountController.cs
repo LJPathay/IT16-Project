@@ -46,17 +46,17 @@ namespace ljp_itsolutions.Controllers
             {
                 var roleName = User.FindFirstValue(ClaimTypes.Role);
                 if (string.Equals(roleName, UserRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase))
-                    return RedirectToAction("Dashboard", "SuperAdmin");
+                    return RedirectToAction(AppConstants.Actions.Dashboard, AppConstants.Controllers.SuperAdmin);
                 if (string.Equals(roleName, UserRoles.Admin, StringComparison.OrdinalIgnoreCase))
-                    return RedirectToAction("Dashboard", "Admin");
+                    return RedirectToAction(AppConstants.Actions.Dashboard, AppConstants.Controllers.Admin);
                 if (string.Equals(roleName, UserRoles.Manager, StringComparison.OrdinalIgnoreCase))
-                    return RedirectToAction("Dashboard", "Manager");
+                    return RedirectToAction(AppConstants.Actions.Dashboard, AppConstants.Controllers.Manager);
                 if (string.Equals(roleName, UserRoles.Cashier, StringComparison.OrdinalIgnoreCase))
-                    return RedirectToAction("Index", "POS");
+                    return RedirectToAction(AppConstants.Actions.Index, AppConstants.Controllers.POS);
                 if (string.Equals(roleName, UserRoles.MarketingStaff, StringComparison.OrdinalIgnoreCase))
-                    return RedirectToAction("Dashboard", "Marketing");
+                    return RedirectToAction(AppConstants.Actions.Dashboard, AppConstants.Controllers.Marketing);
 
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction(AppConstants.Actions.Index, AppConstants.Controllers.Home);
             }
 
             ViewData["ReturnUrl"] = returnUrl;
@@ -68,18 +68,17 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
+            if (!ModelState.IsValid)
+                return View(model);
+
             ViewData["ReturnUrl"] = returnUrl;
 
             // Verify Google reCAPTCHA
-            string captchaResponse = Request.Form["g-recaptcha-response"].ToString() ?? string.Empty;
-            if (string.IsNullOrEmpty(captchaResponse) || !await VerifyReCaptcha(captchaResponse))
+            if (string.IsNullOrEmpty(model.RecaptchaResponse) || !await VerifyReCaptcha(model.RecaptchaResponse))
             {
                 ModelState.AddModelError(string.Empty, "reCAPTCHA verification failed. Please try again.");
                 return View(model);
             }
-
-            if (!ModelState.IsValid)
-                return View(model);
  
             ljp_itsolutions.Models.User? user = null;
             if (!string.IsNullOrWhiteSpace(model.UsernameOrEmail))
@@ -162,8 +161,15 @@ namespace ljp_itsolutions.Controllers
             // 2FA Check
             if (user.TwoFactorEnabled)
             {
-                HttpContext.Session.SetString("MfaUserId", user.UserID.ToString());
-                return RedirectToAction("VerifyMfa");
+                if (await IsDeviceTrusted(user.UserID))
+                {
+                    await LogSecurity("MfaSkipped", $"MFA skipped for user {user.Username} on trusted device/IP", "Info", user.UserID);
+                }
+                else
+                {
+                    HttpContext.Session.SetString("MfaUserId", user.UserID.ToString());
+                    return RedirectToAction("VerifyMfa");
+                }
             }
 
             var roleName = user.Role;
@@ -298,20 +304,20 @@ namespace ljp_itsolutions.Controllers
             await _db.SaveChangesAsync();
             await LogSecurity("PasswordReset", $"Password reset success for user: {user.Username}", "Info", user.UserID);
 
-            TempData["Message"] = "Success! Password has been updated.";
-            return RedirectToAction("Login");
+            TempData[AppConstants.SessionKeys.Message] = "Success! Password has been updated.";
+            return RedirectToAction(nameof(Login));
         }
 
         [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> VerifyMfa()
         {
-            var userIdStr = HttpContext.Session.GetString("MfaUserId");
+            var userIdStr = HttpContext.Session.GetString(AppConstants.SessionKeys.MfaUserId);
             if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
-                return RedirectToAction("Login");
+                return RedirectToAction(nameof(Login));
 
             var user = await _db.Users.FindAsync(userId);
-            if (user == null) return RedirectToAction("Login");
+            if (user == null) return RedirectToAction(nameof(Login));
 
             return View();
         }
@@ -319,19 +325,45 @@ namespace ljp_itsolutions.Controllers
         [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> VerifyMfa(string code)
+        public async Task<IActionResult> VerifyMfa(string code, bool rememberDevice = false)
         {
-            var userIdStr = HttpContext.Session.GetString("MfaUserId");
+            if (string.IsNullOrEmpty(code))
+            {
+                ModelState.AddModelError(string.Empty, "Verification code is required.");
+                return View();
+            }
+
+            var userIdStr = HttpContext.Session.GetString(AppConstants.SessionKeys.MfaUserId);
             if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
-                return RedirectToAction("Login");
+                return RedirectToAction(nameof(Login));
 
             var user = await _db.Users.FindAsync(userId);
-            if (user == null) return RedirectToAction("Login");
+            if (user == null) return RedirectToAction(nameof(Login));
 
             if (!_otpService.VerifyCode(user.TwoFactorSecret ?? "", code))
             {
                 ModelState.AddModelError(string.Empty, "Invalid verification code.");
                 return View();
+            }
+
+            // Trust Device if requested
+            if (rememberDevice)
+            {
+                var deviceToken = Guid.NewGuid().ToString("N");
+                var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+                
+                _db.TrustedDevices.Add(new TrustedDevice
+                {
+                    UserID = user.UserID,
+                    DeviceToken = deviceToken,
+                    IPAddress = ip,
+                    Expiry = DateTime.UtcNow.AddDays(30)
+                });
+                await _db.SaveChangesAsync();
+
+                // Set Persistent Cookie (30 days)
+                CookieOptions option = new CookieOptions { Expires = DateTime.UtcNow.AddDays(30), HttpOnly = true, Secure = true };
+                Response.Cookies.Append(".CoffeeLJP.TrustedDevice", deviceToken, option);
             }
 
             // Success - Sign In
@@ -578,7 +610,7 @@ namespace ljp_itsolutions.Controllers
             if (verify == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
             {
                 await LogSecurity("PasswordChangeFailure", "Failed password change attempt: incorrect current password", "Warning", user.UserID);
-                TempData["Error"] = "Incorrect current password.";
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "Incorrect current password.";
                 return RedirectToAction(nameof(Profile));
             }
             
@@ -634,7 +666,7 @@ namespace ljp_itsolutions.Controllers
             return RedirectToAction(nameof(Profile));
         }
 
-        private bool ValidatePasswordComplexity(string password, User user, out string errorMessage)
+        private static bool ValidatePasswordComplexity(string password, User user, out string errorMessage)
         {
             int minLen = 16;
             errorMessage = string.Empty;
@@ -731,7 +763,39 @@ namespace ljp_itsolutions.Controllers
                     return json.Contains("\"success\": true");
                 }
             }
-            catch { }
+            catch
+            {
+                // reCAPTCHA verification failed due to network or configuration issue.
+                // We return false to deny access rather than throwing an exception.
+            }
+            return false;
+        }
+        private async Task<bool> IsDeviceTrusted(Guid userId)
+        {
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var deviceToken = Request.Cookies[".CoffeeLJP.TrustedDevice"];
+
+            // Check if this IP is already trusted for this user within the last 30 days
+            // (Fulfills the "IP based" request)
+            var ipTrusted = await _db.TrustedDevices.AnyAsync(d => 
+                d.UserID == userId && 
+                d.IPAddress == ip && 
+                d.Expiry > DateTime.UtcNow);
+
+            if (ipTrusted) return true;
+
+            // Check if current device token is valid
+            // (Fulfills the "Device based" request)
+            if (!string.IsNullOrEmpty(deviceToken))
+            {
+                var deviceTrusted = await _db.TrustedDevices.AnyAsync(d =>
+                    d.UserID == userId &&
+                    d.DeviceToken == deviceToken &&
+                    d.Expiry > DateTime.UtcNow);
+                
+                return deviceTrusted;
+            }
+
             return false;
         }
     }

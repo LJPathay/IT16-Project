@@ -14,7 +14,6 @@ namespace ljp_itsolutions.Controllers
     [Authorize(Roles = "Cashier,Admin,Manager,SuperAdmin")]
     public class CashierController : BaseController
     {
-        private readonly InMemoryStore _store;
         private readonly IPayMongoService _payMongoService;
         private readonly ILogger<CashierController> _logger;
         private readonly IReceiptService _receiptService;
@@ -23,10 +22,9 @@ namespace ljp_itsolutions.Controllers
         private readonly ICompositeViewEngine _viewEngine;
         private readonly IOrderService _orderService;
 
-        public CashierController(ApplicationDbContext db, InMemoryStore store, IPayMongoService payMongoService, ILogger<CashierController> logger, IReceiptService receiptService, IServiceScopeFactory scopeFactory, IAnalyticsService analyticsService, ICompositeViewEngine viewEngine, IOrderService orderService)
+        public CashierController(ApplicationDbContext db, IPayMongoService payMongoService, ILogger<CashierController> logger, IReceiptService receiptService, IServiceScopeFactory scopeFactory, IAnalyticsService analyticsService, ICompositeViewEngine viewEngine, IOrderService orderService)
             : base(db)
         {
-            _store = store;
             _payMongoService = payMongoService;
             _logger = logger;
             _receiptService = receiptService;
@@ -260,6 +258,9 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RegisterCustomer([FromBody] CustomerRequest request)
         {
+            if (!ModelState.IsValid)
+                return Json(new { success = false, message = "Invalid data." });
+
             if (string.IsNullOrWhiteSpace(request.FullName))
                 return Json(new { success = false, message = "Name is required." });
 
@@ -334,8 +335,8 @@ namespace ljp_itsolutions.Controllers
             var existing = await _db.CashShifts.FirstOrDefaultAsync(s => s.CashierID == cashierId && !s.IsClosed);
             if(existing != null)
             {
-                TempData["ErrorMessage"] = "You already have an open shift.";
-                return RedirectToAction("ShiftManagement");
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "You already have an open shift.";
+                return RedirectToAction(AppConstants.Actions.ShiftManagement);
             }
 
             var shift = new CashShift
@@ -365,8 +366,8 @@ namespace ljp_itsolutions.Controllers
             var shift = await _db.CashShifts.FirstOrDefaultAsync(s => s.CashierID == cashierId && !s.IsClosed);
             if(shift == null)
             {
-                TempData["ErrorMessage"] = "No open shift found.";
-                return RedirectToAction("ShiftManagement");
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "No open shift found.";
+                return RedirectToAction(AppConstants.Actions.ShiftManagement);
             }
 
             var cashOrders = await _db.Orders
@@ -399,8 +400,8 @@ namespace ljp_itsolutions.Controllers
 
             await LogAudit($"Closed Shift", $"Expected: ₱{expected:N2}, Actual: ₱{actualEndingCash:N2}, Difference: ₱{shift.Difference:N2}");
 
-            TempData["SuccessMessage"] = $"Shift closed successfully. Difference: ₱{shift.Difference:N2}";
-            return RedirectToAction("ShiftManagement");
+            TempData[AppConstants.SessionKeys.SuccessMessage] = $"Shift closed successfully. Difference: ₱{shift.Difference:N2}";
+            return RedirectToAction(AppConstants.Actions.ShiftManagement);
         }
 
         [HttpGet]
