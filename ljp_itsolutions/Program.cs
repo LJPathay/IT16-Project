@@ -144,14 +144,53 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 
 app.Use(async (context, next) =>
 {
-    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
-    context.Response.Headers.Append("X-Frame-Options", "DENY");
-    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
-    context.Response.Headers.Append("X-Robots-Tag", "noindex, nofollow");
-    context.Response.Headers.Append("Referrer-Policy", "same-origin");
-    context.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()");
-    context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https: https://www.gstatic.com; connect-src 'self' https://chart.googleapis.com; frame-src 'self' https://www.google.com;");
-    await next();
+    // 1. Maintenance Mode Enforcement
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ljp_itsolutions.Data.ApplicationDbContext>();
+        var maintenanceMode = await db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == "MaintenanceMode");
+        
+        if (maintenanceMode?.SettingValue == "true" && 
+            !context.Request.Path.StartsWithSegments("/Account/Login") && 
+            !context.User.IsInRole(UserRoles.SuperAdmin) && 
+            !context.User.IsInRole(UserRoles.Admin))
+        {
+            context.Response.ContentType = "text/html";
+            await context.Response.WriteAsync("<html><head><title>Maintenance</title><link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'></head><body class='bg-light'><div class='container text-center' style='padding-top:100px;'><h1 class='display-4 fw-bold'>🚀 System Maintenance</h1><p class='lead'>We are currently performing infrastructure upgrades to improve your experience. Personnel may log in for administrative access.</p><a href='/Account/Login' class='btn btn-primary rounded-pill px-4'>Staff Login</a></div></body></html>");
+            return;
+        }
+    }
+
+    try
+    {
+        // 2. Security Headers
+        context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+        context.Response.Headers.Append("X-Frame-Options", "DENY");
+        context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+        context.Response.Headers.Append("X-Robots-Tag", "noindex, nofollow");
+        context.Response.Headers.Append("Referrer-Policy", "same-origin");
+        context.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()");
+        context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https: https://www.gstatic.com; connect-src 'self' https://chart.googleapis.com; frame-src 'self' https://www.google.com;");
+
+        await next();
+    }
+    catch (Exception ex)
+    {
+        // 3. Global Infrastructure Error Logging (Information Assurance)
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ljp_itsolutions.Data.ApplicationDbContext>();
+            db.SecurityLogs.Add(new SecurityLog {
+                EventType = "SystemCriticalError",
+                Severity = "Critical",
+                Description = $"Global Exception in [{context.Request.Method}] {context.Request.Path}: {ex.Message}",
+                Timestamp = DateTime.UtcNow,
+                IpAddress = context.Connection.RemoteIpAddress?.ToString() ?? "0.0.0.0"
+            });
+            await db.SaveChangesAsync();
+        }
+        context.Response.Redirect("/Home/Error");
+    }
 });
 
 app.UseHttpsRedirection();
