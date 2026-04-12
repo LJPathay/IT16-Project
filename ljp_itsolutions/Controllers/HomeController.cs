@@ -29,7 +29,7 @@ namespace ljp_itsolutions.Controllers
                 if (string.Equals(role, UserRoles.MarketingStaff, StringComparison.OrdinalIgnoreCase))
                     return RedirectToAction(AppConstants.Actions.Dashboard, AppConstants.Controllers.Marketing);
             }
-            return View();
+            return RedirectToAction("Login", "Account");
         }
 
         public IActionResult Privacy()
