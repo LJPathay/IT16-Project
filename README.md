@@ -2,6 +2,7 @@
 ### *Integrative Programming and Technologies (IT16) 
 
 [![Security Level](https://img.shields.io/badge/Security-Enterprise%20Grade-brightgreen)](https://github.com/LJPathay/IT16-Project)
+[![Code Quality](https://img.shields.io/badge/SonarQube-Zero%20Vulnerabilities-success)](https://github.com/LJPathay/IT16-Project)
 [![Language](https://img.shields.io/badge/Stack-ASP.NET%20Core%20%7C%20EF%20Core%20%7C%20SQL%20Server-blue)](https://github.com/LJPathay/IT16-Project)
 
 **LJP IT Solutions** is a robust, web-based Enterprise Resource Planning (ERP) system designed specifically for the modern coffee shop industry. It integrates real-time inventory management, secure financial transactions, and advanced marketing analytics into a unified, high-security dashboard.
@@ -21,11 +22,16 @@
 - **Google reCAPTCHA v2**: Integrated into the login gateway to mitigate brute-force and dictionary attacks.
 - **Rate Limiting**: Intelligent IP-based throttling on all authentication endpoints.
 - **Secure Headers**: Hardened **Content Security Policy (CSP)**, X-Frame-Options (Click-jacking protection), and HSTS.
+- **Reverse Proxy Resiliency**: Dynamic `ForwardedHeaders` mapped exclusively to handle secure cloud edge proxies (runasp.net) without cyclic SSL redirect loops.
 
 ### 🕵️ 3. Auditing & Privacy
 - **Real-Time Security Monitoring**: Automated logging of all security events (login attempts, PII access, role changes).
 - **Visitor Tracking**: Comprehensive audit trail capturing IP addresses and User-Agents for accountability.
 - **Data Masking (Privacy-by-Design)**: Redaction of sensitive PII (Emails, IP segments) in administrative dashboards to comply with privacy standards.
+
+### 📈 4. Technical Debt & Code Quality
+- **SonarQube Hardened**: Extirpated 'under-posting' vulnerabilities, enforced explicit Nullable type mapping, and slashed cognitive complexity across major controllers.
+- **Performance Optimized**: Substituted legacy DOM manipulations with modern `globalThis` constraints and optimized backend LINQ operations (e.g., converting redundant `.Count()` structures to `.Any()`).
 
 ---
 
