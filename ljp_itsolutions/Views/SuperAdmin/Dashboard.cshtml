@@ -141,20 +141,22 @@
                         </div>
                     </div>
 
-                    <a href="@Url.Action("AuditLogs")" class="btn btn-sm btn-dark w-100 rounded-pill mt-2">
-                        View Audit Trails <i class="fas fa-arrow-right ms-2 x-small"></i>
+                    <a href="@Url.Action("SecurityLogs")" class="btn btn-sm btn-dark w-100 rounded-pill mt-2">
+                        View Security Events <i class="fas fa-shield-alt ms-2 x-small"></i>
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Recent System Activity -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm rounded-4">
+    <!-- Dual Stream Analytics (logs) -->
+    <div class="row g-4">
+        <!-- Activity Stream -->
+        <div class="col-xl-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-header bg-white border-0 py-4 px-4 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0">System Activity Audit</h5>
+                    <h6 class="fw-bold mb-0">System Activity Tracking</h6>
+                    <a href="@Url.Action("AuditLogs")" class="btn btn-link btn-sm text-decoration-none p-0">View All</a>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -162,9 +164,7 @@
                             <thead class="bg-light bg-opacity-50">
                                 <tr>
                                     <th class="ps-4 text-uppercase x-small fw-bold text-muted">Operator</th>
-                                    <th class="text-uppercase x-small fw-bold text-muted">Activity Description</th>
-                                    <th class="text-uppercase x-small fw-bold text-muted">Timestamp</th>
-                                    <th class="pe-4 text-end text-uppercase x-small fw-bold text-muted">Status</th>
+                                    <th class="text-uppercase x-small fw-bold text-muted">Activity</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -172,24 +172,67 @@
                                 {
                                     <tr>
                                         <td class="ps-4">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <div class="avatar-sm-refined rounded-circle text-white d-flex align-items-center justify-content-center fw-bold" style="background: var(--primary-color);">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="avatar-xs rounded-circle bg-primary text-white d-flex align-items-center justify-content-center x-small" style="width: 28px; height: 28px;">
                                                     @(log.User?.FullName?.Substring(0, 1) ?? "S")
                                                 </div>
-                                                <div>
-                                                    <p class="mb-0 fw-bold small">@(log.User?.FullName ?? "System Process")</p>
-                                                    <p class="text-muted x-small mb-0">ID: #@log.AuditID</p>
+                                                <div class="overflow-hidden">
+                                                    <p class="mb-0 fw-bold x-small text-truncate" style="max-width: 100px;">@(log.User?.FullName ?? "System")</p>
+                                                    <p class="text-muted xx-small mb-0">@log.Timestamp.ToString("HH:mm")</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="small fw-medium">@log.Action</span>
+                                            <span class="x-small text-muted d-block text-truncate" style="max-width: 250px;" title="@log.Action">@log.Action</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Stream -->
+        <div class="col-xl-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 border-start border-danger border-4">
+                <div class="card-header bg-white border-0 py-4 px-4 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0 text-danger"><i class="fas fa-shield-virus me-2"></i>Security Monitoring</h6>
+                    <a href="@Url.Action("SecurityLogs")" class="btn btn-link btn-sm text-danger text-decoration-none p-0">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="bg-light bg-opacity-50">
+                                <tr>
+                                    <th class="ps-4 text-uppercase x-small fw-bold text-muted">Event</th>
+                                    <th class="text-uppercase x-small fw-bold text-muted">Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var log in Model.SecurityLogs)
+                                {
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="p-2 rounded-circle bg-light text-dark x-small">
+                                                    <i class="fas fa-key"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="mb-0 fw-bold x-small">@log.EventType</p>
+                                                    <p class="text-muted xx-small mb-0">@log.Timestamp.ToString("HH:mm:ss")</p>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td>
-                                            <span class="text-muted x-small">@log.Timestamp.ToString("MMM dd, yyyy • HH:mm:ss")</span>
-                                        </td>
-                                        <td class="pe-4 text-end">
-                                            <span class="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3">COMPLETED</span>
+                                            @if (log.Severity == "Critical") {
+                                                <span class="badge rounded-pill bg-danger-soft text-danger border border-danger border-opacity-10 xx-small">CRITICAL</span>
+                                            } else if (log.Severity == "Warning") {
+                                                <span class="badge rounded-pill bg-warning-soft text-warning border border-warning border-opacity-10 xx-small">WARNING</span>
+                                            } else {
+                                                <span class="badge rounded-pill bg-info-soft text-info border border-info border-opacity-10 xx-small">INFO</span>
+                                            }
                                         </td>
                                     </tr>
                                 }

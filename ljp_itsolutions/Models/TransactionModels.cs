@@ -97,4 +97,30 @@ namespace ljp_itsolutions.Models
         [StringLength(500)]
         public string? UserAgent { get; set; }
     }
+
+    public class SecurityLog
+    {
+        [Key]
+        public int SecurityID { get; set; }
+
+        public Guid? UserID { get; set; }
+        [ForeignKey("UserID")]
+        public virtual User? User { get; set; }
+
+        [Required]
+        public string EventType { get; set; } = "Generic"; // e.g., LoginFailure, MFAChange, PasswordReset
+
+        [Required]
+        public string Description { get; set; } = string.Empty;
+
+        public string? Severity { get; set; } = "Info"; // Info, Warning, Critical
+
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+        [StringLength(50)]
+        public string? IpAddress { get; set; }
+
+        [StringLength(500)]
+        public string? UserAgent { get; set; }
+    }
 }

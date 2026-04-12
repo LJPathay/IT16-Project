@@ -28,6 +28,7 @@ namespace ljp_itsolutions.Services
     public class SuperAdminDashboardData
     {
         public List<AuditLog> AuditLogs { get; set; } = new();
+        public List<SecurityLog> SecurityLogs { get; set; } = new();
         public int UserCount { get; set; }
         public int ActiveUsers { get; set; }
         public int FailedLoginsCount { get; set; }

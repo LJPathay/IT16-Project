@@ -21,7 +21,13 @@
 <div class="nav-item">
     <a class="nav-link d-flex align-items-center @(ViewContext.RouteData.Values["action"]?.ToString() == "AuditLogs" && ViewContext.RouteData.Values["controller"]?.ToString() == "SuperAdmin" ? "active" : "")" asp-controller="SuperAdmin" asp-action="AuditLogs">
         <i class="fas fa-history opacity-75"></i>
-        <span>Audit Logs</span>
+        <span>Activity Logs</span>
+    </a>
+</div>
+<div class="nav-item">
+    <a class="nav-link d-flex align-items-center @(ViewContext.RouteData.Values["action"]?.ToString() == "SecurityLogs" ? "active" : "")" asp-controller="SuperAdmin" asp-action="SecurityLogs">
+        <i class="fas fa-file-shield opacity-75"></i>
+        <span>Security Logs</span>
     </a>
 </div>
 <div class="nav-item">
@@ -44,7 +50,7 @@
         <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Admin" asp-action="Dashboard"><i class="fas fa-th-large opacity-50"></i> Overview</a></li>
         <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Admin" asp-action="Transactions"><i class="fas fa-receipt opacity-50"></i> Transactions</a></li>
         <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Admin" asp-action="InventoryOverview"><i class="fas fa-boxes opacity-50"></i> Stock Overview</a></li>
-        <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Admin" asp-action="AuditLogs"><i class="fas fa-history opacity-50"></i> Audit Logs</a></li>
+        <li><a class="dropdown-item d-flex align-items-center gap-2" asp-controller="Admin" asp-action="AuditLogs"><i class="fas fa-history opacity-50"></i> Activity Tracking</a></li>
     </ul>
 </div>
 

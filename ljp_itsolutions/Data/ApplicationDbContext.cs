@@ -30,6 +30,8 @@ namespace ljp_itsolutions.Data
         public DbSet<RecipeTemplateIngredient> RecipeTemplateIngredients { get; set; }
         public DbSet<ArchivedProduct> ArchivedProducts { get; set; }
         public DbSet<ArchivedUser> ArchivedUsers { get; set; }
+        public DbSet<UserPasswordHistory> UserPasswordHistories { get; set; }
+        public DbSet<SecurityLog> SecurityLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

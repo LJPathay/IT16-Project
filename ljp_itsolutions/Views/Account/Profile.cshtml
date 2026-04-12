@@ -126,52 +126,104 @@
 
         <!-- Password Change Section -->
         <div class="col-lg-12">
-            <div class="card border-0 shadow-sm rounded-lg overflow-hidden ux-card mt-4">
-                <div class="card-header bg-white py-3 border-bottom">
+            @if (Context.Session.GetString("ForcePasswordChange") == "true")
+            {
+                <div class="alert alert-warning border-warning shadow-sm mb-4 ux-animate-bounce-in">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1">Mandatory Password Update Required</h6>
+                            <p class="mb-0 small">Security policy requires you to update your password before continuing. This could be due to an expired password or an administrative reset.</p>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="card border-0 shadow-sm rounded-lg overflow-hidden ux-card mt-0">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                     <h6 class="fw-bold mb-0 text-dark">Security Settings</h6>
+                    <div class="mfa-status-pill">
+                        @if (Model.TwoFactorEnabled)
+                        {
+                            <span class="badge bg-success-soft text-success border border-success-subtle rounded-pill px-3 py-2">
+                                <i class="fas fa-check-circle me-1"></i> 2FA Enabled
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary-soft text-secondary border border-secondary-subtle rounded-pill px-3 py-2">
+                                <i class="fas fa-times-circle me-1"></i> 2FA Disabled
+                            </span>
+                        }
+                    </div>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="ChangePassword" method="post">
-                        @if (TempData["Error"] != null)
-                        {
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        }
-                        <div class="row g-4">
-                            <div class="col-md-4">
-                                <label class="modern-form-label">Current Password</label>
-                                <input type="password" name="CurrentPassword" id="currentPassword" class="modern-form-control w-100" required />
-                            </div>
-                            <div class="col-md-4">
-                                <label class="modern-form-label">New Password</label>
-                                <div class="password-toggle-group position-relative">
-                                    <input type="password" name="NewPassword" id="newPassword" class="modern-form-control w-100" required minlength="8" style="padding-right: 45px;" />
-                                    <button type="button" class="password-toggle-btn" onclick="toggleNewConfirmPassword(this)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
-                                <div class="strength-meter-container d-none" id="strengthContainer">
-                                    <div class="strength-meter-bar">
-                                        <div class="strength-meter-fill" id="strengthFill"></div>
+                    <div class="row g-4">
+                        <!-- MFA Management -->
+                        <div class="col-md-12 mb-4">
+                            <div class="p-4 bg-light rounded-lg border d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <div class="p-3 rounded-circle bg-white text-primary shadow-sm me-3">
+                                        <i class="fas fa-mobile-alt fa-lg"></i>
                                     </div>
-                                    <span class="strength-label" id="strengthLabel">Weak</span>
+                                    <div>
+                                        <h6 class="fw-bold mb-1">Two-Factor Authentication (MFA)</h6>
+                                        <p class="text-muted small mb-0">Add an extra layer of security to your account using an authenticator app.</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="modern-form-label">Confirm New Password</label>
-                                <div class="password-toggle-group position-relative">
-                                    <input type="password" name="ConfirmPassword" id="confirmPassword" class="modern-form-control w-100" required />
+                                <div>
+                                    @if (!Model.TwoFactorEnabled)
+                                    {
+                                        <a asp-action="SetupMfa" class="btn btn-primary rounded-pill px-4">
+                                            Enable MFA
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <form asp-action="DisableMfa" method="post" onsubmit="return confirm('Are you sure you want to disable 2FA? This will make your account less secure.');">
+                                            <button type="submit" class="btn btn-outline-danger rounded-pill px-4">
+                                                Disable MFA
+                                            </button>
+                                        </form>
+                                    }
                                 </div>
                             </div>
                         </div>
-                        <div class="mt-4">
-                            <button type="submit" class="ux-btn-primary rounded-pill px-5" style="background: var(--espresso-dark);">
-                                <i class="fas fa-key me-2"></i>Change Password
-                            </button>
+
+                        <div class="col-12">
+                            <hr class="mt-0 mb-4" />
+                            <h6 class="fw-bold mb-3">Update Password</h6>
                         </div>
-                    </form>
+
+                        <form asp-action="ChangePassword" method="post" class="w-100">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="modern-form-label">Current Password</label>
+                                    <input type="password" name="CurrentPassword" id="currentPassword" class="modern-form-control w-100" required />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="modern-form-label">New Password</label>
+                                    <div class="password-toggle-group position-relative">
+                                        <input type="password" name="NewPassword" id="newPassword" class="modern-form-control w-100" required minlength="8" style="padding-right: 45px;" />
+                                        <button type="button" class="password-toggle-btn" onclick="toggleNewConfirmPassword(this)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="modern-form-label">Confirm New Password</label>
+                                    <div class="password-toggle-group position-relative">
+                                        <input type="password" name="ConfirmPassword" id="confirmPassword" class="modern-form-control w-100" required />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <button type="submit" class="ux-btn-primary rounded-pill px-5" style="background: var(--espresso-dark);">
+                                    <i class="fas fa-key me-2"></i>Change Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>

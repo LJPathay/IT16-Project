@@ -16,17 +16,20 @@ namespace ljp_itsolutions.Controllers
         private readonly ljp_itsolutions.Services.IEmailSender _emailSender;
         private readonly ljp_itsolutions.Services.IPhotoService _photoService;
         private readonly Microsoft.AspNetCore.Identity.IPasswordHasher<ljp_itsolutions.Models.User> _hasher;
+        private readonly ljp_itsolutions.Services.IOtpService _otpService;
 
         public AccountController(
             ljp_itsolutions.Data.ApplicationDbContext db, 
             ljp_itsolutions.Services.IEmailSender emailSender, 
             ljp_itsolutions.Services.IPhotoService photoService,
-            Microsoft.AspNetCore.Identity.IPasswordHasher<ljp_itsolutions.Models.User> hasher)
+            Microsoft.AspNetCore.Identity.IPasswordHasher<ljp_itsolutions.Models.User> hasher,
+            ljp_itsolutions.Services.IOtpService otpService)
             : base(db)
         {
             _emailSender = emailSender;
             _photoService = photoService;
             _hasher = hasher;
+            _otpService = otpService;
         }
 
         [AllowAnonymous]
@@ -51,6 +54,7 @@ namespace ljp_itsolutions.Controllers
             }
 
             ViewData["ReturnUrl"] = returnUrl;
+            PrepareLoginCaptcha();
             return View(new LoginViewModel());
         }
 
@@ -61,9 +65,23 @@ namespace ljp_itsolutions.Controllers
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
- 
-            if (!ModelState.IsValid)
+
+            // Verify CAPTCHA
+            int? expectedAnswer = HttpContext.Session.GetInt32("CaptchaAnswer");
+            int? actualAnswer = int.TryParse(Request.Form["CaptchaResponse"], out int val) ? val : null;
+
+            if (expectedAnswer == null || actualAnswer == null || expectedAnswer != actualAnswer)
+            {
+                ModelState.AddModelError(string.Empty, "Incorrect security verification answer.");
+                PrepareLoginCaptcha();
                 return View(model);
+            }
+
+            if (!ModelState.IsValid)
+            {
+                PrepareLoginCaptcha();
+                return View(model);
+            }
  
             ljp_itsolutions.Models.User? user = null;
             if (!string.IsNullOrWhiteSpace(model.UsernameOrEmail))
@@ -74,6 +92,7 @@ namespace ljp_itsolutions.Controllers
             if (user == null)
             {
                 ModelState.AddModelError(string.Empty, "Invalid credentials");
+                PrepareLoginCaptcha();
                 return View(model);
             }
  
@@ -82,12 +101,14 @@ namespace ljp_itsolutions.Controllers
             {
                 var remainingMinutes = (int)Math.Ceiling((user.LockoutEnd.Value - DateTimeOffset.UtcNow).TotalMinutes);
                 ModelState.AddModelError(string.Empty, $"Account is temporarily locked. Please try again in {remainingMinutes} minutes.");
+                PrepareLoginCaptcha();
                 return View(model);
             }
  
             if (string.IsNullOrEmpty(user.Password))
             {
                 ModelState.AddModelError(string.Empty, "Invalid credentials");
+                PrepareLoginCaptcha();
                 return View(model);
             }
             /// Brute-Force Lockout System
@@ -106,7 +127,7 @@ namespace ljp_itsolutions.Controllers
                 }
                 
                 await _db.SaveChangesAsync();
-                await LogAudit("Failed Login Attempt", null, user.UserID);
+                await LogSecurity("LoginFailure", $"Failed login attempt for user: {user.Username}", "Warning", user.UserID);
                 return View(model);
             }
  
@@ -123,6 +144,7 @@ namespace ljp_itsolutions.Controllers
                 if (restrictedRoles.Contains(user.Role))
                 {
                     ModelState.AddModelError(string.Empty, $"System is under maintenance for {user.Role} accounts. Please contact support.");
+                    PrepareLoginCaptcha();
                     return View(model);
                 }
             }
@@ -132,6 +154,13 @@ namespace ljp_itsolutions.Controllers
             user.LockoutEnd = null;
             await _db.SaveChangesAsync();
  
+            // 2FA Check
+            if (user.TwoFactorEnabled)
+            {
+                HttpContext.Session.SetString("MfaUserId", user.UserID.ToString());
+                return RedirectToAction("VerifyMfa");
+            }
+
             var roleName = user.Role;
  
             var claims = new List<Claim>
@@ -144,7 +173,7 @@ namespace ljp_itsolutions.Controllers
  
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
-            await LogAudit("User Login", null, user.UserID);
+            await LogSecurity("LoginSuccess", $"User {user.Username} logged in successfully", "Info", user.UserID);
  
             // Set session variables for layout consistency
             HttpContext.Session.SetString("UserRole", roleName);
@@ -154,6 +183,14 @@ namespace ljp_itsolutions.Controllers
             HttpContext.Session.SetString("FontSize", user.FontSize);
             HttpContext.Session.SetString("ReduceMotion", user.ReduceMotion.ToString().ToLower());
             HttpContext.Session.SetString("ProfilePictureUrl", user.ProfilePictureUrl ?? "");
+
+            // Password Expiry Check
+            int expiryDays = int.TryParse(GetSetting("PasswordExpiryDays", "90"), out int d) ? d : 90;
+            if (user.RequiresPasswordChange || (DateTime.UtcNow - user.LastPasswordChange).TotalDays > expiryDays)
+            {
+                HttpContext.Session.SetString("ForcePasswordChange", "true");
+                return RedirectToAction("Profile", new { forceChange = true });
+            }
  
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);
@@ -241,29 +278,9 @@ namespace ljp_itsolutions.Controllers
                 return View(model);
             }
 
-            // Dynamic Complexity Check
-            int minLen = int.TryParse(GetSetting("PasswordMinLength", "8"), out int l) ? l : 8;
-            bool reqNumbers = GetBoolSetting("RequireNumbers");
-            bool reqSpecial = GetBoolSetting("RequireSpecialChars");
-
-            if (model.NewPassword.Length < minLen)
+            if (!ValidatePasswordComplexity(model.NewPassword, user, out string error))
             {
-                ModelState.AddModelError(string.Empty, $"Password must be at least {minLen} characters long.");
-                return View(model);
-            }
-            if (!model.NewPassword.Any(char.IsUpper))
-            {
-                ModelState.AddModelError(string.Empty, "Password must contain at least one uppercase letter.");
-                return View(model);
-            }
-            if (reqNumbers && !model.NewPassword.Any(char.IsDigit))
-            {
-                ModelState.AddModelError(string.Empty, "Password must contain at least one number.");
-                return View(model);
-            }
-            if (reqSpecial && !model.NewPassword.Any(c => !char.IsLetterOrDigit(c)))
-            {
-                ModelState.AddModelError(string.Empty, "Password must contain at least one special character.");
+                ModelState.AddModelError(string.Empty, error);
                 return View(model);
             }
 
@@ -274,10 +291,72 @@ namespace ljp_itsolutions.Controllers
             user.LockoutEnd = null;
 
             await _db.SaveChangesAsync();
-            await LogAudit("Password Reset Success", $"User: {user.Username} (Manual Reset via Email)");
+            await LogSecurity("PasswordReset", $"Password reset success for user: {user.Username}", "Info", user.UserID);
 
             TempData["Message"] = "Success! Password has been updated.";
             return RedirectToAction("Login");
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        public async Task<IActionResult> VerifyMfa()
+        {
+            var userIdStr = HttpContext.Session.GetString("MfaUserId");
+            if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
+                return RedirectToAction("Login");
+
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null) return RedirectToAction("Login");
+
+            return View();
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyMfa(string code)
+        {
+            var userIdStr = HttpContext.Session.GetString("MfaUserId");
+            if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
+                return RedirectToAction("Login");
+
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null) return RedirectToAction("Login");
+
+            if (!_otpService.VerifyCode(user.TwoFactorSecret ?? "", code))
+            {
+                ModelState.AddModelError(string.Empty, "Invalid verification code.");
+                return View();
+            }
+
+            // Success - Sign In
+            var roleName = user.Role;
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
+                new Claim(ClaimTypes.Role, roleName)
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+            
+            // Clear temporary session
+            HttpContext.Session.Remove("MfaUserId");
+
+            // Set session variables
+            HttpContext.Session.SetString("UserRole", roleName);
+            HttpContext.Session.SetString("Username", user.Username);
+            HttpContext.Session.SetString("FullName", user.FullName);
+            HttpContext.Session.SetString("IsHighContrast", user.IsHighContrast.ToString().ToLower());
+            HttpContext.Session.SetString("FontSize", user.FontSize);
+            HttpContext.Session.SetString("ReduceMotion", user.ReduceMotion.ToString().ToLower());
+            HttpContext.Session.SetString("ProfilePictureUrl", user.ProfilePictureUrl ?? "");
+
+            await LogSecurity("MfaSuccess", $"User {user.Username} verified MFA successfully", "Info", user.UserID);
+
+            return RedirectToAction("Index", "Home");
         }
 
         [AllowAnonymous]
@@ -291,7 +370,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-            await LogAudit("User Logout");
+            await LogSecurity("Logout", "User logged out", "Info");
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login", "Account");
         }
@@ -358,10 +437,11 @@ namespace ljp_itsolutions.Controllers
             }
         }
 
-        user.FullName = fullName;
-        user.Email = email;
-        user.ProfilePictureUrl = profilePictureUrl;
-        await _db.SaveChangesAsync();
+            user.FullName = fullName;
+            user.Email = email;
+            user.ProfilePictureUrl = profilePictureUrl;
+            await _db.SaveChangesAsync();
+            await LogSecurity("ProfileUpdate", "User updated profile information", "Info", user.UserID);
 
         // Refresh session
         HttpContext.Session.SetString("FullName", user.FullName);
@@ -399,6 +479,72 @@ namespace ljp_itsolutions.Controllers
         }
 
         [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> SetupMfa()
+        {
+            var userId = GetCurrentUserId();
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            if (user.TwoFactorEnabled)
+            {
+                TempData["Error"] = "MFA is already enabled.";
+                return RedirectToAction(nameof(Profile));
+            }
+
+            var secret = _otpService.GenerateSecret();
+            var qrCodeData = _otpService.GetQrCodeData(user.Username, secret);
+
+            ViewBag.Secret = secret;
+            ViewBag.QrCodeData = qrCodeData;
+
+            return View();
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EnableMfa(string secret, string code)
+        {
+            var userId = GetCurrentUserId();
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            if (_otpService.VerifyCode(secret, code))
+            {
+                user.TwoFactorSecret = secret;
+                user.TwoFactorEnabled = true;
+                await _db.SaveChangesAsync();
+                await LogSecurity("MfaEnabled", "User enabled Two-Factor Authentication", "Info", user.UserID);
+                TempData["SuccessMessage"] = "Two-Factor Authentication has been enabled.";
+            }
+            else
+            {
+                TempData["Error"] = "Invalid verification code. Please try again.";
+            }
+
+            return RedirectToAction(nameof(Profile));
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DisableMfa()
+        {
+            var userId = GetCurrentUserId();
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            user.TwoFactorEnabled = false;
+            user.TwoFactorSecret = null;
+            await _db.SaveChangesAsync();
+            await LogSecurity("MfaDisabled", "User disabled Two-Factor Authentication", "Warning", user.UserID);
+
+            TempData["SuccessMessage"] = "Two-Factor Authentication has been disabled.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
@@ -426,42 +572,53 @@ namespace ljp_itsolutions.Controllers
             var verify = _hasher.VerifyHashedPassword(user, user.Password ?? "", model.CurrentPassword);
             if (verify == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
             {
+                await LogSecurity("PasswordChangeFailure", "Failed password change attempt: incorrect current password", "Warning", user.UserID);
                 TempData["Error"] = "Incorrect current password.";
                 return RedirectToAction(nameof(Profile));
             }
-            // Dynamic Complexity Check
-            int minLen = int.TryParse(GetSetting("PasswordMinLength", "8"), out int l) ? l : 8;
-            bool reqNumbers = GetBoolSetting("RequireNumbers");
-            bool reqSpecial = GetBoolSetting("RequireSpecialChars");
+            
+            if (!ValidatePasswordComplexity(model.NewPassword, user, out string error))
+            {
+                TempData["Error"] = error;
+                return RedirectToAction(nameof(Profile));
+            }
 
-            if (model.NewPassword.Length < minLen)
+            // Check Password History
+            var historyLimit = int.TryParse(GetSetting("PasswordHistoryLimit", "5"), out int h) ? h : 5;
+            var pastPasswords = await _db.UserPasswordHistories
+                .Where(h => h.UserID == user.UserID)
+                .OrderByDescending(h => h.CreatedAt)
+                .Take(historyLimit)
+                .ToListAsync();
+
+            foreach (var past in pastPasswords)
             {
-                TempData["Error"] = $"Password must be at least {minLen} characters long.";
-                return RedirectToAction(nameof(Profile));
+                if (_hasher.VerifyHashedPassword(user, past.PasswordHash, model.NewPassword) != Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
+                {
+                    TempData["Error"] = $"You cannot reuse any of your last {historyLimit} passwords.";
+                    return RedirectToAction(nameof(Profile));
+                }
             }
-            if (!model.NewPassword.Any(char.IsUpper))
+
+            // Save to history before updating
+            _db.UserPasswordHistories.Add(new UserPasswordHistory
             {
-                TempData["Error"] = "Password must contain at least one uppercase letter.";
-                return RedirectToAction(nameof(Profile));
-            }
-            if (reqNumbers && !model.NewPassword.Any(char.IsDigit))
-            {
-                TempData["Error"] = "Password must contain at least one number.";
-                return RedirectToAction(nameof(Profile));
-            }
-            if (reqSpecial && !model.NewPassword.Any(c => !char.IsLetterOrDigit(c)))
-            {
-                TempData["Error"] = "Password must contain at least one special character.";
-                return RedirectToAction(nameof(Profile));
-            }
+                UserID = user.UserID,
+                PasswordHash = user.Password ?? "",
+                CreatedAt = DateTime.UtcNow
+            });
 
             user.Password = _hasher.HashPassword(user, model.NewPassword);
+            user.LastPasswordChange = DateTime.UtcNow;
+            user.RequiresPasswordChange = false;
+            
             _db.Users.Update(user);
             var result = await _db.SaveChangesAsync();
 
             if (result > 0)
             {
-                await LogAudit("Self-Service Password Change", null, user.UserID);
+                HttpContext.Session.Remove("ForcePasswordChange");
+                await LogSecurity("PasswordChangeSuccess", "Self-service password change success", "Info", user.UserID);
                 TempData["SuccessMessage"] = "Password updated successfully.";
             }
             else
@@ -470,6 +627,45 @@ namespace ljp_itsolutions.Controllers
             }
 
             return RedirectToAction(nameof(Profile));
+        }
+
+        private bool ValidatePasswordComplexity(string password, User user, out string errorMessage)
+        {
+            int minLen = 16;
+            errorMessage = string.Empty;
+
+            if (password.Length < minLen)
+            {
+                errorMessage = $"Password must be at least {minLen} characters long.";
+                return false;
+            }
+            if (password.Contains(user.Username, StringComparison.OrdinalIgnoreCase))
+            {
+                errorMessage = "Password cannot contain your username.";
+                return false;
+            }
+            if (!password.Any(char.IsUpper))
+            {
+                errorMessage = "Password must contain at least one uppercase letter (A-Z).";
+                return false;
+            }
+            if (!password.Any(char.IsLower))
+            {
+                errorMessage = "Password must contain at least one lowercase letter (a-z).";
+                return false;
+            }
+            if (!password.Any(char.IsDigit))
+            {
+                errorMessage = "Password must contain at least one number (0-9).";
+                return false;
+            }
+            if (!password.Any(c => !char.IsLetterOrDigit(c)))
+            {
+                errorMessage = "Password must contain at least one special character (e.g., !, @, #, $).";
+                return false;
+            }
+
+            return true;
         }
 
         [Authorize]
@@ -517,6 +713,13 @@ namespace ljp_itsolutions.Controllers
             return Ok();
         }
 
-
+        private void PrepareLoginCaptcha()
+        {
+            var random = new Random();
+            int n1 = random.Next(1, 10);
+            int n2 = random.Next(1, 10);
+            HttpContext.Session.SetInt32("CaptchaAnswer", n1 + n2);
+            ViewBag.CaptchaChallenge = $"{n1} + {n2}";
+        }
     }
 }

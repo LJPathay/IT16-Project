@@ -44,8 +44,15 @@
 
     <div class="nav-item">
         <a class="nav-link d-flex align-items-center gap-3 @(IsActive("AuditLogs") ? "active" : "")" href="@Url.Action("AuditLogs", "Admin")">
-            <i class="fas fa-shield-alt opacity-75"></i>
-            <span>Audit Logs</span>
+            <i class="fas fa-history opacity-75"></i>
+            <span>Activity Logs</span>
+        </a>
+    </div>
+
+    <div class="nav-item">
+        <a class="nav-link d-flex align-items-center gap-3 @(IsActive("SecurityLogs") ? "active" : "")" href="@Url.Action("SecurityLogs", "Admin")">
+            <i class="fas fa-file-shield opacity-75"></i>
+            <span>Security Logs</span>
         </a>
     </div>
 </div>

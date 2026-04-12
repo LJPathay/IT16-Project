@@ -33,6 +33,26 @@ namespace ljp_itsolutions.Controllers
             catch { /* Fail silently */ }
         }
 
+        protected async Task LogSecurity(string eventType, string description, string severity = "Info", Guid? userId = null)
+        {
+            try
+            {
+                var securityLog = new SecurityLog
+                {
+                    EventType = eventType,
+                    Description = description,
+                    Severity = severity,
+                    Timestamp = DateTime.UtcNow,
+                    UserID = userId ?? GetCurrentUserId(),
+                    IpAddress = HttpContext?.Connection?.RemoteIpAddress?.ToString(),
+                    UserAgent = HttpContext?.Request?.Headers.UserAgent.ToString()
+                };
+                _db.SecurityLogs.Add(securityLog);
+                await _db.SaveChangesAsync();
+            }
+            catch { /* Fail silently */ }
+        }
+
         protected string GetSetting(string key, string defaultVal = "")
         {
             return _db.SystemSettings.FirstOrDefault(s => s.SettingKey == key)?.SettingValue ?? defaultVal;

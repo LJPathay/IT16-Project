@@ -793,7 +793,13 @@ namespace ljp_itsolutions.Services
             var auditLogs = await _db.AuditLogs
                 .Include(a => a.User)
                 .OrderByDescending(a => a.Timestamp)
-                .Take(10)
+                .Take(5)
+                .ToListAsync();
+
+            var securityLogs = await _db.SecurityLogs
+                .Include(s => s.User)
+                .OrderByDescending(s => s.Timestamp)
+                .Take(5)
                 .ToListAsync();
 
             var userCount = await _db.Users.CountAsync();
@@ -811,9 +817,8 @@ namespace ljp_itsolutions.Services
                 growth = 100;
             }
             
-            // Security Metrics
-            var failedLoginsRecent = await _db.AuditLogs.CountAsync(a => (a.Action.Contains("Failed login") || a.Action.Contains("Login Failed")) && a.Timestamp >= now.AddDays(-1));
-            var totalFailedLogins = await _db.AuditLogs.CountAsync(a => a.Action.Contains("Failed login") || a.Action.Contains("Login Failed"));
+            // Security Metrics - Pulling from SecurityLogs table
+            var failedLoginsRecent = await _db.SecurityLogs.CountAsync(s => s.EventType == "LoginFailure" && s.Timestamp >= now.AddDays(-1));
             var lockedOutUsersCount = await _db.Users.CountAsync(u => u.LockoutEnd != null && u.LockoutEnd > now);
 
             var securityAlerts = new List<string>();
@@ -829,6 +834,7 @@ namespace ljp_itsolutions.Services
             return new SuperAdminDashboardData
             {
                 AuditLogs = auditLogs,
+                SecurityLogs = securityLogs,
                 UserCount = userCount,
                 ActiveUsers = activeUsers,
                 FailedLoginsCount = failedLoginsRecent,

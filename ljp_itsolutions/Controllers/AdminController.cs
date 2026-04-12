@@ -128,7 +128,17 @@ namespace ljp_itsolutions.Controllers
             var logs = _db.AuditLogs
                 .Include(a => a.User)
                 .OrderByDescending(a => a.Timestamp)
-                .Take(100)
+                .Take(200)
+                .ToList();
+            return View(logs);
+        }
+
+        public IActionResult SecurityLogs()
+        {
+            var logs = _db.SecurityLogs
+                .Include(s => s.User)
+                .OrderByDescending(s => s.Timestamp)
+                .Take(200)
                 .ToList();
             return View(logs);
         }
@@ -203,26 +213,28 @@ namespace ljp_itsolutions.Controllers
 
             // Prevent creating a SuperAdmin from this endpoint
             if (user.Role == UserRoles.SuperAdmin)
+            {
+                await LogSecurity("AbnormalActivity", $"Admin {User.Identity?.Name} attempted to create a SuperAdmin", "Critical");
                 return Forbid("Admin cannot create a SuperAdmin account.");
+            }
+
+            var rawPassword = string.IsNullOrEmpty(user.Password) ? "Default123!@#$Initial" : user.Password;
+            if (!ValidatePasswordComplexity(rawPassword, user, out string error))
+            {
+                return BadRequest(error);
+            }
 
             user.UserID = Guid.NewGuid();
-            
-            if (!string.IsNullOrEmpty(user.Password))
-            {
-                user.Password = _hasher.HashPassword(user, user.Password);
-            }
-            else
-            {
-                user.Password = _hasher.HashPassword(user, "Default123!");
-            }
-
+            user.Password = _hasher.HashPassword(user, rawPassword);
             user.CreatedAt = DateTime.UtcNow;
+            user.LastPasswordChange = DateTime.UtcNow;
+            user.RequiresPasswordChange = true; // Force change on first login
             user.IsActive = true;
 
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
 
-            await LogAudit("Created User: " + user.Username, null, user.UserID);
+            await LogSecurity("UserCreated", "Created User: " + user.Username, "Info", user.UserID);
 
             return Ok();
         }
@@ -255,7 +267,7 @@ namespace ljp_itsolutions.Controllers
 
                 _db.Users.Update(existingUser);
                 await _db.SaveChangesAsync();
-                await LogAudit("Updated User: " + existingUser.Username, null, existingUser.UserID);
+                await LogSecurity("UserUpdated", "Updated User: " + existingUser.Username, "Info", existingUser.UserID);
 
                 return Ok();
             }
@@ -277,7 +289,7 @@ namespace ljp_itsolutions.Controllers
             user.IsActive = !user.IsActive;
             _db.Users.Update(user);
             await _db.SaveChangesAsync();
-            await LogAudit((user.IsActive ? "Restored" : "Archived") + " User: " + user.Username, null, user.UserID);
+            await LogSecurity("UserStatusToggled", (user.IsActive ? "Restored" : "Archived") + " User: " + user.Username, "Warning", user.UserID);
 
             return Ok();
         }
@@ -383,6 +395,45 @@ namespace ljp_itsolutions.Controllers
         {
             byte[] buffer = await _analyticsService.GenerateUsersCSVAsync();
             return File(buffer, "text/csv", $"LJP_User_Directory_{DateTime.Now:yyyyMMdd}.csv");
+        }
+
+        private bool ValidatePasswordComplexity(string password, User user, out string errorMessage)
+        {
+            int minLen = 16;
+            errorMessage = string.Empty;
+
+            if (password.Length < minLen)
+            {
+                errorMessage = $"Password must be at least {minLen} characters long.";
+                return false;
+            }
+            if (password.Contains(user.Username, StringComparison.OrdinalIgnoreCase))
+            {
+                errorMessage = "Password cannot contain the username.";
+                return false;
+            }
+            if (!password.Any(char.IsUpper))
+            {
+                errorMessage = "Password must contain at least one uppercase letter (A-Z).";
+                return false;
+            }
+            if (!password.Any(char.IsLower))
+            {
+                errorMessage = "Password must contain at least one lowercase letter (a-z).";
+                return false;
+            }
+            if (!password.Any(char.IsDigit))
+            {
+                errorMessage = "Password must contain at least one number (0-9).";
+                return false;
+            }
+            if (!password.Any(c => !char.IsLetterOrDigit(c)))
+            {
+                errorMessage = "Password must contain at least one special character.";
+                return false;
+            }
+
+            return true;
         }
     }
 }

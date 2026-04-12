@@ -1,0 +1,201 @@
+@model IEnumerable<ljp_itsolutions.Models.SecurityLog>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Security Events & Logs";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header with Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-primary text-white overflow-hidden position-relative">
+                <div class="card-body p-4 position-relative" style="z-index: 2;">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="avatar-sm rounded-circle bg-white bg-opacity-20 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                            <i class="fas fa-shield-alt fa-lg"></i>
+                        </div>
+                        <h6 class="mb-0 fw-bold">Total Security Events</h6>
+                    </div>
+                    <h2 class="mb-0 fw-bold">@Model.Count()</h2>
+                </div>
+                <div class="position-absolute" style="top: -10px; right: -10px; opacity: 0.1;">
+                    <i class="fas fa-shield-alt" style="font-size: 8rem;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-danger text-white overflow-hidden position-relative">
+                <div class="card-body p-4 position-relative" style="z-index: 2;">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="avatar-sm rounded-circle bg-white bg-opacity-20 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                            <i class="fas fa-exclamation-triangle fa-lg"></i>
+                        </div>
+                        <h6 class="mb-0 fw-bold">Critical Alerts</h6>
+                    </div>
+                    <h2 class="mb-0 fw-bold">@Model.Count(l => l.Severity == "Critical")</h2>
+                </div>
+                <div class="position-absolute" style="top: -10px; right: -10px; opacity: 0.1;">
+                    <i class="fas fa-radiation" style="font-size: 8rem;"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-warning text-dark overflow-hidden position-relative">
+                <div class="card-body p-4 position-relative" style="z-index: 2;">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="avatar-sm rounded-circle bg-dark bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                            <i class="fas fa-user-lock fa-lg"></i>
+                        </div>
+                        <h6 class="mb-0 fw-bold">Access Failures</h6>
+                    </div>
+                    <h2 class="mb-0 fw-bold">@Model.Count(l => l.EventType == "LoginFailure")</h2>
+                </div>
+                <div class="position-absolute" style="top: -10px; right: -10px; opacity: 0.1;">
+                    <i class="fas fa-lock" style="font-size: 8rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="row g-3 mb-4 align-items-center">
+        <div class="col-md-4">
+            <div class="input-group shadow-sm rounded-pill overflow-hidden border">
+                <span class="input-group-text bg-white border-0 ps-3">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input type="text" id="logSearch" class="form-control border-0 shadow-none ps-2 py-2" placeholder="Search security events...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select id="severityFilter" class="form-select shadow-sm rounded-pill border py-2">
+                <option value="">All Severities</option>
+                <option value="Info">Info</option>
+                <option value="Warning">Warning</option>
+                <option value="Critical">Critical</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+             <input type="date" id="dateFilter" class="form-control shadow-sm rounded-pill border py-2" title="Filter by date">
+        </div>
+        <div class="col-md-2 text-end">
+            <button id="resetFilters" class="btn btn-light border rounded-pill px-4 ms-auto">
+                Reset
+            </button>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0" id="securityTable">
+                    <thead class="bg-light bg-opacity-50 border-bottom">
+                        <tr>
+                            <th class="ps-4 py-3 text-uppercase x-small fw-bold text-muted">Level</th>
+                            <th class="py-3 text-uppercase x-small fw-bold text-muted">Timestamp</th>
+                            <th class="py-3 text-uppercase x-small fw-bold text-muted">Event Type</th>
+                            <th class="py-3 text-uppercase x-small fw-bold text-muted">Description</th>
+                            <th class="py-3 text-uppercase x-small fw-bold text-muted">User</th>
+                            <th class="pe-4 py-3 text-end text-uppercase x-small fw-bold text-muted">IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in Model)
+                        {
+                            var severityClass = log.Severity switch
+                            {
+                                "Critical" => "bg-danger",
+                                "Warning" => "bg-warning text-dark",
+                                _ => "bg-info"
+                            };
+                            
+                            <tr class="log-row" data-severity="@log.Severity" data-timestamp="@log.Timestamp.ToString("yyyy-MM-dd")">
+                                <td class="ps-4">
+                                    <span class="badge rounded-pill @severityClass px-3 py-1" style="font-size: 0.65rem;">@log.Severity?.ToUpper()</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold text-dark small">@log.Timestamp.ToString("MMM dd, yyyy")</span>
+                                        <span class="text-muted x-small">@log.Timestamp.ToString("HH:mm:ss")</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-dark small">@log.EventType</span>
+                                </td>
+                                <td>
+                                    <p class="small text-muted mb-0 description-text" style="max-width: 300px;">@log.Description</p>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                         <div class="avatar-xs rounded-circle bg-light d-flex align-items-center justify-content-center text-muted" style="width: 28px; height: 28px; font-size: 0.7rem;">
+                                             <i class="fas fa-user-shield"></i>
+                                         </div>
+                                         <span class="small fw-semibold text-dark">@(log.User?.Username ?? "Unknown")</span>
+                                     </div>
+                                 </td>
+                                <td class="pe-4 text-end">
+                                    <span class="small text-secondary font-monospace">@(log.IpAddress ?? "—")</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-file-shield fa-4x text-light mb-3"></i>
+                    <p class="text-muted">No security events recorded yet.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            function filterLogs() {
+                var searchTerm = $('#logSearch').val().toLowerCase();
+                var severityFilter = $('#severityFilter').val();
+                var dateFilter = $('#dateFilter').val();
+
+                $('.log-row').each(function() {
+                    var $row = $(this);
+                    var text = $row.find('.description-text').text().toLowerCase() + $row.find('.fw-bold').text().toLowerCase();
+                    var severity = $row.data('severity');
+                    var date = $row.data('timestamp');
+
+                    var matchesSearch = text.includes(searchTerm);
+                    var matchesSeverity = severityFilter === "" || severity === severityFilter;
+                    var matchesDate = dateFilter === "" || date === dateFilter;
+
+                    if (matchesSearch && matchesSeverity && matchesDate) {
+                        $row.show();
+                    } else {
+                        $row.hide();
+                    }
+                });
+            }
+
+            $('#logSearch').on('keyup', filterLogs);
+            $('#severityFilter, #dateFilter').on('change', filterLogs);
+            
+            $('#resetFilters').click(function() {
+                $('#logSearch').val('');
+                $('#severityFilter').val('');
+                $('#dateFilter').val('');
+                $('.log-row').show();
+            });
+        });
+    </script>
+}
+
+<style>
+    .x-small { font-size: 0.75rem; }
+    .bg-info { background-color: #36b9cc !important; color: white; }
+    .bg-success-soft { background-color: #e8f5e9; color: #2e7d32; }
+    .bg-warning-soft { background-color: #fff8e1; color: #f57f17; }
+    .bg-danger-soft { background-color: #ffebee; color: #c62828; }
+</style>

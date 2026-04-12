@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ljp_itsolutions.Data;
 
@@ -11,9 +12,11 @@ using ljp_itsolutions.Data;
 namespace ljp_itsolutions.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260412035818_AddAdvancedSecurityFeatures")]
+    partial class AddAdvancedSecurityFeatures
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -954,46 +957,6 @@ namespace ljp_itsolutions.Migrations
                     b.ToTable("RewardRedemptions");
                 });
 
-            modelBuilder.Entity("ljp_itsolutions.Models.SecurityLog", b =>
-                {
-                    b.Property<int>("SecurityID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SecurityID"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Severity")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserAgent")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<Guid?>("UserID")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("SecurityID");
-
-                    b.HasIndex("UserID");
-
-                    b.ToTable("SecurityLogs");
-                });
-
             modelBuilder.Entity("ljp_itsolutions.Models.SystemSetting", b =>
                 {
                     b.Property<string>("SettingKey")
@@ -1096,13 +1059,13 @@ namespace ljp_itsolutions.Migrations
                         {
                             UserID = new Guid("4f7b6d1a-5b6c-4d8e-a9f2-0a1b2c3d4e5f"),
                             AccessFailedCount = 0,
-                            CreatedAt = new DateTime(2026, 4, 12, 12, 23, 51, 81, DateTimeKind.Local).AddTicks(2089),
+                            CreatedAt = new DateTime(2026, 4, 12, 11, 58, 17, 204, DateTimeKind.Local).AddTicks(2622),
                             Email = "admin@coffee.local",
                             FontSize = "default",
                             FullName = "System Admin",
                             IsActive = true,
                             IsHighContrast = false,
-                            LastPasswordChange = new DateTime(2026, 4, 12, 4, 23, 51, 81, DateTimeKind.Utc).AddTicks(2104),
+                            LastPasswordChange = new DateTime(2026, 4, 12, 3, 58, 17, 204, DateTimeKind.Utc).AddTicks(2632),
                             ReduceMotion = false,
                             RequiresPasswordChange = false,
                             Role = "Admin",
@@ -1292,15 +1255,6 @@ namespace ljp_itsolutions.Migrations
                         .IsRequired();
 
                     b.Navigation("Customer");
-                });
-
-            modelBuilder.Entity("ljp_itsolutions.Models.SecurityLog", b =>
-                {
-                    b.HasOne("ljp_itsolutions.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserID");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ljp_itsolutions.Models.UserPasswordHistory", b =>

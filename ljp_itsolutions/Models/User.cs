@@ -43,8 +43,29 @@ namespace ljp_itsolutions.Models
         public string? PasswordResetToken { get; set; }
         public DateTime? ResetTokenExpiry { get; set; }
 
+        // Advanced Security
+        public DateTime LastPasswordChange { get; set; } = DateTime.UtcNow;
+        public bool TwoFactorEnabled { get; set; } = false;
+        public string? TwoFactorSecret { get; set; }
+        public bool RequiresPasswordChange { get; set; } = false;
+
         // Legacy compatibility
-        [NotMapped]
+    [NotMapped]
         public Guid Id { get => UserID; set => UserID = value; }
+    }
+
+    public class UserPasswordHistory
+    {
+        [Key]
+        public int Id { get; set; }
+
+        public Guid UserID { get; set; }
+        [ForeignKey("UserID")]
+        public virtual User User { get; set; } = null!;
+
+        [Required]
+        public string PasswordHash { get; set; } = string.Empty;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

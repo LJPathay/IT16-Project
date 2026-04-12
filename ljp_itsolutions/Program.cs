@@ -57,6 +57,7 @@ builder.Services.AddScoped<ljp_itsolutions.Services.IReceiptService, ljp_itsolut
 builder.Services.AddScoped<ljp_itsolutions.Services.IInventoryService, ljp_itsolutions.Services.InventoryService>();
 builder.Services.AddScoped<ljp_itsolutions.Services.IAnalyticsService, ljp_itsolutions.Services.AnalyticsService>();
 builder.Services.AddScoped<ljp_itsolutions.Services.IOrderService, ljp_itsolutions.Services.OrderService>();
+builder.Services.AddScoped<ljp_itsolutions.Services.IOtpService, ljp_itsolutions.Services.OtpService>();
 builder.Services.AddHostedService<ljp_itsolutions.Services.OrderCleanupService>();
 builder.Services.Configure<ljp_itsolutions.Services.CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
@@ -65,9 +66,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/AccessDenied";
-        options.Cookie.SameSite = SameSiteMode.Lax; 
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; 
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Strict; 
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; 
         options.Cookie.IsEssential = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
         options.Events = new CookieAuthenticationEvents
         {
             OnRedirectToLogin = context =>
@@ -136,7 +140,10 @@ app.Use(async (context, next) =>
 {
     context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
     context.Response.Headers.Append("X-Frame-Options", "DENY");
-    context.Response.Headers.Append("Content-Security-Policy", "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data:;");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()");
+    context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://chart.googleapis.com;");
     await next();
 });
 
