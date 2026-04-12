@@ -5,10 +5,12 @@
 }
 
 <style>
-    /* Ensure reCAPTCHA container has space even before it loads */
+    /* Force reCAPTCHA visibility */
     .g-recaptcha {
-        min-height: 78px;
-        display: block;
+        min-height: 78px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 </style>
 
@@ -73,11 +75,13 @@
                         <a class="forgot-link" asp-controller="Account" asp-action="ForgotPassword">Forgot password?</a>
                     </div>
 
-                    <div class="form-group mb-4">
-                        <div class="g-recaptcha" data-sitekey="@ViewBag.SiteKey"></div>
-                        <p class="text-muted mt-2 mb-0" style="font-size: 0.65rem;">Cloud-based bot protection powered by Google.</p>
+                    <div class="form-group mb-4 d-flex justify-content-center">
+                        <div class="g-recaptcha" data-sitekey="6LdqQLMsAAAAACF9BbYke8O2LLRfZeu759gW62rg"></div>
                     </div>
-
+                    <p class="text-muted mt-2 mb-0 text-center" style="font-size: 0.65rem;">
+                        Cloud-based bot protection powered by Google.
+                    </p>
+                    
                     <button type="submit" class="btn-signin">Sign In</button>
                 </form>
             </div>
@@ -89,7 +93,6 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script>
         function togglePassword(inputId, btn) {
             const input = document.getElementById(inputId);
@@ -105,4 +108,6 @@
             }
         }
     </script>
+    @* Simplest loading method at the very end of the view *@
+    <script src="https://www.google.com/recaptcha/api.js"></script>
 }

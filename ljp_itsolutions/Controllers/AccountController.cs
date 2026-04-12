@@ -60,7 +60,6 @@ namespace ljp_itsolutions.Controllers
             }
 
             ViewData["ReturnUrl"] = returnUrl;
-            ViewBag.SiteKey = _config["ReCaptcha:SiteKey"];
             return View(new LoginViewModel());
         }
 
@@ -515,7 +514,7 @@ namespace ljp_itsolutions.Controllers
             }
             else
             {
-                TempData["Error"] = "Invalid verification code. Please try again.";
+                TempData["Error"] = "Verification could not be completed. Please contact your administrator.";
             }
 
             return RedirectToAction(nameof(Profile));
@@ -618,7 +617,7 @@ namespace ljp_itsolutions.Controllers
             }
             else
             {
-                TempData["Error"] = "Failed to update password in database.";
+                TempData["Error"] = "Account update failed. Please contact your administrator.";
             }
 
             return RedirectToAction(nameof(Profile));

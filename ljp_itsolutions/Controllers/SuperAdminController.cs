@@ -46,6 +46,9 @@ namespace ljp_itsolutions.Controllers
 
             var users = query.OrderByDescending(u => u.CreatedAt).ToList();
             
+            // SECURITY: Log that an admin is viewing PII/sensitive user data
+            await LogAudit("Accessed protected personnel list (PII View)");
+            
             // Excluded Superadmin role in adding a user in superadmin as an superadmin can add another superadmin???
             ViewBag.Roles = new List<string> { 
                 UserRoles.Admin, 
@@ -80,7 +83,7 @@ namespace ljp_itsolutions.Controllers
             var rawPassword = string.IsNullOrEmpty(user.Password) ? "Default123!@#$Initial" : user.Password;
             if (!ValidatePasswordComplexity(rawPassword, user, out string error))
             {
-                return BadRequest(error);
+                return BadRequest("Password does not meet the 16-character complexity requirements. Please follow the policy guidelines.");
             }
 
             user.UserID = Guid.NewGuid();
@@ -91,6 +94,15 @@ namespace ljp_itsolutions.Controllers
             user.IsActive = true;
 
             _db.Users.Add(user);
+            
+            // Record initial password in history to prevent immediate reuse after forced change
+            _db.UserPasswordHistories.Add(new UserPasswordHistory
+            {
+                UserID = user.UserID,
+                PasswordHash = user.Password,
+                CreatedAt = DateTime.UtcNow
+            });
+
             await _db.SaveChangesAsync();
 
             await LogSecurity("UserCreated", $"Created user: {user.Username} as {user.Role}", "Info", user.UserID);
@@ -228,7 +240,9 @@ namespace ljp_itsolutions.Controllers
                 await _db.SaveChangesAsync();
                 await LogAudit("Updated system settings");
                 TempData["SuccessMessage"] = "System configuration updated successfully.";
-            } catch (Exception ex) { TempData["ErrorMessage"] = ex.Message; }
+            } catch (Exception) { 
+                TempData["ErrorMessage"] = "A system error occurred while updating settings. Please contact your administrator."; 
+            }
             return RedirectToAction("SystemSettings");
         }        
 
@@ -263,7 +277,9 @@ namespace ljp_itsolutions.Controllers
                 await System.IO.File.WriteAllTextAsync(fullPath, json);
                 await LogAudit("Created system backup");
                 TempData["Success"] = "Backup created.";
-            } catch (Exception ex) { TempData["Error"] = ex.Message; }
+            } catch (Exception) { 
+                TempData["Error"] = "Backup generation failed. Please contact your administrator."; 
+            }
             return RedirectToAction("Backups");
         }
 
