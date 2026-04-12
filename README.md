@@ -1,54 +1,89 @@
-## COFFEE SHOP ERP SYSTEM
-# This project is developed for the subject IT15 – Integrative Programming and Technologies.
-# LJP IT Solutions: A Web-Based Coffee Shop ERP System with Customer Engagement and Marketing Analytics.
+# ☕ LJP IT Solutions: Coffee Shop ERP System
+### *Integrative Programming and Technologies (IT16) - Capstone Project*
 
-# The system is designed to manage coffee shop operations including:
-  - User and role management
-  - Product and category management
-  - Order and payment processing
-  - Inventory monitoring
-  - Promotions and loyalty system
-  - Marketing analytics and reports
-  - Audit logging and archiving
+[![Security Level](https://img.shields.io/badge/Security-Enterprise%20Grade-brightgreen)](https://github.com/LJPathay/IT16-Project)
+[![Language](https://img.shields.io/badge/Stack-ASP.NET%20Core%20%7C%20EF%20Core%20%7C%20SQL%20Server-blue)](https://github.com/LJPathay/IT16-Project)
 
-The system follows role-based access control to ensure secure and authorized usage.
+**LJP IT Solutions** is a robust, web-based Enterprise Resource Planning (ERP) system designed specifically for the modern coffee shop industry. It integrates real-time inventory management, secure financial transactions, and advanced marketing analytics into a unified, high-security dashboard.
 
-# HOW TO USE
+---
 
-git clone https://github.com/LJPathay/ERP_LJP_ITSOLUTIONS.git
-cd ljp_itsolutions
-create appsetings.json and appsettings.Development.json
+## 🛡️ Security Architecture & Hardening
+*This system has been hardened following industry best practices for data protection and access control.*
 
-add connection string to appsettings.json
-      e.g
-      "ConnectionStrings": {
-        "DefaultConnection": "input your connection string here"
-      }
-add cloudinary api and web name to appsettings.json
-      e.g
-      "CloudinarySettings": {
-        "CloudName": "input your cloud name here",
-        "ApiKey": "input your api key here",
-        "ApiSecret": "input your api secret here"
-      }
-add paymongo secret API and webhook api to appsettings.json
-      e.g
-      "PaymongoSettings": {
-        "SecretKey": "input your secret key here",
-        "WebhookSecret": "input your webhook secret here"
-      }
+### 🔐 1. Identity & Access Management (IAM)
+- **Role-Based Access Control (RBAC)**: Distinct permissions for SuperAdmin, Admin, Manager, Cashier, and Marketing Staff.
+- **Advanced Multi-Factor Authentication (MFA)**: Built-in TOTP verification (Google Authenticator/Microsoft Authenticator) for sensitive accounts.
+- **Strict Password Policy**: Mandatory 16-character minimum complexity (Upper, Lower, Numeric, Special) with **Password History** to prevent reuse.
+- **Session Protection**: 20-minute inactivity timeout with Session Fixation prevention.
 
-dotnet ef database update --project ljp_itsolutions.csproj
+### 🤖 2. Perimeter Defense
+- **Google reCAPTCHA v2**: Integrated into the login gateway to mitigate brute-force and dictionary attacks.
+- **Rate Limiting**: Intelligent IP-based throttling on all authentication endpoints.
+- **Secure Headers**: Hardened **Content Security Policy (CSP)**, X-Frame-Options (Click-jacking protection), and HSTS.
+
+### 🕵️ 3. Auditing & Privacy
+- **Real-Time Security Monitoring**: Automated logging of all security events (login attempts, PII access, role changes).
+- **Visitor Tracking**: Comprehensive audit trail capturing IP addresses and User-Agents for accountability.
+- **Data Masking (Privacy-by-Design)**: Redaction of sensitive PII (Emails, IP segments) in administrative dashboards to comply with privacy standards.
+
+---
+
+## 🚀 Core Features
+- **POS & Operations**: Secure payment processing with **PayMongo** integration and digitized receipting.
+- **Inventory Management**: Real-time stock alerts and ingredient-level recipe tracking.
+- **Marketing Analytics**: Data-driven insights for customer engagement and campaign monitoring.
+- **System Maintenance**: Built-in automated backups and system-wide setting configuration.
+
+---
+
+## 🛠️ Installation & Setup
+
+### Prerequisites
+- .NET 8.0 SDK / SQL Server
+- Cloudinary & PayMongo API Keys
+
+### Configuration
+Update your `appsettings.json` with your private credentials:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "YOUR_SQL_SERVER_CONNECTION_STRING"
+  },
+  "CloudinarySettings": {
+    "CloudName": "...", "ApiKey": "...", "ApiSecret": "..."
+  },
+  "PayMongo": {
+    "SecretKey": "...", "WebhookSecretKey": "..."
+  },
+  "ReCaptcha": {
+    "SecretKey": "..."
+  }
+}
+```
+
+### Deployment
+```bash
+# Clone the repository
+git clone https://github.com/LJPathay/IT16-Project.git
+
+# Initialize Database
+dotnet ef database update
+
+# Run Application
 dotnet run
+```
 
-# ROLES
- - Super Admin
- - Admin
- - Manager
- - Cashier
- - Marketing Staff
+---
 
- 
+## 📁 Submission Details
+> [!IMPORTANT]
+> **Project Defense Status**: Phase 3 Final Integration (Security Hardened)
+
+**Prepared by:** Lebron James Pathay  
+**Course & Section:** IT16 -- INFORMATION ASSURANCE AND SECURITY 1
+**Subject:**  IT16  
 
 
-
+© 2026 LJP IT SOLUTIONS. All Rights Reserved.
