@@ -22,14 +22,14 @@ $(document).ready(function () {
 
     // Close sidebar on link click (for mobile)
     $sidebar.find('.nav-link').on('click', function () {
-        if ($(window).width() < 992) {
+        if ($(globalThis).width() < 992) {
             toggleSidebar();
         }
     });
 
     // Handle Window Resize
-    $(window).on('resize', function () {
-        if ($(window).width() >= 992) {
+    $(globalThis).on('resize', function () {
+        if ($(globalThis).width() >= 992) {
             $sidebar.removeClass('show');
             $overlay.removeClass('show');
             $('body').removeClass('overflow-hidden');
@@ -37,9 +37,9 @@ $(document).ready(function () {
     });
 
     // Initialize Tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
+    const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
     // Data Tables search styling

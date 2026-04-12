@@ -16,6 +16,13 @@ namespace ljp_itsolutions.Models
             public const string Products = "Products";
             public const string Transactions = "Transactions";
             public const string ShiftManagement = "ShiftManagement";
+            public const string Users = "Users";
+            public const string SystemSettings = "SystemSettings";
+            public const string Reports_Cashier = "Reports_Cashier";
+            public const string InventoryOverview = "InventoryOverview";
+            public const string Backups = "Backups";
+            public const string AuditLogs = "AuditLogs";
+            public const string SecurityLogs = "SecurityLogs";
         }
 
         public static class SessionKeys
@@ -38,6 +45,7 @@ namespace ljp_itsolutions.Models
             public const string Manager = "Manager";
             public const string Marketing = "Marketing";
             public const string POS = "Pos";
+            public const string Cashier = "Cashier";
         }
     }
 }

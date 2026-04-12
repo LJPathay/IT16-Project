@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ljp_itsolutions.Services;
+using ljp_itsolutions.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
@@ -25,7 +26,7 @@ namespace ljp_itsolutions.Controllers
             if (currentShift == null)
             {
                 TempData[AppConstants.SessionKeys.ErrorMessage] = "No open shift found. Please start a shift first.";
-                return RedirectToAction("ShiftManagement", "Cashier");
+                return RedirectToAction(AppConstants.Actions.ShiftManagement, AppConstants.Controllers.Cashier);
             }
 
             // Content Pre-loading. 

@@ -17,15 +17,13 @@ namespace ljp_itsolutions.Controllers
         private readonly ApplicationDbContext _db;
         private readonly ILogger<PayMongoWebhookController> _logger;
         private readonly IConfiguration _configuration;
-        private readonly IReceiptService _receiptService;
         private readonly IServiceScopeFactory _scopeFactory;
 
-        public PayMongoWebhookController(ApplicationDbContext db, ILogger<PayMongoWebhookController> logger, IConfiguration configuration, IReceiptService receiptService, IServiceScopeFactory scopeFactory)
+        public PayMongoWebhookController(ApplicationDbContext db, ILogger<PayMongoWebhookController> logger, IConfiguration configuration, IServiceScopeFactory scopeFactory)
         {
             _db = db;
             _logger = logger;
             _configuration = configuration;
-            _receiptService = receiptService;
             _scopeFactory = scopeFactory;
         }
 
@@ -42,13 +40,10 @@ namespace ljp_itsolutions.Controllers
             var json = Encoding.UTF8.GetString(requestBodyBytes);
 
             // Verify Signature
-            if (!string.IsNullOrEmpty(signatureHeader) && !string.IsNullOrEmpty(webhookSecret))
+            if (!string.IsNullOrEmpty(signatureHeader) && !string.IsNullOrEmpty(webhookSecret) && !VerifySignature(requestBodyBytes, signatureHeader, webhookSecret))
             {
-                if (!VerifySignature(requestBodyBytes, signatureHeader, webhookSecret))
-                {
-                    _logger.LogWarning("PayMongo Webhook Signature Verification Failed!");
-                    return BadRequest("Invalid Signature");
-                }
+                _logger.LogWarning("PayMongo Webhook Signature Verification Failed!");
+                return BadRequest("Invalid Signature");
             }
 
             try
@@ -73,12 +68,6 @@ namespace ljp_itsolutions.Controllers
             }
         }
 
-        private async Task ProcessPaidEvent(JsonDocument root)
-        {
-            // JsonDocument from outer scope might be disposed, but we're calling this within scope.
-            // Using RootElement because JsonDocument.Parse returns a disposable.
-            // We'll pass the root element instead for clarity.
-        }
 
         // Overload for RootElement
         private async Task ProcessPaidEvent(JsonElement root)
@@ -114,7 +103,7 @@ namespace ljp_itsolutions.Controllers
             }
         }
 
-        private string? TryGetExternalReference(JsonElement attributes)
+        private static string? TryGetExternalReference(JsonElement attributes)
         {
             if (attributes.TryGetProperty("external_reference", out var refProperty) && refProperty.ValueKind != JsonValueKind.Null)
             {
@@ -188,7 +177,7 @@ namespace ljp_itsolutions.Controllers
             }
         }
 
-        private bool VerifySignature(byte[] payloadBytes, string signatureHeader, string secret)
+        private static bool VerifySignature(byte[] payloadBytes, string signatureHeader, string secret)
         {
             try
             {
@@ -214,7 +203,7 @@ namespace ljp_itsolutions.Controllers
 
                 using var hmac = new HMACSHA256(keyBytes);
                 var hashBytes = hmac.ComputeHash(baseBytes);
-                var hashString = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+                var hashString = Convert.ToHexStringLower(hashBytes);
 
                 return hashString == signatureToCompare;
             }

@@ -108,8 +108,8 @@
                                         <span class="text-xs fw-medium text-muted">@(exp.User?.FullName?.Split(' ')[0] ?? "System")</span>
                                     </td>
                                     <td><span class="status-badge warning text-xs">@exp.Category</span></td>
-                                    <td><span class="text-muted text-xs">@exp.ExpenseDate.ToString("MMM dd")</span></td>
-                                    <td class="text-end fw-bold text-danger">-₱@exp.Amount.ToString("N2")</td>
+                                    <td><span class="text-muted text-xs">@(exp.ExpenseDate?.ToString("MMM dd") ?? "N/A")</span></td>
+                                    <td class="text-end fw-bold text-danger">-₱@(exp.Amount?.ToString("N2") ?? "0.00")</td>
                                     <td class="text-end pe-4">
                                         <div class="d-flex justify-content-end gap-1">
                                             <button class="btn btn-sm btn-light border-0 rounded-circle edit-expense-btn" title="Edit"
@@ -118,7 +118,7 @@
                                                     data-desc="@exp.Description"
                                                     data-cat="@exp.Category"
                                                     data-amount="@exp.Amount"
-                                                    data-date="@exp.ExpenseDate.ToString("yyyy-MM-dd")">
+                                                    data-date="@(exp.ExpenseDate?.ToString("yyyy-MM-dd") ?? "")">
                                                 <i class="fas fa-edit text-primary"></i>
                                             </button>
                                             <form asp-action="DeleteExpense" method="post" onsubmit="return confirm('Remove this expense record?');" class="d-inline">

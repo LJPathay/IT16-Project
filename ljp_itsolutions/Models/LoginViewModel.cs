@@ -14,7 +14,7 @@ namespace ljp_itsolutions.Models
         public string Password { get; set; } = string.Empty;
 
         [Display(Name = "Remember me")]
-        public bool RememberMe { get; set; }
+        public bool? RememberMe { get; set; }
 
         [FromForm(Name = "g-recaptcha-response")]
         public string? RecaptchaResponse { get; set; }

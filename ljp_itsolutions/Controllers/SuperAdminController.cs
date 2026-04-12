@@ -144,15 +144,15 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ArchiveUser(string id)
         {
-            if (!Guid.TryParse(id, out var guid)) return RedirectToAction("Users");
+            if (!Guid.TryParse(id, out var guid)) return RedirectToAction(AppConstants.Actions.Users);
             
             var user = await _db.Users.FindAsync(guid);
             if (user != null)
             {
                 if (user.Role == UserRoles.SuperAdmin)
                 {
-                    TempData["Error"] = "SuperAdmin accounts cannot be archived.";
-                    return RedirectToAction("Users");
+                    TempData[AppConstants.SessionKeys.ErrorMessage] = "SuperAdmin accounts cannot be archived.";
+                    return RedirectToAction(AppConstants.Actions.Users);
                 }
 
                 var archivedUser = new ArchivedUser
@@ -171,16 +171,16 @@ namespace ljp_itsolutions.Controllers
                 
                 await _db.SaveChangesAsync();
                 await LogSecurity("UserArchived", $"Archived user: {user.Username}", "Warning", user.UserID);
-                TempData["Success"] = "User moved to archives successfully.";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = "User moved to archives successfully.";
             }
-            return RedirectToAction("Users");
+            return RedirectToAction(AppConstants.Actions.Users);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RestoreUser(string id)
         {
-            if (!Guid.TryParse(id, out var guid)) return RedirectToAction("Users");
+            if (!Guid.TryParse(id, out var guid)) return RedirectToAction(AppConstants.Actions.Users);
             var user = await _db.Users.FindAsync(guid);
             if (user != null)
             {
@@ -189,9 +189,9 @@ namespace ljp_itsolutions.Controllers
                 user.LockoutEnd = null;
                 await _db.SaveChangesAsync();
                 await LogSecurity("UserRestored", $"Restored user: {user.Username}", "Info", user.UserID);
-                TempData["Success"] = "User restored successfully.";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = "User restored successfully.";
             }
-            return RedirectToAction("Users", new { showArchived = true });
+            return RedirectToAction(AppConstants.Actions.Users, new { showArchived = true });
         }
 
         // --- Audit Logs ---
@@ -244,7 +244,10 @@ namespace ljp_itsolutions.Controllers
 
         private static string GetSettingValueFromForm(IFormCollection form, string key, HashSet<string> toggleKeys)
         {
-            if (!form.ContainsKey(key)) return toggleKeys.Contains(key) ? "false" : "false";
+            if (!form.ContainsKey(key))
+            {
+                return toggleKeys.Contains(key) ? "false" : string.Empty;
+            }
             string rawValue = form[key].ToString();
             if (rawValue == "on" || rawValue == "true") return "true";
             return rawValue;
@@ -301,11 +304,11 @@ namespace ljp_itsolutions.Controllers
                 var json = JsonSerializer.Serialize(backupData, new JsonSerializerOptions { WriteIndented = true, ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles });
                 await System.IO.File.WriteAllTextAsync(fullPath, json);
                 await LogAudit("Created system backup");
-                TempData["Success"] = "Backup created.";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = "Backup created.";
             } catch (Exception) { 
-                TempData["Error"] = "Backup generation failed. Please contact your administrator."; 
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "Backup generation failed. Please contact your administrator."; 
             }
-            return RedirectToAction("Backups");
+            return RedirectToAction(AppConstants.Actions.Backups);
         }
 
         [HttpGet]
@@ -329,9 +332,9 @@ namespace ljp_itsolutions.Controllers
             {
                 System.IO.File.Delete(path);
                 await LogAudit($"Deleted backup snapshot: {fileName}");
-                TempData["Success"] = "Snapshot deleted successfully.";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = "Snapshot deleted successfully.";
             }
-            return RedirectToAction("Backups");
+            return RedirectToAction(AppConstants.Actions.Backups);
         }
         // --- Security Logs ---
         public IActionResult SecurityLogs()

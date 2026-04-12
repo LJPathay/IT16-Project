@@ -35,9 +35,9 @@ namespace ljp_itsolutions.Controllers
 
         public class RewardRequest
         {
-            public int CustomerId { get; set; }
-            public int PointsToDeduct { get; set; }
-            public decimal DiscountValue { get; set; }
+            public int? CustomerId { get; set; }
+            public int? PointsToDeduct { get; set; }
+            public decimal? DiscountValue { get; set; }
             public string RewardName { get; set; } = string.Empty;
         }
 
@@ -45,11 +45,14 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> GenerateReward([FromBody] RewardRequest req)
         {
-            var customer = await _db.Customers.FindAsync(req.CustomerId);
+            if (!ModelState.IsValid || req.CustomerId == null)
+                return BadRequest("Invalid request.");
+
+            var customer = await _db.Customers.FindAsync(req.CustomerId.Value);
             if (customer == null) return NotFound();
 
-            var pointsToDeduct = req.PointsToDeduct > 0 ? req.PointsToDeduct : 10;
-            var discountValue = req.DiscountValue > 0 ? req.DiscountValue : 15;
+            var pointsToDeduct = req.PointsToDeduct > 0 ? req.PointsToDeduct.Value : 10;
+            var discountValue = req.DiscountValue > 0 ? req.DiscountValue.Value : 15;
             var rewardName = !string.IsNullOrEmpty(req.RewardName) ? req.RewardName : "15% Loyalty Reward";
 
             if (customer.Points < pointsToDeduct)
@@ -167,7 +170,7 @@ namespace ljp_itsolutions.Controllers
                 await _db.SaveChangesAsync();
                 await LogAudit($"Created Campaign: {promotion.PromotionName}");
                 
-                TempData["SuccessMessage"] = $"Campaign '{promotion.PromotionName}' created and submitted for manager approval.";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = $"Campaign '{promotion.PromotionName}' created and submitted for manager approval.";
                 return RedirectToAction(nameof(Promotions));
             }
             return View(promotion);
@@ -177,6 +180,8 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditCampaign(Promotion promotion)
         {
+            if (!ModelState.IsValid) return View(promotion);
+
             var existing = await _db.Promotions.FindAsync(promotion.PromotionID);
             if (existing == null) return NotFound();
 
@@ -208,7 +213,7 @@ namespace ljp_itsolutions.Controllers
 
             await _db.SaveChangesAsync();
             await LogAudit($"Edited Campaign: {promotion.PromotionName}");
-            TempData["SuccessMessage"] = "Campaign updated and resubmitted for approval.";
+            TempData[AppConstants.SessionKeys.SuccessMessage] = "Campaign updated and resubmitted for approval.";
             return RedirectToAction(nameof(Promotions));
         }
 
@@ -223,7 +228,7 @@ namespace ljp_itsolutions.Controllers
                 _db.Promotions.Remove(promotion);
                 await _db.SaveChangesAsync();
                 await LogAudit($"Deleted Campaign: {promoName}");
-                TempData["SuccessMessage"] = "Campaign deleted successfully.";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = "Campaign deleted successfully.";
             }
             return RedirectToAction(nameof(Promotions));
         }
@@ -290,7 +295,7 @@ namespace ljp_itsolutions.Controllers
                 _db.Customers.Add(customer);
                 await _db.SaveChangesAsync();
                 await LogAudit($"Enrolled Customer: {customer.FullName}");
-                TempData["SuccessMessage"] = "Customer added successfully.";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = "Customer added successfully.";
             }
             return RedirectToAction(nameof(Customers));
         }
@@ -299,6 +304,8 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditCustomer(Customer customer)
         {
+            if (!ModelState.IsValid) return RedirectToAction(nameof(Customers));
+
             var existing = await _db.Customers.FindAsync(customer.CustomerID);
             if (existing == null) return NotFound();
 
@@ -314,7 +321,7 @@ namespace ljp_itsolutions.Controllers
 
             await _db.SaveChangesAsync();
             await LogAudit($"Edited Customer: {customer.FullName}");
-            TempData["SuccessMessage"] = "Customer updated successfully.";
+            TempData[AppConstants.SessionKeys.SuccessMessage] = "Customer updated successfully.";
             return RedirectToAction(nameof(Customers));
         }
 
@@ -325,16 +332,16 @@ namespace ljp_itsolutions.Controllers
             // Only Admins or SuperAdmins can delete customers
             if (!User.IsInRole("Admin") && !User.IsInRole("SuperAdmin"))
             {
-                TempData["ErrorMessage"] = "Unauthorized. Only administrators can remove customer profiles.";
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "Unauthorized. Only administrators can remove customer profiles.";
                 return RedirectToAction(nameof(Customers));
             }
 
             var customer = await _db.Customers.Include(c => c.Orders).FirstOrDefaultAsync(c => c.CustomerID == id);
             if (customer == null) return NotFound();
 
-            if (customer.Orders.Any())
+            if (customer.Orders.Count > 0)
             {
-                TempData["ErrorMessage"] = "Cannot delete customer with existing order history. Consider archiving or keeping the record for audit purposes.";
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "Cannot delete customer with existing order history. Consider archiving or keeping the record for audit purposes.";
                 return RedirectToAction(nameof(Customers));
             }
 
@@ -342,7 +349,7 @@ namespace ljp_itsolutions.Controllers
             _db.Customers.Remove(customer);
             await _db.SaveChangesAsync();
             await LogAudit($"Deleted Customer: {custName}");
-            TempData["SuccessMessage"] = "Customer removed successfully.";
+            TempData[AppConstants.SessionKeys.SuccessMessage] = "Customer removed successfully.";
             
             return RedirectToAction(nameof(Customers));
         }
@@ -399,7 +406,7 @@ namespace ljp_itsolutions.Controllers
 
             // Algorithm: Time-Series Aggregation Algorithm (Revenue Velocity)
             var viewModelList = orders
-                .GroupBy(o => type == "year" ? new DateTime(o.OrderDate.Year, o.OrderDate.Month, 1) : o.OrderDate.Date)
+                .GroupBy(o => type == "year" ? new DateTime(o.OrderDate.Year, o.OrderDate.Month, 1, 0, 0, 0, DateTimeKind.Utc) : DateTime.SpecifyKind(o.OrderDate.Date, DateTimeKind.Utc))
                 .Select(g => new SalesTrendViewModel { 
                     Date = g.Key, 
                     TotalSales = g.Sum(o => o.FinalAmount),
@@ -436,48 +443,63 @@ namespace ljp_itsolutions.Controllers
             return File(buffer, "text/csv", $"LJP_Sales_Trend_{type}_{finalValue}.csv");
         }
 
-        private (DateTime Start, DateTime End, string FinalValue) CalculateDateRange(string type, string value)
+        private static (DateTime Start, DateTime End, string FinalValue) CalculateDateRange(string type, string value)
         {
-            DateTime startDate = DateTime.Today;
+            DateTime today = DateTime.Today;
+            DateTime startDate;
             string finalValue = value;
 
             if (string.IsNullOrEmpty(finalValue))
             {
-                if (type == "month") finalValue = DateTime.Today.ToString("yyyy-MM");
-                else if (type == "week") finalValue = DateTime.Today.ToString("yyyy-'W'WW");
-                else if (type == "year") finalValue = DateTime.Today.Year.ToString();
+                finalValue = GetDefaultValueForType(type, today);
             }
 
             if (type == "year")
             {
-                if (!int.TryParse(finalValue, out int year)) year = DateTime.Today.Year;
+                if (!int.TryParse(finalValue, out int year)) year = today.Year;
                 startDate = new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-                return (startDate, startDate.AddYears(1).AddDays(-1), year.ToString());
+                return (startDate, startDate.AddYears(1).AddDays(-1), year.ToString(System.Globalization.CultureInfo.InvariantCulture));
             }
             
             if (type == "week")
             {
-                if (!string.IsNullOrEmpty(finalValue) && finalValue.Contains("-W"))
-                {
-                    var parts = finalValue.Split("-W");
-                    if (parts.Length == 2 && int.TryParse(parts[0], out int y) && int.TryParse(parts[1], out int w))
-                    {
-                        startDate = new DateTime(y, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddDays((w - 1) * 7);
-                    }
-                }
+                startDate = ParseWeekStartDate(finalValue, today);
                 while (startDate.DayOfWeek != DayOfWeek.Monday) startDate = startDate.AddDays(-1);
                 
-                var currentWeek = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(startDate, System.Globalization.DateTimeFormatInfo.CurrentInfo.CalendarWeekRule, DayOfWeek.Monday);
+                var currentWeek = System.Globalization.CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(startDate, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
                 finalValue = $"{startDate.Year}-W{currentWeek:D2}";
                 
                 return (startDate, startDate.AddDays(7).AddSeconds(-1), finalValue);
             }
 
             // Month default
-            if (!DateTime.TryParse(finalValue + "-01", out startDate)) 
-                startDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            if (!DateTime.TryParse(finalValue + "-01", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out startDate)) 
+                startDate = new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            else
+                startDate = DateTime.SpecifyKind(startDate, DateTimeKind.Utc);
             
-            return (startDate, startDate.AddMonths(1).AddDays(-1), startDate.ToString("yyyy-MM"));
+            return (startDate, startDate.AddMonths(1).AddDays(-1), startDate.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        private static string GetDefaultValueForType(string type, DateTime today)
+        {
+            if (type == "month") return today.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture);
+            if (type == "week") return today.ToString("yyyy-'W'WW", System.Globalization.CultureInfo.InvariantCulture);
+            if (type == "year") return today.Year.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            return string.Empty;
+        }
+
+        private static DateTime ParseWeekStartDate(string value, DateTime today)
+        {
+            if (!string.IsNullOrEmpty(value) && value.Contains("-W", StringComparison.OrdinalIgnoreCase))
+            {
+                var parts = value.Split("-W");
+                if (parts.Length == 2 && int.TryParse(parts[0], out int y) && int.TryParse(parts[1], out int w))
+                {
+                    return new DateTime(y, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddDays((w - 1) * 7);
+                }
+            }
+            return today;
         }
     }
 }

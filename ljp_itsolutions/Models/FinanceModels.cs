@@ -7,7 +7,8 @@ namespace ljp_itsolutions.Models
     public class Expense
     {
         [Key]
-        public int ExpenseID { get; set; }
+        [Required]
+        public int? ExpenseID { get; set; }
 
         [Required]
         [StringLength(100)]
@@ -15,9 +16,11 @@ namespace ljp_itsolutions.Models
 
         public string Description { get; set; } = string.Empty;
 
-        public decimal Amount { get; set; }
+        [Required]
+        public decimal? Amount { get; set; }
 
-        public DateTime ExpenseDate { get; set; } = DateTime.Now;
+        [Required]
+        public DateTime? ExpenseDate { get; set; } = DateTime.UtcNow;
 
         [Required]
         public string Category { get; set; } = "General"; // Supplies, Utilities, Salary, etc.

@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using ljp_itsolutions.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ljp_itsolutions.Controllers
 {
+    [AllowAnonymous]
     public class HomeController : Controller
     {
         public IActionResult Index()

@@ -252,19 +252,20 @@ namespace ljp_itsolutions.Services
             var financeData = new FinanceData
             {
                 TotalRevenue = revenue,
-                TotalExpenses = expenses,
+                TotalExpenses = expenses ?? 0,
                 RecentExpenses = await _db.Expenses.Include(e => e.User).OrderByDescending(e => e.ExpenseDate).Take(50).ToListAsync(),
                 RecentTransactions = await _db.Orders.OrderByDescending(o => o.OrderDate).Take(50).ToListAsync()
             };
 
             foreach (var month in last6Months)
             {
-                var start = new DateTime(month.Year, month.Month, 1);
+                var start = new DateTime(month.Year, month.Month, 1, 0, 0, 0, DateTimeKind.Utc);
                 var end = start.AddMonths(1).AddSeconds(-1);
                 
                 financeData.TrendLabels.Add(month.ToString("MMM"));
                 financeData.IncomeTrend.Add(await _db.Orders.Where(o => o.OrderDate >= start && o.OrderDate <= end).SumAsync(o => o.FinalAmount));
-                financeData.ExpenseTrend.Add(await _db.Expenses.Where(e => e.ExpenseDate >= start && e.ExpenseDate <= end).SumAsync(e => e.Amount));
+                var expenseSum = await _db.Expenses.Where(e => e.ExpenseDate >= start && e.ExpenseDate <= end).SumAsync(e => e.Amount);
+                financeData.ExpenseTrend.Add(expenseSum ?? 0);
             }
 
             return financeData;
@@ -430,7 +431,7 @@ namespace ljp_itsolutions.Services
                 TopProducts = await GetTopProductsAsync(5),
                 PeakHoursLabels = peakHoursLabels,
                 PeakHoursData = peakHoursData,
-                BurnRate = dailyRevenue > 0 ? dailyExpenses / dailyRevenue * 100 : 0,
+                BurnRate = dailyRevenue > 0 ? (dailyExpenses ?? 0) / dailyRevenue * 100 : 0,
                 AvgOrderValue = currentOrdersCount > 0 ? currentRevenue / currentOrdersCount : 0
             };
         }
@@ -440,12 +441,12 @@ namespace ljp_itsolutions.Services
         {
             var inventoryValue = await _db.Expenses
                 .Where(e => e.Category == "Supplies")
-                .SumAsync(e => (decimal?)e.Amount) ?? 0;
+                .SumAsync(e => e.Amount) ?? 0;
             
             var lowStockCount = await _db.Products.CountAsync(p => p.StockQuantity < 20);
             
             var now = DateTime.UtcNow;
-            var startOfMonth = new DateTime(now.Year, now.Month, 1);
+            var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
             var lastMonthStart = startOfMonth.AddMonths(-1);
             var lastMonthEnd = startOfMonth.AddSeconds(-1);
             
@@ -509,7 +510,7 @@ namespace ljp_itsolutions.Services
         {
             var today = DateTime.Today;
             var weekStart = today.AddDays(-6);
-            var monthStart = new DateTime(today.Year, today.Month, 1);
+            var monthStart = new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
             var salesQuery = _db.Orders
                 .Where(o => o.PaymentStatus == "Completed" || o.PaymentStatus == "Paid" || o.PaymentStatus == "Paid (Digital)");
@@ -599,7 +600,7 @@ namespace ljp_itsolutions.Services
             
             var totalCustomers = await _db.Customers.CountAsync();
             
-            var startOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+            var startOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
             var newCustomersThisMonth = await _db.Customers
                 .Where(c => c.Orders.Any())
                 .Select(c => new { FirstOrderDate = c.Orders.Min(o => o.OrderDate) })
@@ -614,123 +615,72 @@ namespace ljp_itsolutions.Services
             };
         }
 
-
-
         public async Task<MarketingDashboardData> GetMarketingDashboardDataAsync()
         {
             var now = DateTime.UtcNow;
             var sevenDaysAgo = now.AddDays(-7);
             
-            // Core Data Fetching
             var totalCustomers = await _db.Customers.Include(c => c.Orders).ToListAsync();
             var paidOrders = await _db.Orders
                 .Where(o => o.PaymentStatus == "Paid" || o.PaymentStatus == "Paid (Digital)" || o.PaymentStatus == "Completed")
                 .ToListAsync();
             
-            var totalRevenue = paidOrders.Sum(o => o.FinalAmount);
-            var loyaltyRevenue = paidOrders.Where(o => o.CustomerID != null).Sum(o => o.FinalAmount);
-            var conversionVolume = paidOrders.Count;
-            
-            // Loyalty Health
-            var totalPointsLiability = totalCustomers.Sum(c => (long)c.Points);
             var activeMemberIds = paidOrders.Where(o => o.OrderDate >= sevenDaysAgo && o.CustomerID != null)
                 .Select(o => o.CustomerID).Distinct().ToHashSet();
             
             var totalPointsRedeemed = await _db.RewardRedemptions.SumAsync(r => (long)r.PointsRedeemed);
-            var redemptionRate = totalPointsLiability + totalPointsRedeemed > 0 
-                ? (double)totalPointsRedeemed / (totalPointsLiability + totalPointsRedeemed) * 100 
-                : 0;
+            var marketingData = CalculateCoreMarketingMetrics(totalCustomers, paidOrders, totalPointsRedeemed);
+            marketingData.ActiveMembersThisWeek = activeMemberIds.Count;
 
-            // Campaign ROI Accuracy
+            // Retentions and VIP Performance
+            var firstOrderDict = BuildFirstOrderDictionary(totalCustomers);
+            marketingData.NewPatronsCount = firstOrderDict.Values.Count(d => d >= sevenDaysAgo);
+            marketingData.ReturningPatronsCount = Math.Max(0, marketingData.ActiveMembersThisWeek - marketingData.NewPatronsCount);
+            marketingData.RetentionRatePercent = marketingData.ActiveMembersThisWeek > 0 ? (double)marketingData.ReturningPatronsCount * 100 / marketingData.ActiveMembersThisWeek : 0;
+            marketingData.VIPPerformance = BuildVIPPerformanceList(totalCustomers);
+
+            // Tiers and Trends
+            var activePromotions = await _db.Promotions.Where(p => p.IsActive && p.EndDate >= now).ToListAsync();
+            PopulateTierAnalysis(marketingData, totalCustomers, paidOrders);
+            await PopulateTrendAnalysis(marketingData, paidOrders, activePromotions);
+
+            return marketingData;
+        }
+
+        private static MarketingDashboardData CalculateCoreMarketingMetrics(List<Customer> totalCustomers, List<Order> paidOrders, long totalPointsRedeemed)
+        {
+            var totalRevenue = paidOrders.Sum(o => o.FinalAmount);
+            var loyaltyRevenue = paidOrders.Where(o => o.CustomerID != null).Sum(o => o.FinalAmount);
+            var totalPointsLiability = totalCustomers.Sum(c => (long)c.Points);
             var promoOrders = paidOrders.Where(o => o.PromotionID != null).ToList();
             var promoRevenue = promoOrders.Sum(o => o.FinalAmount);
             var promoDiscount = promoOrders.Sum(o => o.DiscountAmount);
-            // ROI = (Incremental Revenue - Discount Cost) / Discount Cost
-            var campaignROI = promoDiscount > 0 ? (double)((promoRevenue) / promoDiscount) : 0;
 
-            // Patron Retention Analysis
-
-            var customerFirstOrders = totalCustomers
-                .Where(c => c.Orders.Any())
-                .Select(c => new { 
-                    c.CustomerID, 
-                    FirstOrderDate = c.Orders.Min(o => o.OrderDate) 
-                }).ToList();
-
-            var newPatronsCount = customerFirstOrders.Count(x => x.FirstOrderDate >= sevenDaysAgo);
-            var activeThisWeek = activeMemberIds.Count;
-            var returningPatronsCount = Math.Max(0, activeThisWeek - newPatronsCount);
-
-            // Campaign Performance Deep-Dive
-            var activePromotions = await _db.Promotions.Where(p => p.IsActive && p.EndDate >= now).ToListAsync();
-            var campaignStats = promoOrders
-                .GroupBy(o => o.PromotionID)
-                .Select(g => new { 
-                    PromoID = g.Key, 
-                    Revenue = g.Sum(o => o.FinalAmount),
-                    Count = g.Count()
-                })
-                .OrderByDescending(x => x.Revenue)
-                .ToList();
-
-            string topCampaign = "N/A";
-            string bottomCampaign = "N/A";
-            if (campaignStats.Any())
+            return new MarketingDashboardData
             {
-                var topId = campaignStats.First().PromoID;
-                var bottomId = campaignStats.Last().PromoID;
-                topCampaign = activePromotions.FirstOrDefault(p => p.PromotionID == topId)?.PromotionName ?? "In-Store Special";
-                bottomCampaign = activePromotions.FirstOrDefault(p => p.PromotionID == bottomId)?.PromotionName ?? "Email Blast";
-            }
-
-            // Tier Analysis (Revenue Weighted)
-            var goldCustomers = totalCustomers.Where(c => c.Points >= 500).ToList();
-            var silverCustomers = totalCustomers.Where(c => c.Points >= 300 && c.Points < 500).ToList();
-            var bronzeCustomers = totalCustomers.Where(c => c.Points >= 100 && c.Points < 300).ToList();
-            var basicCustomers = totalCustomers.Where(c => c.Points < 100).ToList();
-
-            var tierLabels = new List<string> { "Gold", "Silver", "Bronze", "Member" };
-            var tierData = new List<int> { goldCustomers.Count, silverCustomers.Count, bronzeCustomers.Count, basicCustomers.Count };
-            
-            // Accurate Tier Revenue (Only Paid Orders)
-            var tierRevenue = new List<decimal> {
-                paidOrders.Where(o => o.CustomerID != null && goldCustomers.Any(c => c.CustomerID == o.CustomerID)).Sum(o => o.FinalAmount),
-                paidOrders.Where(o => o.CustomerID != null && silverCustomers.Any(c => c.CustomerID == o.CustomerID)).Sum(o => o.FinalAmount),
-                paidOrders.Where(o => o.CustomerID != null && bronzeCustomers.Any(c => c.CustomerID == o.CustomerID)).Sum(o => o.FinalAmount),
-                paidOrders.Where(o => o.CustomerID != null && basicCustomers.Any(c => c.CustomerID == o.CustomerID)).Sum(o => o.FinalAmount)
+                LoyaltyRevenueContributionPercent = totalRevenue > 0 ? (loyaltyRevenue / totalRevenue) * 100 : 0,
+                RedemptionRatePercent = totalPointsLiability + totalPointsRedeemed > 0 ? (double)totalPointsRedeemed / (totalPointsLiability + totalPointsRedeemed) * 100 : 0,
+                AvgPointsPerCustomer = totalCustomers.Count > 0 ? (double)totalPointsLiability / totalCustomers.Count : 0,
+                CampaignROI = promoDiscount > 0 ? (double)(promoRevenue / promoDiscount) : 0,
+                CampaignRevenue = promoRevenue,
+                TotalCampaignDiscount = promoDiscount,
+                ConversionVolume = paidOrders.Count,
+                NetworkEquity = totalPointsLiability,
+                AudiencePenetration = totalCustomers.Count,
+                ConversionRate = totalCustomers.Count > 0 ? (double)paidOrders.Count / totalCustomers.Count : 0
             };
+        }
 
-            // Trend Analysis (Last 7 Days)
-            var last7Days = Enumerable.Range(0, 7).Select(i => DateTime.Today.AddDays(-6 + i)).ToList();
-            var redemptionsHistory = await _db.RewardRedemptions.Where(r => r.RedemptionDate >= last7Days.First()).ToListAsync();
-            
-            var pointsTrendLabels = new List<string>();
-            var pointsIssuedData = new List<int>();
-            var pointsRedeemedData = new List<int>();
-            var conversionData = new List<int>();
-            var campaignRevenueTrend = new List<decimal>();
+        private static Dictionary<int, DateTime> BuildFirstOrderDictionary(List<Customer> totalCustomers)
+        {
+            return totalCustomers
+                .Where(c => c.Orders.Count > 0)
+                .ToDictionary(c => c.CustomerID, c => c.Orders.Min(o => o.OrderDate));
+        }
 
-            foreach (var day in last7Days)
-            {
-                pointsTrendLabels.Add(day.ToString("MMM dd"));
-                
-                var dailyOrders = paidOrders.Where(o => o.OrderDate.Date == day.Date).ToList();
-                var dailyLoyaltyOrders = dailyOrders.Where(o => o.CustomerID != null).ToList();
-                
-                int issued = (int)Math.Floor(dailyLoyaltyOrders.Sum(o => o.FinalAmount / 100m)); 
-                pointsIssuedData.Add(issued);
-
-                int redeemed = redemptionsHistory.Where(r => r.RedemptionDate.Date == day.Date).Sum(r => r.PointsRedeemed);
-                pointsRedeemedData.Add(redeemed);
-
-                conversionData.Add(dailyOrders.Count);
-                
-                // Historical Campaign Revenue
-                campaignRevenueTrend.Add(dailyOrders.Where(o => o.PromotionID != null).Sum(o => o.FinalAmount));
-            }
-
-            // 8. Elite Leaderboard (Sorted by Spend as requested)
-            var vipPerformance = totalCustomers
+        private static List<CustomerBasicInfo> BuildVIPPerformanceList(List<Customer> totalCustomers)
+        {
+            return totalCustomers
                 .Select(c => new CustomerBasicInfo
                 {
                     CustomerID = c.CustomerID,
@@ -743,46 +693,61 @@ namespace ljp_itsolutions.Services
                 .OrderByDescending(x => x.TotalSpend)
                 .Take(10)
                 .ToList();
+        }
 
-            return new MarketingDashboardData
-            {
-                LoyaltyRevenueContributionPercent = totalRevenue > 0 ? (loyaltyRevenue / totalRevenue) * 100 : 0,
-                ActiveMembersThisWeek = activeThisWeek,
-                RedemptionRatePercent = redemptionRate,
-                AvgPointsPerCustomer = totalCustomers.Count > 0 ? (double)totalPointsLiability / totalCustomers.Count : 0,
-                CampaignROI = campaignROI,
-                CampaignRevenue = promoRevenue,
-                AvgRevenuePerCampaign = activePromotions.Count > 0 ? (decimal)promoRevenue / activePromotions.Count : 0,
-                RetentionRatePercent = activeThisWeek > 0 ? (double)returningPatronsCount * 100 / activeThisWeek : 0,
-                TotalCampaignDiscount = promoDiscount,
-                TopCampaignName = topCampaign,
-                BottomCampaignName = bottomCampaign,
-                AudiencePenetration = totalCustomers.Count,
-
-                ActiveCampaigns = activePromotions.Count,
-                ConversionVolume = conversionVolume,
-                NetworkEquity = totalPointsLiability,
-                ConversionRate = totalCustomers.Count > 0 ? (double)conversionVolume / totalCustomers.Count : 0,
-                ReachGrowth = 0, 
-
-                PerformanceLabels = pointsTrendLabels,
-                PerformanceData = conversionData,
-                
-                TierLabels = tierLabels,
-                TierData = tierData,
-                TierRevenueData = tierRevenue,
-
-                PointsTrendLabels = pointsTrendLabels,
-                PointsIssuedData = pointsIssuedData,
-                PointsRedeemedData = pointsRedeemedData,
-
-                CampaignRevenueTrendLabels = pointsTrendLabels,
-                CampaignRevenueTrendData = campaignRevenueTrend,
-
-                NewPatronsCount = newPatronsCount,
-                ReturningPatronsCount = returningPatronsCount,
-                VIPPerformance = vipPerformance
+        private static void PopulateTierAnalysis(MarketingDashboardData data, List<Customer> totalCustomers, List<Order> paidOrders)
+        {
+            var tiers = new[] {
+                new { Name = "Gold", Min = 500, Max = int.MaxValue },
+                new { Name = "Silver", Min = 300, Max = 499 },
+                new { Name = "Bronze", Min = 100, Max = 299 },
+                new { Name = "Member", Min = 0, Max = 99 }
             };
+
+            data.TierLabels = tiers.Select(t => t.Name).ToList();
+            data.TierData = new List<int>();
+            data.TierRevenueData = new List<decimal>();
+
+            foreach (var t in tiers)
+            {
+                var tierCustomers = totalCustomers.Where(c => c.Points >= t.Min && c.Points <= t.Max).Select(c => c.CustomerID).ToHashSet();
+                data.TierData.Add(tierCustomers.Count);
+                data.TierRevenueData.Add(paidOrders.Where(o => o.CustomerID != null && tierCustomers.Contains(o.CustomerID.Value)).Sum(o => o.FinalAmount));
+            }
+        }
+
+        private async Task PopulateTrendAnalysis(MarketingDashboardData data, List<Order> paidOrders, List<Promotion> activePromotions)
+        {
+            var last7Days = Enumerable.Range(0, 7).Select(i => DateTime.UtcNow.Date.AddDays(-6 + i)).ToList();
+            var redemptionsHistory = await _db.RewardRedemptions.Where(r => r.RedemptionDate >= last7Days[0]).ToListAsync();
+
+            data.PerformanceLabels = last7Days.Select(d => d.ToString("MMM dd")).ToList();
+            data.PerformanceData = new List<int>();
+            data.PointsTrendLabels = data.PerformanceLabels;
+            data.PointsIssuedData = new List<int>();
+            data.PointsRedeemedData = new List<int>();
+            data.CampaignRevenueTrendLabels = data.PerformanceLabels;
+            data.CampaignRevenueTrendData = new List<decimal>();
+
+            var groupedPaidOrders = paidOrders.GroupBy(o => o.OrderDate.Date).ToDictionary(g => g.Key, g => g.ToList());
+            var groupedRedemptions = redemptionsHistory.GroupBy(r => r.RedemptionDate.Date).ToDictionary(g => g.Key, g => g.ToList());
+
+            data.PerformanceData = last7Days.Select(day => groupedPaidOrders.ContainsKey(day.Date) ? groupedPaidOrders[day.Date].Count : 0).ToList();
+            data.PointsIssuedData = last7Days.Select(day => groupedPaidOrders.ContainsKey(day.Date) ? (int)Math.Floor(groupedPaidOrders[day.Date].Where(o => o.CustomerID != null).Sum(o => o.FinalAmount / 100m)) : 0).ToList();
+            data.PointsRedeemedData = last7Days.Select(day => groupedRedemptions.ContainsKey(day.Date) ? groupedRedemptions[day.Date].Sum(r => r.PointsRedeemed) : 0).ToList();
+            data.CampaignRevenueTrendData = last7Days.Select(day => groupedPaidOrders.ContainsKey(day.Date) ? groupedPaidOrders[day.Date].Where(o => o.PromotionID != null).Sum(o => o.FinalAmount) : 0).ToList();
+
+            var campaignStats = paidOrders.Where(o => o.PromotionID != null).GroupBy(o => o.PromotionID)
+                .Select(g => new { ID = g.Key, Revenue = g.Sum(o => o.FinalAmount) }).OrderByDescending(x => x.Revenue).ToList();
+
+            data.ActiveCampaigns = activePromotions.Count;
+            data.AvgRevenuePerCampaign = activePromotions.Count > 0 ? paidOrders.Where(o => o.PromotionID != null).Sum(o => o.FinalAmount) / activePromotions.Count : 0;
+            
+            if (campaignStats.Count > 0)
+            {
+                data.TopCampaignName = activePromotions.FirstOrDefault(p => p.PromotionID == campaignStats[0].ID)?.PromotionName ?? "N/A";
+                data.BottomCampaignName = activePromotions.FirstOrDefault(p => p.PromotionID == campaignStats[campaignStats.Count-1].ID)?.PromotionName ?? "N/A";
+            }
         }
 
         public async Task<SuperAdminDashboardData> GetSuperAdminDashboardDataAsync()

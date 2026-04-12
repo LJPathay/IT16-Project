@@ -137,10 +137,13 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseForwardedHeaders(new ForwardedHeadersOptions
+var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-});
+};
+forwardedHeadersOptions.KnownNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 app.Use(async (context, next) =>
 {
@@ -194,7 +197,7 @@ app.Use(async (context, next) =>
     }
 });
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Disabled to prevent proxy loop on runasp.net
 app.UseStaticFiles();
 app.UseRouting();
 
