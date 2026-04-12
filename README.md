@@ -1,5 +1,5 @@
 # ☕ LJP IT Solutions: Coffee Shop ERP System
-### *Integrative Programming and Technologies (IT16) - Capstone Project*
+### *Integrative Programming and Technologies (IT16) 
 
 [![Security Level](https://img.shields.io/badge/Security-Enterprise%20Grade-brightgreen)](https://github.com/LJPathay/IT16-Project)
 [![Language](https://img.shields.io/badge/Stack-ASP.NET%20Core%20%7C%20EF%20Core%20%7C%20SQL%20Server-blue)](https://github.com/LJPathay/IT16-Project)
