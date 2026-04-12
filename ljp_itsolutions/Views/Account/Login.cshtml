@@ -4,6 +4,14 @@
     ViewData["Title"] = "Login";
 }
 
+<style>
+    /* Ensure reCAPTCHA container has space even before it loads */
+    .g-recaptcha {
+        min-height: 78px;
+        display: block;
+    }
+</style>
+
 <div class="login-container">
     <div class="cafe-panel">
         <div class="cafe-logo">
@@ -66,12 +74,8 @@
                     </div>
 
                     <div class="form-group mb-4">
-                        <label class="form-label fw-bold mb-2 text-dark small">Security Verification</label>
-                        <div class="input-group-custom bg-light p-1 rounded-3 border d-flex align-items-center">
-                            <span class="fw-bold text-primary mx-3">@ViewBag.CaptchaChallenge = ?</span>
-                            <input name="CaptchaResponse" type="number" class="form-control border-0 bg-transparent shadow-none" placeholder="Ans" required style="width: 80px;" />
-                        </div>
-                        <p class="text-muted xx-small mt-1 mb-0" style="font-size: 0.65rem;">Prevents automated brute-force attempts.</p>
+                        <div class="g-recaptcha" data-sitekey="@ViewBag.SiteKey"></div>
+                        <p class="text-muted mt-2 mb-0" style="font-size: 0.65rem;">Cloud-based bot protection powered by Google.</p>
                     </div>
 
                     <button type="submit" class="btn-signin">Sign In</button>
@@ -85,6 +89,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script>
         function togglePassword(inputId, btn) {
             const input = document.getElementById(inputId);

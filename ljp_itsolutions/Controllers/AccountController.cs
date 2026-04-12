@@ -17,19 +17,25 @@ namespace ljp_itsolutions.Controllers
         private readonly ljp_itsolutions.Services.IPhotoService _photoService;
         private readonly Microsoft.AspNetCore.Identity.IPasswordHasher<ljp_itsolutions.Models.User> _hasher;
         private readonly ljp_itsolutions.Services.IOtpService _otpService;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _config;
 
         public AccountController(
             ljp_itsolutions.Data.ApplicationDbContext db, 
             ljp_itsolutions.Services.IEmailSender emailSender, 
             ljp_itsolutions.Services.IPhotoService photoService,
             Microsoft.AspNetCore.Identity.IPasswordHasher<ljp_itsolutions.Models.User> hasher,
-            ljp_itsolutions.Services.IOtpService otpService)
+            ljp_itsolutions.Services.IOtpService otpService,
+            IHttpClientFactory httpClientFactory,
+            IConfiguration config)
             : base(db)
         {
             _emailSender = emailSender;
             _photoService = photoService;
             _hasher = hasher;
             _otpService = otpService;
+            _httpClientFactory = httpClientFactory;
+            _config = config;
         }
 
         [AllowAnonymous]
@@ -54,34 +60,27 @@ namespace ljp_itsolutions.Controllers
             }
 
             ViewData["ReturnUrl"] = returnUrl;
-            PrepareLoginCaptcha();
+            ViewBag.SiteKey = _config["ReCaptcha:SiteKey"];
             return View(new LoginViewModel());
         }
 
         [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("login")]
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
 
-            // Verify CAPTCHA
-            int? expectedAnswer = HttpContext.Session.GetInt32("CaptchaAnswer");
-            int? actualAnswer = int.TryParse(Request.Form["CaptchaResponse"], out int val) ? val : null;
-
-            if (expectedAnswer == null || actualAnswer == null || expectedAnswer != actualAnswer)
+            // Verify Google reCAPTCHA
+            string captchaResponse = Request.Form["g-recaptcha-response"];
+            if (string.IsNullOrEmpty(captchaResponse) || !await VerifyReCaptcha(captchaResponse))
             {
-                ModelState.AddModelError(string.Empty, "Incorrect security verification answer.");
-                PrepareLoginCaptcha();
+                ModelState.AddModelError(string.Empty, "reCAPTCHA verification failed. Please try again.");
                 return View(model);
             }
 
             if (!ModelState.IsValid)
-            {
-                PrepareLoginCaptcha();
                 return View(model);
-            }
  
             ljp_itsolutions.Models.User? user = null;
             if (!string.IsNullOrWhiteSpace(model.UsernameOrEmail))
@@ -92,7 +91,6 @@ namespace ljp_itsolutions.Controllers
             if (user == null)
             {
                 ModelState.AddModelError(string.Empty, "Invalid credentials");
-                PrepareLoginCaptcha();
                 return View(model);
             }
  
@@ -101,14 +99,12 @@ namespace ljp_itsolutions.Controllers
             {
                 var remainingMinutes = (int)Math.Ceiling((user.LockoutEnd.Value - DateTimeOffset.UtcNow).TotalMinutes);
                 ModelState.AddModelError(string.Empty, $"Account is temporarily locked. Please try again in {remainingMinutes} minutes.");
-                PrepareLoginCaptcha();
                 return View(model);
             }
  
             if (string.IsNullOrEmpty(user.Password))
             {
                 ModelState.AddModelError(string.Empty, "Invalid credentials");
-                PrepareLoginCaptcha();
                 return View(model);
             }
             /// Brute-Force Lockout System
@@ -144,7 +140,6 @@ namespace ljp_itsolutions.Controllers
                 if (restrictedRoles.Contains(user.Role))
                 {
                     ModelState.AddModelError(string.Empty, $"System is under maintenance for {user.Role} accounts. Please contact support.");
-                    PrepareLoginCaptcha();
                     return View(model);
                 }
             }
@@ -713,13 +708,21 @@ namespace ljp_itsolutions.Controllers
             return Ok();
         }
 
-        private void PrepareLoginCaptcha()
+        private async Task<bool> VerifyReCaptcha(string response)
         {
-            var random = new Random();
-            int n1 = random.Next(1, 10);
-            int n2 = random.Next(1, 10);
-            HttpContext.Session.SetInt32("CaptchaAnswer", n1 + n2);
-            ViewBag.CaptchaChallenge = $"{n1} + {n2}";
+            try
+            {
+                var secret = _config["ReCaptcha:SecretKey"]; // Read from secure config
+                var client = _httpClientFactory.CreateClient();
+                var res = await client.PostAsync($"https://www.google.com/recaptcha/api/siteverify?secret={secret}&response={response}", null);
+                if (res.IsSuccessStatusCode)
+                {
+                    var json = await res.Content.ReadAsStringAsync();
+                    return json.Contains("\"success\": true");
+                }
+            }
+            catch { }
+            return false;
         }
     }
 }
