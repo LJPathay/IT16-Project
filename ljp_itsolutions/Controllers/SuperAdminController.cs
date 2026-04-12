@@ -38,7 +38,7 @@ namespace ljp_itsolutions.Controllers
 
 
         // --- User Management ---
-        public IActionResult Users(bool showArchived = false)
+        public async Task<IActionResult> Users(bool showArchived = false)
         {
             var query = _db.Users.AsQueryable();
             if (showArchived) query = query.Where(u => !u.IsActive);

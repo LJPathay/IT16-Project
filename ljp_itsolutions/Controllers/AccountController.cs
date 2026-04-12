@@ -71,7 +71,7 @@ namespace ljp_itsolutions.Controllers
             ViewData["ReturnUrl"] = returnUrl;
 
             // Verify Google reCAPTCHA
-            string captchaResponse = Request.Form["g-recaptcha-response"];
+            string captchaResponse = Request.Form["g-recaptcha-response"].ToString() ?? string.Empty;
             if (string.IsNullOrEmpty(captchaResponse) || !await VerifyReCaptcha(captchaResponse))
             {
                 ModelState.AddModelError(string.Empty, "reCAPTCHA verification failed. Please try again.");

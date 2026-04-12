@@ -86,7 +86,7 @@
                             <td><span class="text-dark small">@(log.User?.Username ?? "N/A")</span></td>
                             <td><div class="x-small text-muted desc-cell" style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@log.Description</div></td>
                             <td><span class="text-muted x-small">@log.Timestamp.ToString("MMM dd HH:mm:ss")</span></td>
-                            <td class="pe-4 text-end font-monospace x-small text-secondary">@SecurityHelper.MaskIpAddress(log.IpAddress)</td>
+                            <td class="pe-4 text-end font-monospace x-small text-secondary">@SecurityHelper.MaskIpAddress(log.IpAddress ?? string.Empty)</td>
                         </tr>
                     }
                 </tbody>

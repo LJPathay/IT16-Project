@@ -163,7 +163,8 @@ app.Use(async (context, next) =>
 
     try
     {
-        // 2. Security Headers
+        context.Response.Headers.Remove("X-Powered-By");
+        context.Response.Headers.Remove("Server");
         context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
         context.Response.Headers.Append("X-Frame-Options", "DENY");
         context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
