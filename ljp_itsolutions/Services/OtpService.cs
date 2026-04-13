@@ -73,7 +73,7 @@ namespace ljp_itsolutions.Services
             }
         }
 
-        private string Base32Encode(byte[] data)
+        private static string Base32Encode(byte[] data)
         {
             const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
             StringBuilder output = new StringBuilder();
@@ -103,7 +103,7 @@ namespace ljp_itsolutions.Services
             return output.ToString();
         }
 
-        private byte[] Base32Decode(string base32)
+        private static byte[] Base32Decode(string base32)
         {
             const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
             base32 = base32.ToUpper();

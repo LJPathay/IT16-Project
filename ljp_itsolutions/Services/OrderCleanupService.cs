@@ -132,7 +132,7 @@ namespace ljp_itsolutions.Services
                         }
 
                         order.PaymentStatus = "Expired/Cancelled";
-                        await LogAudit(db, "Automatic Stale Order Cleanup", $"Order #{order.OrderID} timed out. Stock restored.", order.OrderID);
+                        await LogAudit(db, "Automatic Stale Order Cleanup", $"Order #{order.OrderID} timed out. Stock restored.");
                     }
 
                     await db.SaveChangesAsync();
@@ -140,7 +140,7 @@ namespace ljp_itsolutions.Services
             }
         }
 
-        private async Task LogAudit(ApplicationDbContext db, string action, string details, Guid? orderId)
+        private async Task LogAudit(ApplicationDbContext db, string action, string details)
         {
             try
             {

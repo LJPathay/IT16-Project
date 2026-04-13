@@ -84,7 +84,7 @@ namespace ljp_itsolutions.Services
                     }
                     else
                     {
-                        product.StockQuantity += (int)detail.Quantity;
+                        product.StockQuantity += detail.Quantity;
                         
                         _db.InventoryLogs.Add(new InventoryLog
                         {
