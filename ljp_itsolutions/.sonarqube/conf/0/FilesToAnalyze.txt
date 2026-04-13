@@ -185,7 +185,6 @@ C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\lib\jquery\L
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\appsettings.Development.json
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\appsettings.json
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Backups\backup_20260211_201620.json
-C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\token.json
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Account\AccessDenied.cshtml
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Account\ForgotPassword.cshtml
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Account\Login.cshtml

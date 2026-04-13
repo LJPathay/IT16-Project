@@ -66,7 +66,7 @@
                                     <div class="d-flex align-items-center gap-2">
                                          <div class="avatar-xs rounded-circle bg-light d-flex align-items-center justify-content-center border" style="width: 32px; height: 32px; font-size: 0.7rem; overflow: hidden;">
                                              @if (log.User != null && !string.IsNullOrEmpty(log.User.ProfilePictureUrl)) {
-                                                 <img src="@log.User.ProfilePictureUrl" class="w-100 h-100 object-fit-cover shadow-sm">
+                                                 <img src="@log.User.ProfilePictureUrl" alt="@(log.User.FullName ?? "User")" class="w-100 h-100 object-fit-cover shadow-sm">
                                              } else if (isGuest) {
                                                  <i class="fas fa-user-secret opacity-50 text-warning"></i>
                                              } else {
