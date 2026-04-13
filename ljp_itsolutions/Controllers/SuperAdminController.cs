@@ -280,7 +280,28 @@ namespace ljp_itsolutions.Controllers
             var path = Path.Combine(Directory.GetCurrentDirectory(), "Backups");
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
             var files = Directory.GetFiles(path, "*.json").Select(f => new FileInfo(f)).OrderByDescending(f => f.CreationTime).ToList();
+            ViewBag.BackupSchedule = _db.SystemSettings.FirstOrDefault(s => s.SettingKey == "BackupSchedule")?.SettingValue ?? "Manual";
             return View(files);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateBackupSchedule(string schedule)
+        {
+            try {
+                var setting = await _db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == "BackupSchedule");
+                if (setting == null) {
+                    _db.SystemSettings.Add(new SystemSetting { SettingKey = "BackupSchedule", SettingValue = schedule });
+                } else {
+                    setting.SettingValue = schedule;
+                }
+                await _db.SaveChangesAsync();
+                await LogAudit($"Updated automated backup schedule to: {schedule}");
+                TempData[AppConstants.SessionKeys.SuccessMessage] = $"Automated backup schedule updated to: {schedule}";
+            } catch (Exception) { 
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "Failed to update schedule. Please contact your administrator."; 
+            }
+            return RedirectToAction(AppConstants.Actions.Backups);
         }
 
         [HttpPost]

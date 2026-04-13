@@ -2,65 +2,13 @@
 @using ljp_itsolutions.Helpers
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Security Events & Logs";
+    ViewData["Title"] = "Security Logs";
 }
 
-<div class="container-fluid py-4">
-    <!-- Header with Stats -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100 bg-primary text-white overflow-hidden position-relative">
-                <div class="card-body p-4 position-relative" style="z-index: 2;">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="avatar-sm rounded-circle bg-white bg-opacity-20 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
-                            <i class="fas fa-shield-alt fa-lg"></i>
-                        </div>
-                        <h6 class="mb-0 fw-bold">Total Security Events</h6>
-                    </div>
-                    <h2 class="mb-0 fw-bold">@Model.Count()</h2>
-                </div>
-                <div class="position-absolute" style="top: -10px; right: -10px; opacity: 0.1;">
-                    <i class="fas fa-shield-alt" style="font-size: 8rem;"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100 bg-danger text-white overflow-hidden position-relative">
-                <div class="card-body p-4 position-relative" style="z-index: 2;">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="avatar-sm rounded-circle bg-white bg-opacity-20 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
-                            <i class="fas fa-exclamation-triangle fa-lg"></i>
-                        </div>
-                        <h6 class="mb-0 fw-bold">Critical Alerts</h6>
-                    </div>
-                    <h2 class="mb-0 fw-bold">@Model.Count(l => l.Severity == "Critical")</h2>
-                </div>
-                <div class="position-absolute" style="top: -10px; right: -10px; opacity: 0.1;">
-                    <i class="fas fa-radiation" style="font-size: 8rem;"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100 bg-warning text-dark overflow-hidden position-relative">
-                <div class="card-body p-4 position-relative" style="z-index: 2;">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="avatar-sm rounded-circle bg-dark bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
-                            <i class="fas fa-user-lock fa-lg"></i>
-                        </div>
-                        <h6 class="mb-0 fw-bold">Access Failures</h6>
-                    </div>
-                    <h2 class="mb-0 fw-bold">@Model.Count(l => l.EventType == "LoginFailure")</h2>
-                </div>
-                <div class="position-absolute" style="top: -10px; right: -10px; opacity: 0.1;">
-                    <i class="fas fa-lock" style="font-size: 8rem;"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
+<div class="container-fluid py-2">
     <!-- Filters Bar -->
     <div class="row g-3 mb-4 align-items-center">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="input-group shadow-sm rounded-pill overflow-hidden border">
                 <span class="input-group-text bg-white border-0 ps-3">
                     <i class="fas fa-search text-muted"></i>
@@ -76,8 +24,12 @@
                 <option value="Critical">Critical</option>
             </select>
         </div>
-        <div class="col-md-3">
-             <input type="date" id="dateFilter" class="form-control shadow-sm rounded-pill border py-2" title="Filter by date">
+        <div class="col-md-4">
+            <div class="d-flex align-items-center gap-2">
+                <input type="date" id="dateFilterFrom" class="form-control shadow-sm rounded-pill border py-2" title="From Date">
+                <span class="text-muted">to</span>
+                <input type="date" id="dateFilterTo" class="form-control shadow-sm rounded-pill border py-2" title="To Date">
+            </div>
         </div>
         <div class="col-md-2 text-end">
             <button id="resetFilters" class="btn btn-light border rounded-pill px-4 ms-auto">
@@ -90,104 +42,216 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table align-middle mb-0" id="securityTable">
-                    <thead class="bg-light bg-opacity-50 border-bottom">
+                    <thead class="bg-light bg-opacity-50">
                         <tr>
-                            <th class="ps-4 py-3 text-uppercase x-small fw-bold text-muted">Level</th>
-                            <th class="py-3 text-uppercase x-small fw-bold text-muted">Timestamp</th>
-                            <th class="py-3 text-uppercase x-small fw-bold text-muted">Event Type</th>
-                            <th class="py-3 text-uppercase x-small fw-bold text-muted">Description</th>
-                            <th class="py-3 text-uppercase x-small fw-bold text-muted">User</th>
-                            <th class="pe-4 py-3 text-end text-uppercase x-small fw-bold text-muted">IP Address</th>
+                            <th class="ps-4 py-3 text-uppercase x-small fw-bold text-muted" style="width: 200px;">Timestamp</th>
+                            <th class="py-3 text-uppercase x-small fw-bold text-muted">Operator Info</th>
+                            <th class="py-3 text-uppercase x-small fw-bold text-muted">Security Event</th>
+                            <th class="py-3 text-uppercase x-small fw-bold text-muted">IP / Agent</th>
+                            <th class="pe-4 py-3 text-end text-uppercase x-small fw-bold text-muted" style="width: 120px;">Severity</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var log in Model)
                         {
-                            var severityClass = log.Severity switch
-                            {
-                                "Critical" => "bg-danger",
-                                "Warning" => "bg-warning text-dark",
-                                _ => "bg-info"
-                            };
-                            
+                            var isGuest = log.User == null;
                             <tr class="log-row" data-severity="@log.Severity" data-timestamp="@log.Timestamp.ToString("yyyy-MM-dd")">
                                 <td class="ps-4">
-                                    <span class="badge rounded-pill @severityClass px-3 py-1" style="font-size: 0.65rem;">@log.Severity?.ToUpper()</span>
-                                </td>
-                                <td>
                                     <div class="d-flex flex-column">
                                         <span class="fw-bold text-dark small">@log.Timestamp.ToString("MMM dd, yyyy")</span>
                                         <span class="text-muted x-small">@log.Timestamp.ToString("HH:mm:ss")</span>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="fw-bold text-dark small">@log.EventType</span>
-                                </td>
-                                <td>
-                                    <p class="small text-muted mb-0 description-text" style="max-width: 300px;">@log.Description</p>
-                                </td>
-                                <td>
                                     <div class="d-flex align-items-center gap-2">
-                                         <div class="avatar-xs rounded-circle bg-light d-flex align-items-center justify-content-center text-muted" style="width: 28px; height: 28px; font-size: 0.7rem;">
-                                             <i class="fas fa-user-shield"></i>
+                                         <div class="avatar-xs rounded-circle bg-light d-flex align-items-center justify-content-center border" style="width: 32px; height: 32px; font-size: 0.7rem; overflow: hidden;">
+                                             @if (log.User != null && !string.IsNullOrEmpty(log.User.ProfilePictureUrl)) {
+                                                 <img src="@log.User.ProfilePictureUrl" class="w-100 h-100 object-fit-cover shadow-sm">
+                                             } else if (isGuest) {
+                                                 <i class="fas fa-user-secret opacity-50 text-warning"></i>
+                                             } else {
+                                                 <i class="fas fa-user-shield opacity-50 text-primary"></i>
+                                             }
                                          </div>
-                                         <span class="small fw-semibold text-dark">@(log.User?.Username ?? "Unknown")</span>
+                                         <div>
+                                             <p class="mb-0 small fw-bold text-dark">@(log.User?.FullName ?? log.User?.Username ?? "System / Anonymous")</p>
+                                             <p class="text-muted x-small mb-0">@(log.User?.Role ?? "Internal")</p>
+                                         </div>
                                      </div>
                                  </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="small fw-bold text-dark action-text">@log.EventType</span>
+                                        <span class="text-muted x-small description-text" style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="@log.Description">@log.Description</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="small text-dark font-monospace">@(string.IsNullOrEmpty(log.IpAddress) ? "::1" : SecurityHelper.MaskIpAddress(log.IpAddress))</span>
+                                    </div>
+                                </td>
                                 <td class="pe-4 text-end">
-                                    <span class="small text-secondary font-monospace">@(string.IsNullOrEmpty(log.IpAddress) ? "—" : SecurityHelper.MaskIpAddress(log.IpAddress))</span>
+                                    @if (log.Severity == "Critical") {
+                                        <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-10 px-3 x-small">CRITICAL</span>
+                                    } else if (log.Severity == "Warning") {
+                                        <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-10 px-3 x-small">WARNING</span>
+                                    } else {
+                                        <span class="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-10 px-3 x-small">INFO</span>
+                                    }
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
-            
             @if (!Model.Any())
             {
-                <div class="text-center py-5">
+                <div class="text-center py-5" id="emptyState">
                     <i class="fas fa-file-shield fa-4x text-light mb-3"></i>
                     <p class="text-muted">No security events recorded yet.</p>
                 </div>
             }
+        </div>
+        <!-- Pagination Controls -->
+        <div class="d-flex justify-content-between align-items-center p-3 bg-light border-top">
+            <div class="text-muted x-small">
+                Showing <span id="startRange">0</span> to <span id="endRange">0</span> of <span id="totalItems">0</span> logs
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0" id="pagination">
+                </ul>
+            </nav>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
+        // Pagination state
+        let currentPage = 1;
+        const rowsPerPage = 15;
+        let filteredRows = [];
+
+        function initPagination() {
+            const rows = Array.from(document.querySelectorAll('#securityTable tbody tr.log-row'));
+            filteredRows = rows;
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const totalItems = filteredRows.length;
+            const totalPages = Math.ceil(totalItems / rowsPerPage);
+            
+            if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            // Hide all rows
+            document.querySelectorAll('#securityTable tbody tr.log-row').forEach(row => row.style.display = 'none');
+            
+            // Show filtered
+            filteredRows.slice(start, end).forEach(row => row.style.display = '');
+
+            if (totalItems > 0) {
+                document.getElementById('startRange').textContent = start + 1;
+                document.getElementById('endRange').textContent = Math.min(end, totalItems);
+                document.getElementById('totalItems').textContent = totalItems;
+            } else {
+                document.getElementById('startRange').textContent = 0;
+                document.getElementById('endRange').textContent = 0;
+                document.getElementById('totalItems').textContent = 0;
+            }
+
+            renderPaginationButtons(totalPages);
+        }
+
+        function renderPaginationButtons(totalPages) {
+            const container = document.getElementById('pagination');
+            container.innerHTML = '';
+            if (totalPages <= 1) return;
+
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})"><i class="fas fa-chevron-left x-small"></i></a>`;
+            container.appendChild(prevLi);
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    const li = document.createElement('li');
+                    li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                    li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+                    container.appendChild(li);
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    const li = document.createElement('li');
+                    li.className = 'page-item disabled';
+                    li.innerHTML = '<span class="page-link">...</span>';
+                    container.appendChild(li);
+                }
+            }
+
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})"><i class="fas fa-chevron-right x-small"></i></a>`;
+            container.appendChild(nextLi);
+        }
+
+        window.changePage = function(page) {
+            if (page < 1 || page > Math.ceil(filteredRows.length / rowsPerPage)) return;
+            currentPage = page;
+            updatePagination();
+            event.preventDefault();
+        };
+
         $(document).ready(function() {
+            initPagination();
+
             function filterLogs() {
                 var searchTerm = $('#logSearch').val().toLowerCase();
                 var severityFilter = $('#severityFilter').val();
-                var dateFilter = $('#dateFilter').val();
+                var dateFrom = $('#dateFilterFrom').val();
+                var dateTo = $('#dateFilterTo').val();
+                var allRows = Array.from(document.querySelectorAll('.log-row'));
 
-                $('.log-row').each(function() {
-                    var $row = $(this);
-                    var text = $row.find('.description-text').text().toLowerCase() + $row.find('.fw-bold').text().toLowerCase();
+                filteredRows = allRows.filter(function(row) {
+                    var $row = $(row);
+                    var actionText = $row.find('.action-text').text().toLowerCase();
+                    var descText = $row.find('.description-text').text().toLowerCase();
+                    var userName = $row.find('.fw-bold').text().toLowerCase();
                     var severity = $row.data('severity');
-                    var date = $row.data('timestamp');
+                    var logDate = $row.data('timestamp');
 
-                    var matchesSearch = text.includes(searchTerm);
+                    var matchesSearch = actionText.includes(searchTerm) || descText.includes(searchTerm) || userName.includes(searchTerm);
                     var matchesSeverity = severityFilter === "" || severity === severityFilter;
-                    var matchesDate = dateFilter === "" || date === dateFilter;
+                    
+                    var matchesDate = true;
+                    if (dateFrom && logDate < dateFrom) matchesDate = false;
+                    if (dateTo && logDate > dateTo) matchesDate = false;
 
-                    if (matchesSearch && matchesSeverity && matchesDate) {
-                        $row.show();
-                    } else {
-                        $row.hide();
-                    }
+                    return matchesSearch && matchesSeverity && matchesDate;
                 });
+
+                currentPage = 1;
+                updatePagination();
+
+                if (filteredRows.length === 0) {
+                    if ($('#noResultsRow').length === 0) {
+                        $('#securityTable tbody').append('<tr id="noResultsRow"><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-search-minus fa-3x mb-3 opacity-25"></i><p>No security records found matching filters.</p></td></tr>');
+                    }
+                } else {
+                    $('#noResultsRow').remove();
+                }
             }
 
             $('#logSearch').on('keyup', filterLogs);
-            $('#severityFilter, #dateFilter').on('change', filterLogs);
+            $('#severityFilter, #dateFilterFrom, #dateFilterTo').on('change', filterLogs);
             
             $('#resetFilters').click(function() {
                 $('#logSearch').val('');
                 $('#severityFilter').val('');
-                $('#dateFilter').val('');
-                $('.log-row').show();
+                $('#dateFilterFrom').val('');
+                $('#dateFilterTo').val('');
+                filterLogs();
             });
         });
     </script>
@@ -195,8 +259,5 @@
 
 <style>
     .x-small { font-size: 0.75rem; }
-    .bg-info { background-color: #36b9cc !important; color: white; }
-    .bg-success-soft { background-color: #e8f5e9; color: #2e7d32; }
-    .bg-warning-soft { background-color: #fff8e1; color: #f57f17; }
-    .bg-danger-soft { background-color: #ffebee; color: #c62828; }
+    .action-text { display: block; margin-bottom: 2px; }
 </style>

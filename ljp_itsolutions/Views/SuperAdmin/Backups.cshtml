@@ -38,6 +38,23 @@
         </div>
     }
 
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h6 class="fw-bold text-dark mb-3"><i class="fas fa-clock text-primary me-2"></i>Automated Backup Strategy</h6>
+            <form asp-action="UpdateBackupSchedule" method="post" class="d-flex align-items-center gap-3">
+                @Html.AntiForgeryToken()
+                <select name="schedule" class="form-select w-auto shadow-none">
+                    <option value="Manual" selected="@(ViewBag.BackupSchedule == "Manual" ? "selected" : null)">Manual Backups Only</option>
+                    <option value="Daily" selected="@(ViewBag.BackupSchedule == "Daily" ? "selected" : null)">Daily Automation</option>
+                    <option value="Weekly" selected="@(ViewBag.BackupSchedule == "Weekly" ? "selected" : null)">Weekly Automation (Weekend)</option>
+                    <option value="Monthly" selected="@(ViewBag.BackupSchedule == "Monthly" ? "selected" : null)">Monthly Automation</option>
+                </select>
+                <button type="submit" class="btn btn-outline-secondary px-4"><i class="fas fa-save me-2"></i>Save Policy</button>
+                <div class="text-muted small ms-2"><i class="fas fa-info-circle me-1"></i>Automated backup routine processes are strictly globally enforced via the system's global configuration.</div>
+            </form>
+        </div>
+    </div>
+
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="card-body p-0">
             <div class="table-responsive">

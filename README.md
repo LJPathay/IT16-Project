@@ -26,6 +26,7 @@
 
 ### 🕵️ 3. Auditing & Privacy
 - **Real-Time Security Monitoring**: Automated logging of all security events (login attempts, PII access, role changes).
+- **Unified Audit Interface**: Complete 1:1 design synchronization between Security Logs and Activity Tracking, utilizing streamlined avatar-based operator formatting for rapid threat identification and data consumption.
 - **Visitor Tracking**: Comprehensive audit trail capturing IP addresses and User-Agents for accountability.
 - **Data Masking (Privacy-by-Design)**: Redaction of sensitive PII (Emails, IP segments) in administrative dashboards to comply with privacy standards.
 
@@ -39,7 +40,7 @@
 - **POS & Operations**: Secure payment processing with **PayMongo** integration and digitized receipting.
 - **Inventory Management**: Real-time stock alerts and ingredient-level recipe tracking.
 - **Marketing Analytics**: Data-driven insights for customer engagement and campaign monitoring.
-- **System Maintenance**: Built-in automated backups and system-wide setting configuration.
+- **System Maintenance & Resilience**: Global automated backup policies (Configurable execution for Daily, Weekly, or Monthly snapshots) ensuring absolute data recovery assurance.
 
 ---
 
