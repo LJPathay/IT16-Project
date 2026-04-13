@@ -37,7 +37,7 @@ $(document).ready(function () {
     });
 
     const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    window.appTooltips = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    globalThis.appTooltips = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
