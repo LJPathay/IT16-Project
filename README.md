@@ -32,6 +32,9 @@
 
 ### 📈 4. Technical Debt & Code Quality
 - **SonarQube Hardened**: Extirpated 'under-posting' vulnerabilities, enforced explicit Nullable type mapping, and slashed cognitive complexity across major controllers.
+- **Strict WCAG-A Accessibility**: Completely redundant-proofed layout rendering, establishing explicit context for screen readers by stripping ambiguous HTML image tags.
+- **CDN & Cryptographic Management**: Documented secure CDN architectures, explicitly balancing Subresource Integrity (SRI) with dynamic provider dependencies (e.g. Google reCAPTCHA, TOTP RFC-6238 hashing).
+- **Object Memory Minimization**: Bypassed catch-22 Javascript instantiation traps via global memory binding, entirely eliminating localized "unused variable" SonarQube defects.
 - **Performance Optimized**: Substituted legacy DOM manipulations with modern `globalThis` constraints and optimized backend LINQ operations (e.g., converting redundant `.Count()` structures to `.Any()`).
 
 ---
