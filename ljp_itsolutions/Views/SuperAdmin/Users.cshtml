@@ -120,17 +120,7 @@
                 </table>
             </div>
         </div>
-        <!-- Pagination Controls -->
-        <div class="d-flex justify-content-between align-items-center p-3 bg-light border-top">
-            <div class="text-muted x-small">
-                Showing <span id="startRange">0</span> to <span id="endRange">0</span> of <span id="totalItems">0</span> personnel
-            </div>
-            <nav>
-                <ul class="pagination pagination-sm mb-0" id="pagination">
-                    <!-- Pagination buttons will be injected here -->
-                </ul>
-            </nav>
-        </div>
+        <partial name="_Pagination" model='("usersTable", "startRange", "endRange", "totalItems", "pagination")' />
     </div>
 </div>
 </div>
@@ -273,82 +263,7 @@
 
 @section Scripts {
     <script>
-        // Pagination state
-        let currentPage = 1;
-        const rowsPerPage = 10;
-        let filteredRows = [];
-
-        function initPagination() {
-            const rows = Array.from(document.querySelectorAll('#usersTable tbody tr.user-row'));
-            filteredRows = rows;
-            updatePagination();
-        }
-
-        function updatePagination() {
-            const totalItems = filteredRows.length;
-            const totalPages = Math.ceil(totalItems / rowsPerPage);
-            
-            if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
-
-            const start = (currentPage - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-
-            // Hide all rows
-            document.querySelectorAll('#usersTable tbody tr.user-row').forEach(row => row.style.display = 'none');
-            
-            // Show filtered
-            filteredRows.slice(start, end).forEach(row => row.style.display = '');
-
-            // Update range text
-            if (totalItems > 0) {
-                document.getElementById('startRange').textContent = start + 1;
-                document.getElementById('endRange').textContent = Math.min(end, totalItems);
-                document.getElementById('totalItems').textContent = totalItems;
-            } else {
-                document.getElementById('startRange').textContent = 0;
-                document.getElementById('endRange').textContent = 0;
-                document.getElementById('totalItems').textContent = 0;
-            }
-
-            renderPaginationButtons(totalPages);
-        }
-
-        function renderPaginationButtons(totalPages) {
-            const container = document.getElementById('pagination');
-            container.innerHTML = '';
-            if (totalPages <= 1) return;
-
-            const prevLi = document.createElement('li');
-            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-            prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()"><i class="fas fa-chevron-left x-small"></i></a>`;
-            container.appendChild(prevLi);
-
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-                    const li = document.createElement('li');
-                    li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-                    li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()">${i}</a>`;
-                    container.appendChild(li);
-                } else if (i === currentPage - 2 || i === currentPage + 2) {
-                    const li = document.createElement('li');
-                    li.className = 'page-item disabled';
-                    li.innerHTML = '<span class="page-link">...</span>';
-                    container.appendChild(li);
-                }
-            }
-
-            const nextLi = document.createElement('li');
-            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-            nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()"><i class="fas fa-chevron-right x-small"></i></a>`;
-            container.appendChild(nextLi);
-        }
-
-        window.changePage = function(page) {
-            if (page < 1 || page > Math.ceil(filteredRows.length / rowsPerPage)) return;
-            currentPage = page;
-            updatePagination();
-            event.preventDefault();
-        };
+        <partial name="_PaginationScripts" model='("usersTable", "user-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
 
         const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
         const successModal = new bootstrap.Modal(document.getElementById('successModal'));
@@ -416,7 +331,7 @@
                 var roleFilterValue = $('#roleFilter').val();
                 var allRows = Array.from(document.querySelectorAll('.user-row'));
 
-                filteredRows = allRows.filter(function(row) {
+                const filtered = allRows.filter(function(row) {
                     var $row = $(row);
                     var fullName = $row.find('.user-info p.fw-bold').text().toLowerCase();
                     var username = $row.find('.user-search-content').text().toLowerCase();
@@ -428,10 +343,9 @@
                     return matchesSearch && matchesRole;
                 });
 
-                currentPage = 1;
-                updatePagination();
+                window.paginationControl.update(filtered);
 
-                if (filteredRows.length === 0) {
+                if (filtered.length === 0) {
                     if ($('#noResultsRow').length === 0) {
                         $('#usersTable tbody').append('<tr id="noResultsRow"><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-user-slash fa-3x mb-3 opacity-25"></i><p>No personnel matching your criteria were found.</p></td></tr>');
                     }

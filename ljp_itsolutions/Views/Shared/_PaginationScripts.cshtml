@@ -1,0 +1,110 @@
+@* Shared Pagination JS Logic *@
+@model (string TableId, string RowClass, string RangeStartId, string RangeEndId, string TotalItemsId, string PaginationContainerId, int RowsPerPage)
+
+<script>
+    (function() {
+        let currentPage = 1;
+        const rowsPerPage = @Model.RowsPerPage;
+        let filteredRows = [];
+
+        function initPagination() {
+            const rows = Array.from(document.querySelectorAll('#@Model.TableId tbody tr.@Model.RowClass'));
+            filteredRows = rows;
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const totalItems = filteredRows.length;
+            const totalPages = Math.ceil(totalItems / rowsPerPage);
+            
+            if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            document.querySelectorAll('#@Model.TableId tbody tr.@Model.RowClass').forEach(row => row.style.display = 'none');
+            filteredRows.slice(start, end).forEach(row => row.style.display = '');
+
+            if (totalItems > 0) {
+                const startEl = document.getElementById('@Model.RangeStartId');
+                const endEl = document.getElementById('@Model.RangeEndId');
+                const totalEl = document.getElementById('@Model.TotalItemsId');
+                if (startEl) startEl.textContent = start + 1;
+                if (endEl) endEl.textContent = Math.min(end, totalItems);
+                if (totalEl) totalEl.textContent = totalItems;
+            } else {
+                const startEl = document.getElementById('@Model.RangeStartId');
+                const endEl = document.getElementById('@Model.RangeEndId');
+                const totalEl = document.getElementById('@Model.TotalItemsId');
+                if (startEl) startEl.textContent = 0;
+                if (endEl) endEl.textContent = 0;
+                if (totalEl) totalEl.textContent = 0;
+            }
+
+            renderPaginationButtons(totalPages);
+        }
+
+        function renderPaginationButtons(totalPages) {
+            const container = document.getElementById('@Model.PaginationContainerId');
+            if (!container) return;
+            container.innerHTML = '';
+            if (totalPages <= 1) return;
+
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="#" data-page="${currentPage - 1}" role="button" tabindex="0"><i class="fas fa-chevron-left x-small"></i></a>`;
+            container.appendChild(prevLi);
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    const li = document.createElement('li');
+                    li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                    li.innerHTML = `<a class="page-link" href="#" data-page="${i}" role="button" tabindex="0">${i}</a>`;
+                    container.appendChild(li);
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    const li = document.createElement('li');
+                    li.className = 'page-item disabled';
+                    li.innerHTML = '<span class="page-link">...</span>';
+                    container.appendChild(li);
+                }
+            }
+
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="#" data-page="${currentPage + 1}" role="button" tabindex="0"><i class="fas fa-chevron-right x-small"></i></a>`;
+            container.appendChild(nextLi);
+
+            container.querySelectorAll('.page-link').forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    const page = parseInt(e.currentTarget.dataset.page);
+                    if (!isNaN(page)) {
+                        changePage(page);
+                    }
+                });
+                link.addEventListener('keypress', e => {
+                    if (e.key === 'Enter') e.currentTarget.click();
+                });
+            });
+        }
+
+        window.changePage = function(page) {
+            const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            updatePagination();
+        };
+
+        // Expose update functions for external search/filter
+        window.paginationControl = {
+            init: initPagination,
+            update: function(newFilteredRows) {
+                filteredRows = newFilteredRows;
+                currentPage = 1;
+                updatePagination();
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', initPagination);
+    })();
+</script>

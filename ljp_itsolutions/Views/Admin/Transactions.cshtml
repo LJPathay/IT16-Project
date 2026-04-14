@@ -131,17 +131,7 @@
                 </tbody>
             </table>
         </div>
-        <!-- Pagination Controls -->
-        <div class="card-footer bg-white border-top py-3 px-4 d-flex justify-content-between align-items-center">
-            <div class="text-muted xx-small fw-bold text-uppercase tracking-wider">
-                Showing <span id="start-index">0</span>-<span id="end-index">0</span> of <span id="total-count">0</span> transactions
-            </div>
-            <nav aria-label="Transaction navigation">
-                <ul class="pagination pagination-sm mb-0 gap-1" id="pagination-container">
-                    <!-- Pagination injected by JS -->
-                </ul>
-            </nav>
-        </div>
+        <partial name="_Pagination" model='("transactionsTable", "start-index", "end-index", "total-count", "pagination-container")' />
     </div>
 </div>
 
@@ -238,9 +228,7 @@
         const dateFilter = document.getElementById('dateFilter');
         const rows = document.querySelectorAll('.transaction-row');
 
-        let currentPage = 1;
-        const rowsPerPage = 15;
-        let filteredRows = [];
+        <partial name="_PaginationScripts" model='("transactionsTable", "transaction-row", "start-index", "end-index", "total-count", "pagination-container", 15)' />
 
         function filterTransactions() {
             const term = searchInput.value.toLowerCase();
@@ -248,7 +236,7 @@
             const date = dateFilter.value;
 
             const allRows = Array.from(rows);
-            filteredRows = allRows.filter(row => {
+            const filtered = allRows.filter(row => {
                 const text = row.textContent.toLowerCase();
                 const rowStatus = row.dataset.status;
                 const rowDate = row.dataset.date;
@@ -260,75 +248,8 @@
                 return matchesSearch && matchesStatus && matchesDate;
             });
 
-            currentPage = 1;
-            updatePagination();
+            window.paginationControl.update(filtered);
         }
-
-        function updatePagination() {
-            const totalItems = filteredRows.length;
-            const totalPages = Math.ceil(totalItems / rowsPerPage);
-            
-            if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
-
-            const start = (currentPage - 1) * rowsPerPage;
-            const end = Math.min(start + rowsPerPage, totalItems);
-
-            // Hide all rows first
-            rows.forEach(row => row.style.display = 'none');
-
-            // Show current page rows
-            for (let i = start; i < end; i++) {
-                filteredRows[i].style.display = '';
-            }
-
-            // Update stats
-            document.getElementById('start-index').textContent = totalItems > 0 ? start + 1 : 0;
-            document.getElementById('end-index').textContent = end;
-            document.getElementById('total-count').textContent = totalItems;
-
-            renderPaginationControls(totalPages);
-        }
-
-        function renderPaginationControls(totalPages) {
-            const container = document.getElementById('pagination-container');
-            container.innerHTML = '';
-
-            if (totalPages <= 1) return;
-
-            // Previous
-            const prevLi = document.createElement('li');
-            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-            prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()"><i class="fas fa-chevron-left x-small"></i></a>`;
-            container.appendChild(prevLi);
-
-            // Pages
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-                    const li = document.createElement('li');
-                    li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-                    li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()">${i}</a>`;
-                    container.appendChild(li);
-                } else if (i === currentPage - 2 || i === currentPage + 2) {
-                    const li = document.createElement('li');
-                    li.className = 'page-item disabled';
-                    li.innerHTML = '<span class="page-link bg-transparent">...</span>';
-                    container.appendChild(li);
-                }
-            }
-
-            // Next
-            const nextLi = document.createElement('li');
-            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-            nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()"><i class="fas fa-chevron-right x-small"></i></a>`;
-            container.appendChild(nextLi);
-        }
-
-        window.changePage = function(page) {
-            event.preventDefault();
-            if (page < 1 || page > Math.ceil(filteredRows.length / rowsPerPage)) return;
-            currentPage = page;
-            updatePagination();
-        };
 
         searchInput.addEventListener('input', filterTransactions);
         statusFilter.addEventListener('change', filterTransactions);

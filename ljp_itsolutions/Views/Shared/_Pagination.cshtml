@@ -1,0 +1,13 @@
+@* Shared Pagination Partial *@
+@model (string TableId, string RangeStartId, string RangeEndId, string TotalItemsId, string PaginationContainerId)
+
+<div class="d-flex justify-content-between align-items-center p-3 bg-light border-top">
+    <div class="text-muted x-small">
+        Showing <span id="@Model.RangeStartId">0</span> to <span id="@Model.RangeEndId">0</span> of <span id="@Model.TotalItemsId">0</span> items
+    </div>
+    <nav>
+        <ul class="pagination pagination-sm mb-0" id="@Model.PaginationContainerId">
+            <!-- Pagination buttons will be injected here -->
+        </ul>
+    </nav>
+</div>

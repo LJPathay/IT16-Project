@@ -90,22 +90,27 @@
                         </tr>
                     }
                 </tbody>
-            </table>
-        </div>
+        <partial name="_Pagination" model='("secTable", "startRange", "endRange", "totalItems", "pagination")' />
     </div>
 </div>
 
 @section Scripts {
     <script>
+        <partial name="_PaginationScripts" model='("secTable", "sec-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
+
         $(document).ready(function() {
             function filter() {
                 var s = $('#secSearch').val().toLowerCase();
                 var v = $('#sevFilter').val();
-                $('.sec-row').each(function() {
-                    var t = $(this).text().toLowerCase();
-                    var sv = $(this).data('sev');
-                    $(this).toggle(t.includes(s) && (v === "" || sv === v));
+                const allRows = Array.from(document.querySelectorAll('.sec-row'));
+                
+                const filtered = allRows.filter(function(row) {
+                    var t = row.textContent.toLowerCase();
+                    var sv = row.getAttribute('data-sev');
+                    return t.includes(s) && (v === "" || sv === v);
                 });
+                
+                window.paginationControl.update(filtered);
             }
             $('#secSearch').keyup(filter);
             $('#sevFilter').change(filter);
