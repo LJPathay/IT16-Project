@@ -224,9 +224,8 @@
 </div>
 
 @section Scripts {
+    <partial name="_PaginationScripts" model='("usersTable", "user-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
     <script>
-        <partial name="_PaginationScripts" model='("usersTable", "user-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
-
         // Search & Filter
         const searchInput = document.getElementById('userSearch');
         const roleFilter = document.getElementById('roleFilter');
@@ -246,17 +245,10 @@
 
             window.paginationControl.update(filtered);
 
-            // Show no results row if needed
-            const noResults = document.querySelector('#usersTable tbody tr:not(.user-row)');
-            if (noResults) {
-                noResults.style.display = filteredRows.length === 0 ? '' : 'none';
-            }
         }
 
         searchInput.addEventListener('keyup', filterUsers);
         roleFilter.addEventListener('change', filterUsers);
-
-        document.addEventListener('DOMContentLoaded', initPagination);
 
         // Add User
         const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));

@@ -7,5 +7,7 @@ namespace ljp_itsolutions.Models
         public const string Manager = "Manager";
         public const string Cashier = "Cashier";
         public const string MarketingStaff = "MarketingStaff";
+
+        public static readonly List<string> AllExceptSuper = new() { Admin, Manager, Cashier, MarketingStaff };
     }
 }

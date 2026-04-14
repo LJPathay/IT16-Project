@@ -420,6 +420,7 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" integrity="sha384-d3UHjPdzJkZuk5H3qKYMLRyWLAQBJbby2yr2Q58hXXtAGF8RSNO9jpLDlKKPv5v3" crossorigin="anonymous"></script>
+    <partial name="_PaginationScripts" model='("inventoryTable", "inventory-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
     <script>
         const itemModal = new bootstrap.Modal(document.getElementById('itemModal'));
 
@@ -443,8 +444,6 @@
                 input.min = today; // Prevent backtracking
             });
         });
-
-        <partial name="_PaginationScripts" model='("inventoryTable", "inventory-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
 
         // Search functionality
         document.getElementById('inventorySearch').addEventListener('keyup', function() {

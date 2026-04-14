@@ -262,9 +262,8 @@
 </script>
 
 @section Scripts {
+    <partial name="_PaginationScripts" model='("usersTable", "user-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
     <script>
-        <partial name="_PaginationScripts" model='("usersTable", "user-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
-
         const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
         const successModal = new bootstrap.Modal(document.getElementById('successModal'));
         const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));

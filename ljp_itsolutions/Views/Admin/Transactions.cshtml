@@ -221,14 +221,13 @@
 </div>
 
 @section Scripts {
+    <partial name="_PaginationScripts" model='("transactionsTable", "transaction-row", "start-index", "end-index", "total-count", "pagination-container", 15)' />
     <script>
         const orderModal = new bootstrap.Modal(document.getElementById('orderModal'));
         const searchInput = document.getElementById('transactionSearch');
         const statusFilter = document.getElementById('statusFilter');
         const dateFilter = document.getElementById('dateFilter');
         const rows = document.querySelectorAll('.transaction-row');
-
-        <partial name="_PaginationScripts" model='("transactionsTable", "transaction-row", "start-index", "end-index", "total-count", "pagination-container", 15)' />
 
         function filterTransactions() {
             const term = searchInput.value.toLowerCase();

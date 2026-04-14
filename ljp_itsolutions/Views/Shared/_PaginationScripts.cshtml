@@ -32,6 +32,9 @@
                 if (startEl) startEl.textContent = start + 1;
                 if (endEl) endEl.textContent = Math.min(end, totalItems);
                 if (totalEl) totalEl.textContent = totalItems;
+                
+                const noResults = document.getElementById('noResultsRow');
+                if (noResults) noResults.style.display = 'none';
             } else {
                 const startEl = document.getElementById('@Model.RangeStartId');
                 const endEl = document.getElementById('@Model.RangeEndId');
@@ -39,6 +42,9 @@
                 if (startEl) startEl.textContent = 0;
                 if (endEl) endEl.textContent = 0;
                 if (totalEl) totalEl.textContent = 0;
+
+                const noResults = document.getElementById('noResultsRow');
+                if (noResults) noResults.style.display = '';
             }
 
             renderPaginationButtons(totalPages);

@@ -95,9 +95,8 @@
 </div>
 
 @section Scripts {
+    <partial name="_PaginationScripts" model='("secTable", "sec-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
     <script>
-        <partial name="_PaginationScripts" model='("secTable", "sec-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
-
         $(document).ready(function() {
             function filter() {
                 var s = $('#secSearch').val().toLowerCase();

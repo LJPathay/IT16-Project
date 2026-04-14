@@ -93,119 +93,24 @@
                 </table>
             </div>
         </div>
-        <!-- Pagination Controls -->
-        <div class="card-footer bg-white border-top p-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="text-muted x-small">
-                    Showing <span id="startRange">0</span> to <span id="endRange">0</span> of <span id="totalItems">0</span> transactions
-                </div>
-                <nav>
-                    <ul class="pagination pagination-sm mb-0" id="pagination">
-                        <!-- Pagination buttons injected by JS -->
-                    </ul>
-                </nav>
-            </div>
-        </div>
+        <partial name="_Pagination" model='("transactionsTable", "startRange", "endRange", "totalItems", "pagination")' />
     </div>
 </div>
 
 @section Scripts {
+    <partial name="_PaginationScripts" model='("transactionsTable", "transaction-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            let currentPage = 1;
-            const rowsPerPage = 10;
-            let filteredRows = [];
-
-            const table = document.getElementById('transactionsTable');
-            const tbody = table.querySelector('tbody');
-            const allRows = Array.from(tbody.querySelectorAll('tr.transaction-row'));
             const searchInput = document.getElementById('transactionSearch');
+            const allRows = Array.from(document.querySelectorAll('.transaction-row'));
 
             function applyFilters() {
                 const search = searchInput.value.toLowerCase();
-                
-                filteredRows = allRows.filter(row => {
-                    const text = row.textContent.toLowerCase();
-                    return text.includes(search);
-                });
-
-                const noRowsMsg = document.getElementById('noRowsFound');
-                if (filteredRows.length === 0) {
-                    if (!noRowsMsg) {
-                        tbody.innerHTML += `<tr id="noRowsFound"><td colspan="6" class="text-center py-5"><div class="opacity-50"><i class="fas fa-search fa-3x mb-3 text-muted"></i><p>No results found for "${search}"</p></div></td></tr>`;
-                    }
-                } else if (noRowsMsg) {
-                    noRowsMsg.remove();
-                }
-
-                currentPage = 1;
-                updatePagination();
-            }
-
-            function updatePagination() {
-                const total = filteredRows.length;
-                const totalPages = Math.max(1, Math.ceil(total / rowsPerPage));
-                
-                if (currentPage > totalPages) currentPage = totalPages;
-
-                const start = (currentPage - 1) * rowsPerPage;
-                const end = start + rowsPerPage;
-
-                allRows.forEach(row => row.style.display = 'none');
-                filteredRows.slice(start, end).forEach(row => row.style.display = '');
-
-                document.getElementById('startRange').textContent = total ? start + 1 : 0;
-                document.getElementById('endRange').textContent = Math.min(end, total);
-                document.getElementById('totalItems').textContent = total;
-                document.getElementById('tableCount').textContent = `Showing ${total} transactions`;
-
-                renderPaginationButtons(totalPages);
-            }
-
-            function renderPaginationButtons(totalPages) {
-                const container = document.getElementById('pagination');
-                container.innerHTML = '';
-                if (totalPages <= 1) return;
-
-                const createLi = (page, content, disabled = false, active = false) => {
-                    const li = document.createElement('li');
-                    li.className = `page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}`;
-                    const a = document.createElement('a');
-                    a.className = 'page-link';
-                    a.href = '#';
-                    a.innerHTML = content;
-                    a.onclick = (e) => {
-                        e.preventDefault();
-                        if (!disabled && !active) {
-                            currentPage = page;
-                            updatePagination();
-                        }
-                    };
-                    li.appendChild(a);
-                    return li;
-                };
-
-                container.appendChild(createLi(currentPage - 1, '<i class="fas fa-chevron-left x-small"></i>', currentPage === 1));
-
-                for (let i = 1; i <= totalPages; i++) {
-                    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-                        container.appendChild(createLi(i, i, false, i === currentPage));
-                    } else if (i === currentPage - 2 || i === currentPage + 2) {
-                        const li = document.createElement('li');
-                        li.className = 'page-item disabled';
-                        li.innerHTML = '<span class="page-link">...</span>';
-                        container.appendChild(li);
-                    }
-                }
-
-                container.appendChild(createLi(currentPage + 1, '<i class="fas fa-chevron-right x-small"></i>', currentPage === totalPages));
+                const filtered = allRows.filter(row => row.textContent.toLowerCase().includes(search));
+                window.paginationControl.update(filtered);
             }
 
             searchInput.addEventListener('input', applyFilters);
-
-            // Initial load
-            filteredRows = allRows;
-            updatePagination();
         });
     </script>
 }

@@ -201,17 +201,7 @@
                 </tbody>
             </table>
         </div>
-        <!-- Pagination Controls -->
-        <div class="d-flex justify-content-between align-items-center p-3 bg-light border-top">
-            <div class="text-muted x-small">
-                Showing <span id="startRange">0</span> to <span id="endRange">0</span> of <span id="totalItems">0</span> items
-            </div>
-            <nav>
-                <ul class="pagination pagination-sm mb-0" id="pagination">
-                    <!-- Pagination buttons will be injected here -->
-                </ul>
-            </nav>
-        </div>
+        <partial name="_Pagination" model='("inventoryTable", "startRange", "endRange", "totalItems", "pagination")' />
     </div>
 
 <!-- Add Ingredient Modal -->
@@ -499,89 +489,13 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" integrity="sha384-d3UHjPdzJkZuk5H3qKYMLRyWLAQBJbby2yr2Q58hXXtAGF8RSNO9jpLDlKKPv5v3" crossorigin="anonymous"></script>
+    <partial name="_PaginationScripts" model='("inventoryTable", "ingredient-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
     <script>
         $(document).ready(function() {
             // Initialize Select2
             $('.select2').select2({
                 dropdownParent: $('#stockIntakeModal')
             });
-
-            // Pagination state
-            let currentPage = 1;
-            const rowsPerPage = 10;
-            let filteredRows = [];
-
-            function initPagination() {
-                const rows = Array.from(document.querySelectorAll('#inventoryTable tbody tr.ingredient-row'));
-                filteredRows = rows;
-                updatePagination();
-            }
-
-            function updatePagination() {
-                const totalItems = filteredRows.length;
-                const totalPages = Math.ceil(totalItems / rowsPerPage);
-                
-                if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
-
-                const start = (currentPage - 1) * rowsPerPage;
-                const end = start + rowsPerPage;
-
-                // Hide all rows
-                document.querySelectorAll('#inventoryTable tbody tr.ingredient-row').forEach(row => row.style.display = 'none');
-                
-                // Show filtered
-                filteredRows.slice(start, end).forEach(row => row.style.display = '');
-
-                // Update range text
-                if (totalItems > 0) {
-                    document.getElementById('startRange').textContent = start + 1;
-                    document.getElementById('endRange').textContent = Math.min(end, totalItems);
-                    document.getElementById('totalItems').textContent = totalItems;
-                } else {
-                    document.getElementById('startRange').textContent = 0;
-                    document.getElementById('endRange').textContent = 0;
-                    document.getElementById('totalItems').textContent = 0;
-                }
-
-                renderPaginationButtons(totalPages);
-            }
-
-            function renderPaginationButtons(totalPages) {
-                const container = document.getElementById('pagination');
-                container.innerHTML = '';
-                if (totalPages <= 1) return;
-
-                const prevLi = document.createElement('li');
-                prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-                prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()"><i class="fas fa-chevron-left x-small"></i></a>`;
-                container.appendChild(prevLi);
-
-                for (let i = 1; i <= totalPages; i++) {
-                    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-                        const li = document.createElement('li');
-                        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-                        li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()">${i}</a>`;
-                        container.appendChild(li);
-                    } else if (i === currentPage - 2 || i === currentPage + 2) {
-                        const li = document.createElement('li');
-                        li.className = 'page-item disabled';
-                        li.innerHTML = '<span class="page-link">...</span>';
-                        container.appendChild(li);
-                    }
-                }
-
-                const nextLi = document.createElement('li');
-                nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-                nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()"><i class="fas fa-chevron-right x-small"></i></a>`;
-                container.appendChild(nextLi);
-            }
-
-            window.changePage = function(page) {
-                if (page < 1 || page > Math.ceil(filteredRows.length / rowsPerPage)) return;
-                currentPage = page;
-                updatePagination();
-                event.preventDefault();
-            };
 
             // Search functionality with debounce
             let searchTimeoutInvent;
@@ -591,14 +505,8 @@
                 
                 searchTimeoutInvent = setTimeout(() => {
                     const allRows = Array.from(document.querySelectorAll('#inventoryTable tbody tr.ingredient-row'));
-                    
-                    filteredRows = allRows.filter(row => {
-                        const text = row.textContent.toLowerCase();
-                        return text.includes(searchValue);
-                    });
-                    
-                    currentPage = 1;
-                    updatePagination();
+                    const filtered = allRows.filter(row => row.textContent.toLowerCase().includes(searchValue));
+                    window.paginationControl.update(filtered);
                 }, 300);
             });
 

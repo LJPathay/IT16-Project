@@ -47,14 +47,7 @@ namespace ljp_itsolutions.Controllers
             // SECURITY: Log that an admin is viewing PII/sensitive user data
             await LogAudit("Accessed protected personnel list (PII View)");
             
-            // Excluded Superadmin role in adding a user in superadmin as an superadmin can add another superadmin???
-            ViewBag.Roles = new List<string> { 
-                UserRoles.Admin, 
-                UserRoles.Manager, 
-                UserRoles.Cashier, 
-                UserRoles.MarketingStaff 
-            };
-            
+            ViewBag.Roles = UserRoles.AllExceptSuper;
             ViewBag.ShowArchived = showArchived;
             return View(users);
         }

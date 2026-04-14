@@ -40,12 +40,7 @@ namespace ljp_itsolutions.Controllers
                 query = query.Where(u => u.IsActive);
 
             var users = query.OrderByDescending(u => u.CreatedAt).ToList();
-            ViewBag.Roles = new List<string> { 
-                UserRoles.Admin, 
-                UserRoles.Manager, 
-                UserRoles.Cashier, 
-                UserRoles.MarketingStaff 
-            };
+            ViewBag.Roles = UserRoles.AllExceptSuper;
             ViewBag.ShowArchived = showArchived;
             return View(users);
         }

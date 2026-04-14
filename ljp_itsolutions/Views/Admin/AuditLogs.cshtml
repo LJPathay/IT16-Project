@@ -201,11 +201,10 @@
 </div>
 
 @section Scripts {
+    <partial name="_PaginationScripts" model='("logsTable", "log-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
     <script>
         const logModalEl = document.getElementById('logModal');
         const logModal = new bootstrap.Modal(logModalEl);
-        
-        <partial name="_PaginationScripts" model='("logsTable", "log-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
 
         // Search and Filter Override
         function filterLogs() {
@@ -232,9 +231,6 @@
 
         document.getElementById('logSearch').addEventListener('keyup', filterLogs);
         document.getElementById('typeFilter').addEventListener('change', filterLogs);
-
-        // Initial setup
-        document.addEventListener('DOMContentLoaded', initPagination);
 
         function openLogModal(id) {
             const data = document.getElementById(`data-${id}`);

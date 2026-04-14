@@ -238,18 +238,7 @@
                 </tbody>
             </table>
         </div>
-        <!-- Table Footer / No Results -->
-        <div id="noResults" class="text-center py-5 d-none">
-            <i class="fas fa-search fa-2x text-muted opacity-25 mb-3 d-block"></i>
-            <p class="text-muted fw-bold">No transactions match your search</p>
-            <button class="btn btn-light rounded-pill px-4 small" id="clearFilters2">Clear Filters</button>
-        </div>
-        <div class="page-bar px-4 py-3 d-flex justify-content-between align-items-center">
-            <span class="text-muted x-small" id="resultCount"></span>
-            <nav>
-                <ul class="pagination pagination-sm mb-0" id="pagination"></ul>
-            </nav>
-        </div>
+        <partial name="_Pagination" model='("txTable", "startRange", "endRange", "totalItems", "pagination")' />
     </div>
 </div>
 
@@ -356,12 +345,9 @@
 </div>
 
 @section Scripts {
+    <partial name="_PaginationScripts" model='("txTable", "tx-row", "startRange", "endRange", "totalItems", "pagination", 10)' />
     <script>
         $(document).ready(function() {
-            let currentPage = 1;
-            const rowsPerPage = 10;
-            let filteredRows = [];
-
             // Modal triggers
             $('.void-btn').click(function() { $('#void-orderid').val($(this).data('id')); });
             $('.refund-btn').click(function() { $('#refund-orderid').val($(this).data('id')); });
@@ -379,13 +365,13 @@
                 const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
                 const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-                filteredRows = allRows.filter(rowElement => {
+                const filtered = allRows.filter(rowElement => {
                     const row = $(rowElement);
                     const rowSearch = row.data('search') || '';
                     const rowStatus = row.data('status') || '';
                     const rowDate = row.data('date') || '';
 
-                    const matchesSearch = !search || rowSearch.includes(search);
+                    const matchesSearch = !search || rowSearch.toString().toLowerCase().includes(search);
                     const matchesStatus = !status || rowStatus === status;
 
                     let matchesDate = true;
@@ -400,70 +386,7 @@
                     return matchesSearch && matchesStatus && matchesDate;
                 });
 
-                currentPage = 1;
-                updatePagination();
-            }
-
-            function updatePagination() {
-                const total = filteredRows.length;
-                const totalPages = Math.max(1, Math.ceil(total / rowsPerPage));
-
-                if (currentPage > totalPages) currentPage = totalPages;
-
-                const start = (currentPage - 1) * rowsPerPage;
-                const end = start + rowsPerPage;
-
-                allRows.forEach(row => row.style.display = 'none');
-                filteredRows.slice(start, end).forEach(row => row.style.display = '');
-
-                if (total === 0) {
-                    $('#noResults').removeClass('d-none');
-                } else {
-                    $('#noResults').addClass('d-none');
-                }
-
-                document.getElementById('resultCount').textContent = `Showing ${total ? start + 1 : 0} to ${Math.min(end, total)} of ${total} transactions`;
-                renderPaginationButtons(totalPages);
-            }
-
-            function renderPaginationButtons(totalPages) {
-                const container = document.getElementById('pagination');
-                if (!container) return;
-                container.innerHTML = '';
-                if (totalPages <= 1) return;
-
-                const createLi = (page, content, disabled = false, active = false) => {
-                    const li = document.createElement('li');
-                    li.className = `page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}`;
-                    const a = document.createElement('a');
-                    a.className = 'page-link';
-                    a.href = '#';
-                    a.innerHTML = content;
-                    a.onclick = (e) => {
-                        e.preventDefault();
-                        if (!disabled && !active) {
-                            currentPage = page;
-                            updatePagination();
-                        }
-                    };
-                    li.appendChild(a);
-                    return li;
-                };
-
-                container.appendChild(createLi(currentPage - 1, '<i class="fas fa-chevron-left x-small"></i>', currentPage === 1));
-
-                for (let i = 1; i <= totalPages; i++) {
-                    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-                        container.appendChild(createLi(i, i, false, i === currentPage));
-                    } else if (i === currentPage - 2 || i === currentPage + 2) {
-                        const li = document.createElement('li');
-                        li.className = 'page-item disabled';
-                        li.innerHTML = '<span class="page-link">...</span>';
-                        container.appendChild(li);
-                    }
-                }
-
-                container.appendChild(createLi(currentPage + 1, '<i class="fas fa-chevron-right x-small"></i>', currentPage === totalPages));
+                window.paginationControl.update(filtered);
             }
 
             $('#txSearch').on('keyup input', applyFilters);
@@ -477,7 +400,7 @@
                 applyFilters();
             }
 
-            $('#clearFilters, #clearFilters2').click(clearAll);
+            $('#clearFilters').click(clearAll);
 
             // Initial load
             applyFilters();

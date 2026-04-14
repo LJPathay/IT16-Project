@@ -78,31 +78,17 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.IsEssential = true;
         options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
         options.SlidingExpiration = true;
+        bool IsRestricted(PathString p) => p.StartsWithSegments("/api") || p.StartsWithSegments("/admin", StringComparison.OrdinalIgnoreCase) || p.StartsWithSegments("/config", StringComparison.OrdinalIgnoreCase);
+
         options.Events = new CookieAuthenticationEvents
         {
-            OnRedirectToLogin = context =>
-            {
-                if (context.Request.Path.StartsWithSegments("/api") || 
-                    context.Request.Path.StartsWithSegments("/admin", StringComparison.OrdinalIgnoreCase) || 
-                    context.Request.Path.StartsWithSegments("/config", StringComparison.OrdinalIgnoreCase))
-                {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    return Task.CompletedTask;
-                }
-                context.Response.Redirect(context.RedirectUri);
-                return Task.CompletedTask;
+            OnRedirectToLogin = c => {
+                if (IsRestricted(c.Request.Path)) { c.Response.StatusCode = 401; return Task.CompletedTask; }
+                c.Response.Redirect(c.RedirectUri); return Task.CompletedTask;
             },
-            OnRedirectToAccessDenied = context =>
-            {
-                if (context.Request.Path.StartsWithSegments("/api") || 
-                    context.Request.Path.StartsWithSegments("/admin", StringComparison.OrdinalIgnoreCase) || 
-                    context.Request.Path.StartsWithSegments("/config", StringComparison.OrdinalIgnoreCase))
-                {
-                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                    return Task.CompletedTask;
-                }
-                context.Response.Redirect(context.RedirectUri);
-                return Task.CompletedTask;
+            OnRedirectToAccessDenied = c => {
+                if (IsRestricted(c.Request.Path)) { c.Response.StatusCode = 403; return Task.CompletedTask; }
+                c.Response.Redirect(c.RedirectUri); return Task.CompletedTask;
             }
         };
     });

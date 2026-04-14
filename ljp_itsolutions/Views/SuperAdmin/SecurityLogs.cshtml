@@ -117,8 +117,8 @@
 </div>
 
 @section Scripts {
-        <partial name="_PaginationScripts" model='("securityTable", "log-row", "startRange", "endRange", "totalItems", "pagination", 15)' />
-
+    <partial name="_PaginationScripts" model='("securityTable", "log-row", "startRange", "endRange", "totalItems", "pagination", 15)' />
+    <script>
         $(document).ready(function() {
             function filterLogs() {
                 var searchTerm = $('#logSearch').val().toLowerCase();
