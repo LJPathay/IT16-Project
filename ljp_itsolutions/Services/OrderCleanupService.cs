@@ -5,9 +5,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace ljp_itsolutions.Services
 {
@@ -31,6 +33,7 @@ namespace ljp_itsolutions.Services
                 try
                 {
                     await CleanupStaleOrders();
+                    await ProcessAutomatedBackups();
                     
                     // Simple logic to run expiration check once every 24 hours
                     if (DateTime.UtcNow.Hour == 8 && DateTime.UtcNow.Minute < 15) // Run around 8am
@@ -136,6 +139,71 @@ namespace ljp_itsolutions.Services
                     }
 
                     await db.SaveChangesAsync();
+                }
+            }
+        }
+
+        private async Task ProcessAutomatedBackups()
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                try
+                {
+                    var setting = await db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == "BackupSchedule");
+                    if (setting == null || string.Equals(setting.SettingValue, "Manual", StringComparison.OrdinalIgnoreCase))
+                        return;
+
+                    var path = Path.Combine(Directory.GetCurrentDirectory(), "Backups");
+                    if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+
+                    var files = new DirectoryInfo(path).GetFiles("*.json").OrderByDescending(f => f.CreationTimeUtc).ToList();
+                    var latestFile = files.FirstOrDefault();
+
+                    bool shouldRun = false;
+                    if (latestFile == null)
+                    {
+                        shouldRun = true;
+                    }
+                    else
+                    {
+                        var timeSinceLastBackup = DateTime.UtcNow - latestFile.CreationTimeUtc;
+                        if (string.Equals(setting.SettingValue, "Daily", StringComparison.OrdinalIgnoreCase) && timeSinceLastBackup.TotalHours >= 24)
+                            shouldRun = true;
+                        else if (string.Equals(setting.SettingValue, "Weekly", StringComparison.OrdinalIgnoreCase) && timeSinceLastBackup.TotalDays >= 7)
+                            shouldRun = true;
+                    }
+
+                    if (shouldRun)
+                    {
+                        _logger.LogInformation("Starting automated system backup...");
+                        var fileName = $"backup_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json";
+                        var fullPath = Path.Combine(path, fileName);
+                        var backupData = new {
+                            GeneratedAt = DateTime.UtcNow,
+                            Users = await db.Users.AsNoTracking().ToListAsync(),
+                            Products = await db.Products.AsNoTracking().ToListAsync(),
+                            Orders = await db.Orders.AsNoTracking().Include(o => o.OrderDetails).ToListAsync(),
+                            Settings = await db.SystemSettings.AsNoTracking().ToListAsync()
+                        };
+
+                        var json = JsonSerializer.Serialize(backupData, new JsonSerializerOptions { WriteIndented = true, ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles });
+                        await File.WriteAllTextAsync(fullPath, json);
+                        await LogAudit(db, "Automated Backup", "Scheduled automated backup completed successfully.");
+                        
+                        // Delete older backups if there are too many (e.g., keep the last 5)
+                        if (files.Count > 4)
+                        {
+                            foreach (var old in files.Skip(4))
+                            {
+                                old.Delete();
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Automated backup generation failed.");
                 }
             }
         }

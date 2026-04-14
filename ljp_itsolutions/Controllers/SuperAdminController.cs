@@ -364,43 +364,6 @@ namespace ljp_itsolutions.Controllers
             return View(logs);
         }
 
-        private bool ValidatePasswordComplexity(string password, User user, out string errorMessage)
-        {
-            int minLen = int.TryParse(GetSetting("PasswordMinLength", "16"), out int ml) ? ml : 16;
-            errorMessage = string.Empty;
 
-            if (password.Length < minLen)
-            {
-                errorMessage = $"Password must be at least {minLen} characters long.";
-                return false;
-            }
-            if (password.Contains(user.Username, StringComparison.OrdinalIgnoreCase))
-            {
-                errorMessage = "Password cannot contain the username.";
-                return false;
-            }
-            if (!password.Any(char.IsUpper))
-            {
-                errorMessage = "Password must contain at least one uppercase letter (A-Z).";
-                return false;
-            }
-            if (!password.Any(char.IsLower))
-            {
-                errorMessage = "Password must contain at least one lowercase letter (a-z).";
-                return false;
-            }
-            if (!password.Any(char.IsDigit))
-            {
-                errorMessage = "Password must contain at least one number (0-9).";
-                return false;
-            }
-            if (!password.Any(c => !char.IsLetterOrDigit(c)))
-            {
-                errorMessage = "Password must contain at least one special character.";
-                return false;
-            }
-
-            return true;
-        }
     }
 }
