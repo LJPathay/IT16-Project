@@ -43,13 +43,13 @@
                 <div class="col-lg-5 col-md-12">
                     <div class="input-group">
                         <span class="input-group-text bg-light border-0 text-muted"><i class="fas fa-search"></i></span>
-                        <input type="text" id="productSearch" class="form-control bg-light border-0 ps-0" placeholder="Search products by name or ID...">
+                        <input type="text" id="productSearch" class="form-control bg-light border-0 ps-0" placeholder="Search products by name or ID..." aria-label="productSearch">
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-12">
                     <div class="input-group">
                         <span class="input-group-text bg-light border-0 text-muted x-small fw-bold">CATEGORY</span>
-                        <select id="categoryFilter" class="form-select bg-light border-0">
+                        <select id="categoryFilter" class="form-select bg-light border-0" aria-label="categoryFilter">
                             <option value="">All Categories</option>
                             @foreach (var cat in categories)
                             {
@@ -169,17 +169,17 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="modern-form-label">Product Photo</label>
-                        <input type="file" name="photo" class="modern-form-control w-100" accept="image/*" required />
+                        <input type="file" name="photo" class="modern-form-control w-100" accept="image/*" required / aria-label="photo">
                         <div class="form-text text-xs">Upload a photo for POS display</div>
                     </div>
                     <div class="mb-3">
                         <label class="modern-form-label">Product Name</label>
-                        <input type="text" name="ProductName" class="modern-form-control w-100" required placeholder="e.g. Iced Vanilla Latte" />
+                        <input type="text" name="ProductName" class="modern-form-control w-100" required placeholder="e.g. Iced Vanilla Latte" / aria-label="ProductName">
                     </div>
                     <div class="row mb-3">
                         <div class="col">
                             <label class="modern-form-label">Category</label>
-                            <select name="CategoryID" class="modern-form-control w-100" required>
+                            <select name="CategoryID" class="modern-form-control w-100" required aria-label="CategoryID">
                                 <option value="">Select Category</option>
                                 @foreach (var cat in categories)
                                 {
@@ -189,7 +189,7 @@
                         </div>
                         <div class="col">
                             <label class="modern-form-label">Price (₱)</label>
-                            <input type="number" step="0.01" name="Price" class="modern-form-control w-100" required placeholder="0.00" />
+                            <input type="number" step="0.01" name="Price" class="modern-form-control w-100" required placeholder="0.00" / aria-label="Price">
                         </div>
                     </div>
                     <input type="hidden" name="StockQuantity" value="1000" />
@@ -216,17 +216,17 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="modern-form-label">Product Photo (Optional)</label>
-                        <input type="file" name="photo" class="modern-form-control w-100" accept="image/*" />
+                        <input type="file" name="photo" class="modern-form-control w-100" accept="image/*" / aria-label="photo">
                         <div class="form-text text-xs">Leave blank to keep current photo</div>
                     </div>
                     <div class="mb-3">
                         <label class="modern-form-label">Product Name</label>
-                        <input type="text" name="ProductName" id="edit-name" class="modern-form-control w-100" required />
+                        <input type="text" name="ProductName" id="edit-name" class="modern-form-control w-100" required / aria-label="ProductName">
                     </div>
                     <div class="row mb-3">
                         <div class="col">
                             <label class="modern-form-label">Category</label>
-                            <select name="CategoryID" id="edit-category" class="modern-form-control w-100" required>
+                            <select name="CategoryID" id="edit-category" class="modern-form-control w-100" required aria-label="CategoryID">
                                 <option value="">Select Category</option>
                                 @foreach (var cat in categories)
                                 {
@@ -236,12 +236,12 @@
                         </div>
                         <div class="col">
                             <label class="modern-form-label">Price (₱)</label>
-                            <input type="number" step="0.01" name="Price" id="edit-price" class="modern-form-control w-100" required />
+                            <input type="number" step="0.01" name="Price" id="edit-price" class="modern-form-control w-100" required / aria-label="Price">
                         </div>
                     </div>
                     <input type="hidden" name="StockQuantity" id="edit-stock" value="1000" />
                     <div class="form-check form-switch mt-2">
-                        <input type="checkbox" name="IsAvailable" id="edit-available" value="true" class="form-check-input" />
+                        <input type="checkbox" name="IsAvailable" id="edit-available" value="true" class="form-check-input" / aria-label="IsAvailable">
                         <label class="form-check-label fw-bold text-sm ms-2">Available for Sale</label>
                     </div>
                 </div>
@@ -310,14 +310,14 @@
 
                 const prevLi = document.createElement('li');
                 prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-                prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})"><i class="fas fa-chevron-left x-small"></i></a>`;
+                prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})" role="button" tabindex="0"><i class="fas fa-chevron-left x-small"></i></a>`;
                 container.appendChild(prevLi);
 
                 for (let i = 1; i <= totalPages; i++) {
                     if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
                         const li = document.createElement('li');
                         li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-                        li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+                        li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})" role="button" tabindex="0">${i}</a>`;
                         container.appendChild(li);
                     } else if (i === currentPage - 2 || i === currentPage + 2) {
                         const li = document.createElement('li');
@@ -329,7 +329,7 @@
 
                 const nextLi = document.createElement('li');
                 nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-                nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})"><i class="fas fa-chevron-right x-small"></i></a>`;
+                nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})" role="button" tabindex="0"><i class="fas fa-chevron-right x-small"></i></a>`;
                 container.appendChild(nextLi);
             }
 

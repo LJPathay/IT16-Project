@@ -14,7 +14,7 @@
         <div class="col-lg-7 d-flex justify-content-lg-end gap-2 align-items-center flex-wrap">
             <form id="filterForm" method="get" class="d-flex gap-2 align-items-center">
                 <div class="position-relative">
-                    <select name="type" id="typeFilter" class="form-select form-select-sm rounded-pill shadow-sm border bg-white x-small fw-bold ps-3 pe-4" onchange="updateDateInput()" style="width: 110px; height: 45px; -webkit-appearance: none; cursor: pointer;">
+                    <select name="type" id="typeFilter" class="form-select form-select-sm rounded-pill shadow-sm border bg-white x-small fw-bold ps-3 pe-4" onchange="updateDateInput()" style="width: 110px; height: 45px; -webkit-appearance: none; cursor: pointer;" aria-label="type">
                         <option value="week" selected="@(ViewBag.SelectedType == "week")">Weekly</option>
                         <option value="month" selected="@(ViewBag.SelectedType == "month")">Monthly</option>
                         <option value="year" selected="@(ViewBag.SelectedType == "year")">Yearly</option>
@@ -26,7 +26,7 @@
                     <span class="input-group-text bg-transparent border-0 ps-3">
                         <i class="far fa-calendar-alt text-muted x-small"></i>
                     </span>
-                    <input type="month" name="value" id="valueFilter" class="form-control border-0 shadow-none ps-2 py-2 x-small fw-bold" value="@ViewBag.SelectedValue" style="height: 100%;">
+                    <input type="month" name="value" id="valueFilter" class="form-control border-0 shadow-none ps-2 py-2 x-small fw-bold" value="@ViewBag.SelectedValue" style="height: 100%;" aria-label="value">
                 </div>
 
                 <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold x-small d-flex align-items-center justify-content-center" style="height: 45px; min-width: 140px; background-color: #d97706; border-color: #d97706;">

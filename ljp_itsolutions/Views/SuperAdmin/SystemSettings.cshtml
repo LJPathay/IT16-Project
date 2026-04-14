@@ -44,21 +44,21 @@
                         <div class="mb-3">
                             <label class="form-label x-small fw-bold text-muted uppercase tracking-wider">Urgent Stock Priority Threshold</label>
                             <div class="input-group">
-                                <input type="number" name="CriticalStockThreshold" class="form-control rounded-start-3" value="@GetVal("CriticalStockThreshold", "5")">
+                                <input type="number" name="CriticalStockThreshold" class="form-control rounded-start-3" value="@GetVal("CriticalStockThreshold", "5")" aria-label="CriticalStockThreshold">
                                 <span class="input-group-text bg-light border-0 x-small">units</span>
                             </div>
                             <div class="x-small text-danger mt-1 opacity-75">Alerts trigger instantly when inventory drops below this mark.</div>
                         </div>
                         <div class="p-3 rounded-4 bg-light border border-light-2 mb-3">
                             <div class="form-check form-switch mb-2">
-                                <input type="checkbox" name="AllowPaymentBypass" class="form-check-input mt-1" value="on" @(GetBool("AllowPaymentBypass") ? "checked" : "")>
+                                <input type="checkbox" name="AllowPaymentBypass" class="form-check-input mt-1" value="on" @(GetBool("AllowPaymentBypass") ? "checked" : "") aria-label="AllowPaymentBypass">
                                 <label class="form-check-label small fw-bold">Emergency Payment Bypass</label>
                             </div>
                             <div class="x-small text-muted">Allow checkouts to proceed even if payment APIs are offline.</div>
                         </div>
                         <div class="mb-0">
                             <label class="form-label x-small fw-bold text-muted uppercase tracking-wider">System Brand Tagline</label>
-                            <input type="text" name="SystemTagline" class="form-control rounded-3" value="@GetVal("SystemTagline", "Premium Coffee Experience")">
+                            <input type="text" name="SystemTagline" class="form-control rounded-3" value="@GetVal("SystemTagline", "Premium Coffee Experience")" aria-label="SystemTagline">
                         </div>
                     </div>
                 </div>
@@ -79,19 +79,19 @@
                         <div class="row g-3 mb-3">
                             <div class="col-6">
                                 <label class="form-label x-small fw-bold text-muted uppercase tracking-wider">Currency Symbol</label>
-                                <input type="text" name="Currency" class="form-control rounded-3 text-center fw-900 font-monospace" value="@GetVal("Currency", "₱")">
+                                <input type="text" name="Currency" class="form-control rounded-3 text-center fw-900 font-monospace" value="@GetVal("Currency", "₱")" aria-label="Currency">
                             </div>
                             <div class="col-6">
                                 <label class="form-label x-small fw-bold text-muted uppercase tracking-wider">Tax Rate (%)</label>
                                 <div class="input-group">
-                                    <input type="number" step="0.01" name="TaxRate" class="form-control rounded-start-3" value="@GetVal("TaxRate", "5")">
+                                    <input type="number" step="0.01" name="TaxRate" class="form-control rounded-start-3" value="@GetVal("TaxRate", "5")" aria-label="TaxRate">
                                     <span class="input-group-text bg-light border-0 x-small">%</span>
                                 </div>
                             </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label x-small fw-bold text-muted uppercase tracking-wider">System Timezone</label>
-                            <select name="Timezone" class="form-select rounded-3">
+                            <select name="Timezone" class="form-select rounded-3" aria-label="Timezone">
                                 <option value="Asia/Manila" selected="@(GetVal("Timezone") == "Asia/Manila")">Asia/Manila (UTC+8)</option>
                                 <option value="UTC" selected="@(GetVal("Timezone") == "UTC")">UTC / GMT</option>
                                 <option value="Asia/Singapore" selected="@(GetVal("Timezone") == "Asia/Singapore")">Asia/Singapore</option>
@@ -100,7 +100,7 @@
                         </div>
                         <div>
                             <label class="form-label x-small fw-bold text-muted uppercase tracking-wider">Date Format</label>
-                            <select name="DateFormat" class="form-select rounded-3">
+                            <select name="DateFormat" class="form-select rounded-3" aria-label="DateFormat">
                                 <option value="MMM dd, yyyy" selected="@(GetVal("DateFormat") == "MMM dd, yyyy")">MMM dd, yyyy (e.g. Mar 03, 2026)</option>
                                 <option value="dd/MM/yyyy" selected="@(GetVal("DateFormat") == "dd/MM/yyyy")">dd/MM/yyyy</option>
                                 <option value="MM/dd/yyyy" selected="@(GetVal("DateFormat") == "MM/dd/yyyy")">MM/dd/yyyy</option>
@@ -124,19 +124,19 @@
                     <div class="card-body p-4 pt-2">
                         <div class="mb-3">
                             <label class="form-label x-small fw-bold text-muted uppercase tracking-wider">SMTP Server</label>
-                            <input type="text" name="SmtpServer" class="form-control rounded-3" value="@GetVal("SmtpServer")" placeholder="smtp.gmail.com">
+                            <input type="text" name="SmtpServer" class="form-control rounded-3" value="@GetVal("SmtpServer")" placeholder="smtp.gmail.com" aria-label="SmtpServer">
                         </div>
                         <div class="mb-3">
                             <label class="form-label x-small fw-bold text-muted uppercase tracking-wider">SMTP Port</label>
-                            <input type="number" name="SmtpPort" class="form-control rounded-3" value="@GetVal("SmtpPort", "587")">
+                            <input type="number" name="SmtpPort" class="form-control rounded-3" value="@GetVal("SmtpPort", "587")" aria-label="SmtpPort">
                         </div>
                         <div class="p-3 rounded-4 bg-light border border-light-2">
                             <div class="form-check form-switch mb-2">
-                                <input type="checkbox" name="EmailNotifications" class="form-check-input mt-1" value="on" @(GetBool("EmailNotifications") ? "checked" : "")>
+                                <input type="checkbox" name="EmailNotifications" class="form-check-input mt-1" value="on" @(GetBool("EmailNotifications") ? "checked" : "") aria-label="EmailNotifications">
                                 <label class="form-check-label small fw-bold">System Email Dispatch</label>
                             </div>
                             <div class="form-check form-switch">
-                                <input type="checkbox" name="DailyReports" class="form-check-input mt-1" value="on" @(GetBool("DailyReports") ? "checked" : "")>
+                                <input type="checkbox" name="DailyReports" class="form-check-input mt-1" value="on" @(GetBool("DailyReports") ? "checked" : "") aria-label="DailyReports">
                                 <label class="form-check-label small fw-bold">Auto-generate Daily EOD</label>
                             </div>
                         </div>
@@ -160,14 +160,14 @@
                             <div class="col-6">
                                 <label class="form-label x-small fw-bold text-muted uppercase tracking-wider">Session Limit</label>
                                 <div class="input-group">
-                                    <input type="number" name="SessionTimeout" class="form-control rounded-start-3" value="@GetVal("SessionTimeout", "60")">
+                                    <input type="number" name="SessionTimeout" class="form-control rounded-start-3" value="@GetVal("SessionTimeout", "60")" aria-label="SessionTimeout">
                                     <span class="input-group-text bg-light border-0 x-small">min</span>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <label class="form-label x-small fw-bold text-muted uppercase tracking-wider">Min Password</label>
                                 <div class="input-group">
-                                    <input type="number" name="PasswordMinLength" class="form-control rounded-start-3" value="@GetVal("PasswordMinLength", "8")">
+                                    <input type="number" name="PasswordMinLength" class="form-control rounded-start-3" value="@GetVal("PasswordMinLength", "8")" aria-label="PasswordMinLength">
                                     <span class="input-group-text bg-light border-0 x-small">chars</span>
                                 </div>
                             </div>
@@ -177,25 +177,25 @@
                                 <div class="col-12">
                                     <div class="form-check form-switch custom-switch-danger p-0 m-0 d-flex align-items-center justify-content-between">
                                         <label class="form-check-label small fw-bold">Enforce 2FA for Admins</label>
-                                        <input type="checkbox" name="TwoFactorAuth" class="form-check-input m-0" value="on" @(GetBool("TwoFactorAuth") ? "checked" : "")>
+                                        <input type="checkbox" name="TwoFactorAuth" class="form-check-input m-0" value="on" @(GetBool("TwoFactorAuth") ? "checked" : "") aria-label="TwoFactorAuth">
                                     </div>
                                 </div>
                                 <div class="col-12 border-top border-light pt-2">
                                     <div class="form-check form-switch p-0 m-0 d-flex align-items-center justify-content-between">
                                         <label class="form-check-label small fw-bold">Strong Password (Numbers)</label>
-                                        <input type="checkbox" name="RequireNumbers" class="form-check-input m-0" value="on" @(GetBool("RequireNumbers") ? "checked" : "")>
+                                        <input type="checkbox" name="RequireNumbers" class="form-check-input m-0" value="on" @(GetBool("RequireNumbers") ? "checked" : "") aria-label="RequireNumbers">
                                     </div>
                                 </div>
                                 <div class="col-12 border-top border-light pt-2">
                                     <div class="form-check form-switch p-0 m-0 d-flex align-items-center justify-content-between">
                                         <label class="form-check-label small fw-bold">Require Special Characters</label>
-                                        <input type="checkbox" name="RequireSpecialChars" class="form-check-input m-0" value="on" @(GetBool("RequireSpecialChars") ? "checked" : "")>
+                                        <input type="checkbox" name="RequireSpecialChars" class="form-check-input m-0" value="on" @(GetBool("RequireSpecialChars") ? "checked" : "") aria-label="RequireSpecialChars">
                                     </div>
                                 </div>
                                 <div class="col-12 border-top border-light pt-2">
                                     <div class="form-check form-switch p-0 m-0 d-flex align-items-center justify-content-between">
                                         <label class="form-check-label small fw-bold">Allow Public Registration</label>
-                                        <input type="checkbox" name="AllowPublicRegistration" class="form-check-input m-0" value="on" @(GetBool("AllowPublicRegistration") ? "checked" : "")>
+                                        <input type="checkbox" name="AllowPublicRegistration" class="form-check-input m-0" value="on" @(GetBool("AllowPublicRegistration") ? "checked" : "") aria-label="AllowPublicRegistration">
                                     </div>
                                 </div>
                             </div>
@@ -222,7 +222,7 @@
                                     <div class="d-flex align-items-center justify-content-between mb-3">
                                         <h6 class="mb-0 fw-bold text-danger"><i class="fas fa-tools me-2"></i>Selective Maintenance Mode</h6>
                                         <div class="form-check form-switch p-0">
-                                            <input type="checkbox" name="MaintenanceMode" class="form-check-input m-0" value="on" @(GetBool("MaintenanceMode") ? "checked" : "")>
+                                            <input type="checkbox" name="MaintenanceMode" class="form-check-input m-0" value="on" @(GetBool("MaintenanceMode") ? "checked" : "") aria-label="MaintenanceMode">
                                         </div>
                                     </div>
                                     <p class="x-small text-danger opacity-75 mb-3">Select the specific user roles to restrict from accessing the system:</p>
@@ -234,7 +234,7 @@
                                     <div class="d-flex flex-wrap gap-3">
                                         @foreach(var role in roleList) {
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="MaintRole_@role" id="maint_@role" value="true" @(maintRoles.Contains(role) ? "checked" : "")>
+                                                <input class="form-check-input" type="checkbox" name="MaintRole_@role" id="maint_@role" value="true" @(maintRoles.Contains(role) ? "checked" : "") aria-label="MaintRole_@role">
                                                 <label class="form-check-label small fw-bold text-dark" for="maint_@role">@role</label>
                                             </div>
                                         }
@@ -246,7 +246,7 @@
                                     <div class="col-12">
                                         <label class="form-label x-small fw-bold text-muted uppercase tracking-wider">Log Retention Policy</label>
                                         <div class="input-group">
-                                            <input type="number" name="LogRetentionDays" class="form-control rounded-start-3" value="@GetVal("LogRetentionDays", "30")">
+                                            <input type="number" name="LogRetentionDays" class="form-control rounded-start-3" value="@GetVal("LogRetentionDays", "30")" aria-label="LogRetentionDays">
                                             <span class="input-group-text bg-light border-0 x-small">Retention (Days)</span>
                                         </div>
                                     </div>
@@ -254,10 +254,10 @@
                                         <div class="p-3 bg-light rounded-4 border border-light">
                                             <div class="form-check form-switch mb-2 p-0 d-flex align-items-center justify-content-between">
                                                 <label class="form-check-label small fw-bold">Inventory Low Stock Alerts</label>
-                                                <input type="checkbox" name="LowStockAlerts" class="form-check-input m-0" value="on" @(GetBool("LowStockAlerts") ? "checked" : "")>
+                                                <input type="checkbox" name="LowStockAlerts" class="form-check-input m-0" value="on" @(GetBool("LowStockAlerts") ? "checked" : "") aria-label="LowStockAlerts">
                                             </div>
                                             <div class="input-group mt-2">
-                                                <input type="number" name="LowStockThreshold" class="form-control form-control-sm rounded-start-3" value="@GetVal("LowStockThreshold", "10")">
+                                                <input type="number" name="LowStockThreshold" class="form-control form-control-sm rounded-start-3" value="@GetVal("LowStockThreshold", "10")" aria-label="LowStockThreshold">
                                                 <span class="input-group-text bg-white border x-small border-start-0">Warning Threshold</span>
                                             </div>
                                         </div>

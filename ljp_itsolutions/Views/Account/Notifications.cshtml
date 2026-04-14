@@ -69,7 +69,7 @@
                                                 <div class="d-flex justify-content-end gap-2">
                                                     @if (!string.IsNullOrEmpty(notification.TargetUrl))
                                                     {
-                                                        <a href="@notification.TargetUrl" class="btn btn-sm btn-light rounded-pill px-3 fw-bold x-small" onclick="handleNotificationAction(@notification.NotificationID, '@notification.TargetUrl')">
+                                                        <a href="@notification.TargetUrl" class="btn btn-sm btn-light rounded-pill px-3 fw-bold x-small" onclick="handleNotificationAction(@notification.NotificationID, '@notification.TargetUrl')" role="button" tabindex="0">
                                                             View Scope
                                                         </a>
                                                     }

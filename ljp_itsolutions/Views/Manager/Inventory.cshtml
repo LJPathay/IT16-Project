@@ -99,7 +99,7 @@
         <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between">
             <div class="input-group" style="max-width: 300px;">
                 <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                <input type="text" id="inventorySearch" class="form-control bg-light border-start-0" placeholder="Search ingredients...">
+                <input type="text" id="inventorySearch" class="form-control bg-light border-start-0" placeholder="Search ingredients..." aria-label="inventorySearch">
             </div>
             <div class="d-flex gap-2">
                 <a asp-action="ExportInventoryCSV" class="btn btn-outline-dark rounded-pill px-4">
@@ -234,16 +234,16 @@
                 <form asp-action="CreateIngredient" method="post">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Ingredient Name</label>
-                        <input type="text" name="Name" class="form-control bg-light border-0 py-2" required placeholder="e.g. Fresh Milk" />
+                        <input type="text" name="Name" class="form-control bg-light border-0 py-2" required placeholder="e.g. Fresh Milk" / aria-label="Name">
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-6">
                             <label class="form-label small fw-bold text-muted uppercase">Initial Stock</label>
-                            <input type="number" step="0.001" name="StockQuantity" class="form-control bg-light border-0 py-2" required value="0" />
+                            <input type="number" step="0.001" name="StockQuantity" class="form-control bg-light border-0 py-2" required value="0" / aria-label="StockQuantity">
                         </div>
                         <div class="col-6">
                             <label class="form-label small fw-bold text-muted uppercase">Unit</label>
-                            <select name="Unit" class="form-select bg-light border-0 py-2" required>
+                            <select name="Unit" class="form-select bg-light border-0 py-2" required aria-label="Unit">
                                 <option value="kg">kg (Kilogram)</option>
                                 <option value="L">L (Liter)</option>
                                 <option value="ml">ml (Milliliter)</option>
@@ -254,12 +254,12 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Low Stock Threshold</label>
-                        <input type="number" step="0.001" name="LowStockThreshold" class="form-control bg-light border-0 py-2" required value="1" />
+                        <input type="number" step="0.001" name="LowStockThreshold" class="form-control bg-light border-0 py-2" required value="1" / aria-label="LowStockThreshold">
                         <div class="form-text x-small text-muted mt-1"><i class="fas fa-info-circle me-1"></i>You'll be notified when stock falls below this level.</div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Expiry Date (Optional)</label>
-                        <input type="date" name="ExpiryDate" class="form-control bg-light border-0 py-2" />
+                        <input type="date" name="ExpiryDate" class="form-control bg-light border-0 py-2" / aria-label="ExpiryDate">
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary rounded-pill fw-bold py-3 shadow-sm">
@@ -293,16 +293,16 @@
                     <input type="hidden" name="IngredientID" id="edit-ing-id" />
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Ingredient Name</label>
-                        <input type="text" name="Name" id="edit-ing-name" class="form-control bg-light border-0 py-2" required />
+                        <input type="text" name="Name" id="edit-ing-name" class="form-control bg-light border-0 py-2" required / aria-label="Name">
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-6">
                             <label class="form-label small fw-bold text-muted uppercase">Update Stock</label>
-                            <input type="number" step="0.001" name="StockQuantity" id="edit-ing-stock" class="form-control bg-light border-0 py-2" required />
+                            <input type="number" step="0.001" name="StockQuantity" id="edit-ing-stock" class="form-control bg-light border-0 py-2" required / aria-label="StockQuantity">
                         </div>
                         <div class="col-6">
                             <label class="form-label small fw-bold text-muted uppercase">Unit</label>
-                            <select name="Unit" id="edit-ing-unit" class="form-select bg-light border-0 py-2" required>
+                            <select name="Unit" id="edit-ing-unit" class="form-select bg-light border-0 py-2" required aria-label="Unit">
                                 <option value="kg">kg</option>
                                 <option value="L">L</option>
                                 <option value="ml">ml</option>
@@ -313,11 +313,11 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Low Stock Threshold</label>
-                        <input type="number" step="0.001" name="LowStockThreshold" id="edit-ing-threshold" class="form-control bg-light border-0 py-2" required />
+                        <input type="number" step="0.001" name="LowStockThreshold" id="edit-ing-threshold" class="form-control bg-light border-0 py-2" required / aria-label="LowStockThreshold">
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Expiry Date (Optional)</label>
-                        <input type="date" name="ExpiryDate" id="edit-ing-expiry" class="form-control bg-light border-0 py-2" />
+                        <input type="date" name="ExpiryDate" id="edit-ing-expiry" class="form-control bg-light border-0 py-2" / aria-label="ExpiryDate">
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary rounded-pill fw-bold py-3 shadow-sm">
@@ -350,7 +350,7 @@
                 <form asp-action="IntakeStock" method="post">
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Select Ingredient</label>
-                        <select name="IngredientID" id="intake-ing-id" class="form-select select2 bg-light border-0" required style="width: 100%; padding: 0.75rem;">
+                        <select name="IngredientID" id="intake-ing-id" class="form-select select2 bg-light border-0" required style="width: 100%; padding: 0.75rem;" aria-label="IngredientID">
                             <option value="">-- Choose Ingredient --</option>
                             @foreach (var ing in Model.Ingredients.OrderBy(i => i.Name))
                             {
@@ -362,23 +362,23 @@
                         <label class="form-label small fw-bold text-muted uppercase">Quantity to Add</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="fas fa-balance-scale"></i></span>
-                            <input type="number" step="0.001" name="Quantity" class="form-control bg-light border-0 py-2" required placeholder="0.00" />
+                            <input type="number" step="0.001" name="Quantity" class="form-control bg-light border-0 py-2" required placeholder="0.00" / aria-label="Quantity">
                             <span class="input-group-text bg-light border-0 text-muted pe-3 fw-bold" id="intake-unit-badge">unit</span>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Intake Date</label>
-                        <input type="date" name="IntakeDate" id="intake-date" class="form-control bg-light border-0 py-2" required />
+                        <input type="date" name="IntakeDate" id="intake-date" class="form-control bg-light border-0 py-2" required / aria-label="IntakeDate">
                         <div class="form-text x-small text-muted mt-1"><i class="fas fa-clock me-1"></i>Date of physical stocking</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Expiry Date (Optional)</label>
-                        <input type="date" name="ExpiryDate" id="intake-expiry" class="form-control bg-light border-0 py-2" />
+                        <input type="date" name="ExpiryDate" id="intake-expiry" class="form-control bg-light border-0 py-2" / aria-label="ExpiryDate">
                         <div class="form-text x-small text-muted mt-1"><i class="fas fa-calendar-times me-1"></i>New expiry date for this batch</div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Remarks</label>
-                        <textarea name="Remarks" class="form-control bg-light border-0 py-2" rows="3" placeholder="e.g. Weekly restock from supplier X" maxlength="200"></textarea>
+                        <textarea name="Remarks" class="form-control bg-light border-0 py-2" rows="3" placeholder="e.g. Weekly restock from supplier X" maxlength="200" aria-label="Remarks"></textarea>
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary rounded-pill fw-bold py-3 shadow-sm">
@@ -473,6 +473,14 @@
                         </h6>
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0">
+                                <thead class="visually-hidden">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Change</th>
+                                        <th>Type</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
                                 <tbody id="detail-logs-body" class="small border-top-0">
                                     <!-- Logs will be loaded here -->
                                 </tbody>
@@ -545,14 +553,14 @@
 
                 const prevLi = document.createElement('li');
                 prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-                prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})"><i class="fas fa-chevron-left x-small"></i></a>`;
+                prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})" role="button" tabindex="0"><i class="fas fa-chevron-left x-small"></i></a>`;
                 container.appendChild(prevLi);
 
                 for (let i = 1; i <= totalPages; i++) {
                     if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
                         const li = document.createElement('li');
                         li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-                        li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+                        li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})" role="button" tabindex="0">${i}</a>`;
                         container.appendChild(li);
                     } else if (i === currentPage - 2 || i === currentPage + 2) {
                         const li = document.createElement('li');
@@ -564,7 +572,7 @@
 
                 const nextLi = document.createElement('li');
                 nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-                nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})"><i class="fas fa-chevron-right x-small"></i></a>`;
+                nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})" role="button" tabindex="0"><i class="fas fa-chevron-right x-small"></i></a>`;
                 container.appendChild(nextLi);
             }
 

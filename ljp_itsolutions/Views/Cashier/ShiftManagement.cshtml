@@ -23,7 +23,7 @@
                                 <p class="text-muted small">Enter the starting amount in your cash drawer.</p>
                             </div>
                             <div class="form-floating mb-4">
-                                <input type="number" step="0.01" class="form-control" id="startingCash" name="startingCash" placeholder="Starting Cash" required min="0">
+                                <input type="number" step="0.01" class="form-control" id="startingCash" name="startingCash" placeholder="Starting Cash" required min="0" aria-label="startingCash">
                                 <label for="startingCash">Starting Cash (₱)</label>
                             </div>
                             <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-pill">Start Shift</button>
@@ -56,7 +56,7 @@
 
                         <form asp-action="CloseShift" method="post">
                             <div class="form-floating mb-4">
-                                <input type="number" step="0.01" class="form-control form-control-lg" id="actualEndingCash" name="actualEndingCash" placeholder="Actual Ending Cash" required min="0">
+                                <input type="number" step="0.01" class="form-control form-control-lg" id="actualEndingCash" name="actualEndingCash" placeholder="Actual Ending Cash" required min="0" aria-label="actualEndingCash">
                                 <label for="actualEndingCash">Actual Cash in Drawer (₱)</label>
                             </div>
                             <button type="submit" class="btn btn-success w-100 py-3 fw-bold rounded-pill">Close Shift & Print Z-Report</button>

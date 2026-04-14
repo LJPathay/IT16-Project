@@ -28,7 +28,7 @@
                             <h6 class="fw-bold text-dark mb-3"><i class="fas fa-fingerprint text-primary me-2"></i>Campaign Identity</h6>
                             <div class="mb-3">
                                 <label asp-for="PromotionName" class="form-label x-small fw-bold text-muted uppercase tracking-wider">Display Name</label>
-                                <input asp-for="PromotionName" class="form-control form-control-lg rounded-3 border-2" placeholder="e.g. Q1 Seasonal Rewards Blast" required />
+                                <input asp-for="PromotionName" class="form-control form-control-lg rounded-3 border-2" placeholder="e.g. Q1 Seasonal Rewards Blast" required / aria-label="Form input">
                                 <span asp-validation-for="PromotionName" class="text-danger x-small"></span>
                             </div>
                         </div>
@@ -39,7 +39,7 @@
                             <div class="row g-4">
                                 <div class="col-md-6">
                                     <label asp-for="DiscountType" class="form-label x-small fw-bold text-muted uppercase tracking-wider">Calculation Type</label>
-                                    <select asp-for="DiscountType" class="form-select rounded-3 py-2">
+                                    <select asp-for="DiscountType" class="form-select rounded-3 py-2" aria-label="Form input">
                                         <option value="Percentage">Relational Percentage (%)</option>
                                         <option value="Fixed">Static Fixed Amount (₱)</option>
                                     </select>
@@ -48,7 +48,7 @@
                                     <label asp-for="DiscountValue" class="form-label x-small fw-bold text-muted uppercase tracking-wider">Face Value</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light border-0 rounded-start-3"><i class="fas fa-coins x-small"></i></span>
-                                        <input asp-for="DiscountValue" class="form-control rounded-end-3" placeholder="20" required />
+                                        <input asp-for="DiscountValue" class="form-control rounded-end-3" placeholder="20" required / aria-label="Form input">
                                     </div>
                                     <span asp-validation-for="DiscountValue" class="text-danger x-small"></span>
                                 </div>
@@ -61,11 +61,11 @@
                             <div class="row g-4">
                                 <div class="col-md-6">
                                     <label asp-for="StartDate" class="form-label x-small fw-bold text-muted uppercase tracking-wider">Activation Date</label>
-                                    <input asp-for="StartDate" type="date" class="form-control rounded-3" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                                    <input asp-for="StartDate" type="date" class="form-control rounded-3" value="@DateTime.Now.ToString("yyyy-MM-dd")" / aria-label="Form input">
                                 </div>
                                 <div class="col-md-6">
                                     <label asp-for="EndDate" class="form-label x-small fw-bold text-muted uppercase tracking-wider">Termination Date</label>
-                                    <input asp-for="EndDate" type="date" class="form-control rounded-3" value="@DateTime.Now.AddDays(30).ToString("yyyy-MM-dd")" />
+                                    <input asp-for="EndDate" type="date" class="form-control rounded-3" value="@DateTime.Now.AddDays(30).ToString("yyyy-MM-dd")" / aria-label="Form input">
                                 </div>
                             </div>
                         </div>
@@ -78,7 +78,7 @@
                                     <p class="text-muted x-small mb-0">Should this initiative be live in the POS environment upon creation?</p>
                                 </div>
                                 <div class="form-check form-switch p-0" style="padding-left: 0 !important;">
-                                    <input class="form-check-input ms-0 mt-0" asp-for="IsActive" type="checkbox" id="isActiveSwitch" checked style="width: 50px; height: 26px; cursor: pointer;">
+                                    <input class="form-check-input ms-0 mt-0" asp-for="IsActive" type="checkbox" id="isActiveSwitch" checked style="width: 50px; height: 26px; cursor: pointer;" aria-label="isActiveSwitch">
                                 </div>
                             </div>
                         </div>

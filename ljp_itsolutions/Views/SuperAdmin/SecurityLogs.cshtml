@@ -13,11 +13,11 @@
                 <span class="input-group-text bg-white border-0 ps-3">
                     <i class="fas fa-search text-muted"></i>
                 </span>
-                <input type="text" id="logSearch" class="form-control border-0 shadow-none ps-2 py-2" placeholder="Search security events...">
+                <input type="text" id="logSearch" class="form-control border-0 shadow-none ps-2 py-2" placeholder="Search security events..." aria-label="logSearch">
             </div>
         </div>
         <div class="col-md-3">
-            <select id="severityFilter" class="form-select shadow-sm rounded-pill border py-2">
+            <select id="severityFilter" class="form-select shadow-sm rounded-pill border py-2" aria-label="severityFilter">
                 <option value="">All Severities</option>
                 <option value="Info">Info</option>
                 <option value="Warning">Warning</option>
@@ -26,9 +26,9 @@
         </div>
         <div class="col-md-4">
             <div class="d-flex align-items-center gap-2">
-                <input type="date" id="dateFilterFrom" class="form-control shadow-sm rounded-pill border py-2" title="From Date">
+                <input type="date" id="dateFilterFrom" class="form-control shadow-sm rounded-pill border py-2" title="From Date" aria-label="dateFilterFrom">
                 <span class="text-muted">to</span>
-                <input type="date" id="dateFilterTo" class="form-control shadow-sm rounded-pill border py-2" title="To Date">
+                <input type="date" id="dateFilterTo" class="form-control shadow-sm rounded-pill border py-2" title="To Date" aria-label="dateFilterTo">
             </div>
         </div>
         <div class="col-md-2 text-end">
@@ -173,14 +173,14 @@
 
             const prevLi = document.createElement('li');
             prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-            prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})"><i class="fas fa-chevron-left x-small"></i></a>`;
+            prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})" role="button" tabindex="0"><i class="fas fa-chevron-left x-small"></i></a>`;
             container.appendChild(prevLi);
 
             for (let i = 1; i <= totalPages; i++) {
                 if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
                     const li = document.createElement('li');
                     li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-                    li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+                    li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})" role="button" tabindex="0">${i}</a>`;
                     container.appendChild(li);
                 } else if (i === currentPage - 2 || i === currentPage + 2) {
                     const li = document.createElement('li');
@@ -192,7 +192,7 @@
 
             const nextLi = document.createElement('li');
             nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-            nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})"><i class="fas fa-chevron-right x-small"></i></a>`;
+            nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})" role="button" tabindex="0"><i class="fas fa-chevron-right x-small"></i></a>`;
             container.appendChild(nextLi);
         }
 

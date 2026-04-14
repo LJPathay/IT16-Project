@@ -20,7 +20,7 @@
             <h6 class="mb-0 fw-bold">Notifications @(unreadCount > 0 ? $"({unreadCount})" : "")</h6>
             @if (unreadCount > 0)
             {
-                <a href="javascript:void(0)" onclick="markAllNotificationsAsRead()" class="text-primary small text-decoration-none">Mark all read</a>
+                <a href="javascript:void(0)" onclick="markAllNotificationsAsRead()" class="text-primary small text-decoration-none" role="button" tabindex="0">Mark all read</a>
             }
         </div>
         <div class="notification-list" style="max-height: 300px; overflow-y: auto;">
@@ -29,7 +29,7 @@
                 foreach (var item in Model)
                 {
                     <li class="border-bottom">
-                        <a class="dropdown-item p-3 d-flex gap-3 text-wrap" href="@(string.IsNullOrEmpty(item.TargetUrl) ? "#" : item.TargetUrl)" onclick="handleNotificationClick(event, @item.Id, this.href)">
+                        <a class="dropdown-item p-3 d-flex gap-3 text-wrap" href="@(string.IsNullOrEmpty(item.TargetUrl) ? "#" : item.TargetUrl)" onclick="handleNotificationClick(event, @item.Id, this.href)" role="button" tabindex="0">
                             <div class="flex-shrink-0">
                                 <div class="rounded-circle bg-@item.Type bg-opacity-10 text-@item.Type d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                                     <i class="@item.IconClass small"></i>

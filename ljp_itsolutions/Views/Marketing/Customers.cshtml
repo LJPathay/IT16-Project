@@ -12,11 +12,11 @@
                 <span class="input-group-text bg-transparent border-0 ps-3">
                     <i class="fas fa-search text-muted"></i>
                 </span>
-                <input type="text" id="customerSearch" class="form-control border-0 shadow-none ps-2 py-2" placeholder="Search by name or contact number...">
+                <input type="text" id="customerSearch" class="form-control border-0 shadow-none ps-2 py-2" placeholder="Search by name or contact number..." aria-label="customerSearch">
             </div>
         </div>
         <div class="col-md-3">
-            <select id="tierFilter" class="form-select shadow-sm rounded-pill border py-2">
+            <select id="tierFilter" class="form-select shadow-sm rounded-pill border py-2" aria-label="tierFilter">
                 <option value="">All Loyalty Tiers</option>
                 <option value="Gold">Gold Tier (500+)</option>
                 <option value="Silver">Silver Tier (300+)</option>
@@ -192,15 +192,15 @@
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Full Name</label>
-                        <input type="text" name="FullName" class="form-control rounded-3" required placeholder="e.g. John Doe" />
+                        <input type="text" name="FullName" class="form-control rounded-3" required placeholder="e.g. John Doe" / aria-label="FullName">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Phone Number</label>
-                        <input type="text" name="PhoneNumber" class="form-control rounded-3" required placeholder="e.g. 09123456789" />
+                        <input type="text" name="PhoneNumber" class="form-control rounded-3" required placeholder="e.g. 09123456789" / aria-label="PhoneNumber">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Email (Optional)</label>
-                        <input type="email" name="Email" class="form-control rounded-3" placeholder="e.g. user@domain.com" />
+                        <input type="email" name="Email" class="form-control rounded-3" placeholder="e.g. user@domain.com" / aria-label="Email">
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-0">
@@ -226,20 +226,20 @@
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Full Name</label>
-                        <input type="text" name="FullName" id="edit-name" class="form-control rounded-3" required />
+                        <input type="text" name="FullName" id="edit-name" class="form-control rounded-3" required / aria-label="FullName">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Phone Number</label>
-                        <input type="text" name="PhoneNumber" id="edit-phone" class="form-control rounded-3" required />
+                        <input type="text" name="PhoneNumber" id="edit-phone" class="form-control rounded-3" required / aria-label="PhoneNumber">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Email (Optional)</label>
-                        <input type="email" name="Email" id="edit-email" class="form-control rounded-3" />
+                        <input type="email" name="Email" id="edit-email" class="form-control rounded-3" / aria-label="Email">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Loyalty Balance (Points)</label>
                         <input type="number" name="Points" id="edit-points" class="form-control rounded-3" required 
-                               @(User.IsInRole("Admin") || User.IsInRole("SuperAdmin") ? "" : "readonly") />
+                               @(User.IsInRole("Admin") || User.IsInRole("SuperAdmin") ? "" : "readonly") / aria-label="Points">
                         @if (!(User.IsInRole("Admin") || User.IsInRole("SuperAdmin")))
                         {
                             <div class="x-small text-muted mt-1 opacity-75">Only administrators can manually adjust loyalty points.</div>

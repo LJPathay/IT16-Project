@@ -11,9 +11,9 @@
             <div class="d-flex gap-3 flex-grow-1">
                 <div class="input-group" style="max-width: 300px;">
                     <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                    <input type="text" id="userSearch" class="form-control bg-light border-start-0" placeholder="Search users...">
+                    <input type="text" id="userSearch" class="form-control bg-light border-start-0" placeholder="Search users..." aria-label="userSearch">
                 </div>
-                <select id="roleFilter" class="form-select bg-light border-0" style="max-width: 150px;">
+                <select id="roleFilter" class="form-select bg-light border-0" style="max-width: 150px;" aria-label="roleFilter">
                     <option value="">All Roles</option>
                     @if (roles != null)
                     {
@@ -139,23 +139,23 @@
                 <form id="addUserForm">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Full Name</label>
-                        <input type="text" class="form-control bg-light border-0" id="addFullName" placeholder="e.g. John Doe" required>
+                        <input type="text" class="form-control bg-light border-0" id="addFullName" placeholder="e.g. John Doe" required aria-label="addFullName">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Username</label>
-                        <input type="text" class="form-control bg-light border-0" id="addUsername" placeholder="Unique username" required>
+                        <input type="text" class="form-control bg-light border-0" id="addUsername" placeholder="Unique username" required aria-label="addUsername">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Email</label>
-                        <input type="email" class="form-control bg-light border-0" id="addEmail" placeholder="user@coffee.local" required>
+                        <input type="email" class="form-control bg-light border-0" id="addEmail" placeholder="user@coffee.local" required aria-label="addEmail">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Temporary Password</label>
-                        <input type="password" class="form-control bg-light border-0" id="addPassword" required>
+                        <input type="password" class="form-control bg-light border-0" id="addPassword" required aria-label="addPassword">
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted">Role</label>
-                        <select class="form-select bg-light border-0" id="addRole" required>
+                        <select class="form-select bg-light border-0" id="addRole" required aria-label="addRole">
                             @if (roles != null)
                             {
                                 foreach (var role in roles)
@@ -206,15 +206,15 @@
                     <input type="hidden" id="editUserId">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Full Name</label>
-                        <input type="text" class="form-control bg-light border-0" id="editFullName" required>
+                        <input type="text" class="form-control bg-light border-0" id="editFullName" required aria-label="editFullName">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Email</label>
-                        <input type="email" class="form-control bg-light border-0" id="editEmail" required>
+                        <input type="email" class="form-control bg-light border-0" id="editEmail" required aria-label="editEmail">
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted">Role</label>
-                        <select class="form-select bg-light border-0" id="editRole" required>
+                        <select class="form-select bg-light border-0" id="editRole" required aria-label="editRole">
                             @if (roles != null)
                             {
                                 foreach (var role in roles)
@@ -282,14 +282,14 @@
 
             const prevLi = document.createElement('li');
             prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-            prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})"><i class="fas fa-chevron-left x-small"></i></a>`;
+            prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})" role="button" tabindex="0"><i class="fas fa-chevron-left x-small"></i></a>`;
             container.appendChild(prevLi);
 
             for (let i = 1; i <= totalPages; i++) {
                 if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
                     const li = document.createElement('li');
                     li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-                    li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+                    li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})" role="button" tabindex="0">${i}</a>`;
                     container.appendChild(li);
                 } else if (i === currentPage - 2 || i === currentPage + 2) {
                     const li = document.createElement('li');
@@ -301,7 +301,7 @@
 
             const nextLi = document.createElement('li');
             nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-            nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})"><i class="fas fa-chevron-right x-small"></i></a>`;
+            nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})" role="button" tabindex="0"><i class="fas fa-chevron-right x-small"></i></a>`;
             container.appendChild(nextLi);
         }
 

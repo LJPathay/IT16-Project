@@ -11,7 +11,7 @@
 
 
 <div class="pos-container">
-    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()" role="button" tabindex="0"></div>
     
     <button class="floating-cart-btn" onclick="toggleCart()" id="cartToggleBtn">
         <i class="fas fa-shopping-cart"></i>
@@ -24,7 +24,7 @@
                 <span class="input-group-text bg-white border-end-0">
                     <i class="fas fa-search text-muted"></i>
                 </span>
-                <input type="text" id="productSearch" class="form-control border-start-0" placeholder="Search products..." onkeyup="searchProducts()">
+                <input type="text" id="productSearch" class="form-control border-start-0" placeholder="Search products..." onkeyup="searchProducts()" aria-label="productSearch">
             </div>
         </div>
 
@@ -46,7 +46,7 @@
                      data-category="@product.Category?.CategoryName" 
                      tabindex="@(isStocked ? "0" : "-1")"
                      onclick="@(isStocked ? $"addToCart('{product.ProductID}', '{product.ProductName}', {product.Price})" : "")"
-                     onkeypress="if(event.key === 'Enter') this.click()">
+                     onkeypress="if(event.key === 'Enter') this.click()" role="button">
                     <div class="product-image-container">
                         @if (!string.IsNullOrEmpty(product.ImageURL))
                         {
@@ -100,7 +100,7 @@
             <div class="position-relative">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted small"></i></span>
-                    <input type="text" id="customerSearch" class="form-control border-start-0" placeholder="Search phone or name..." oninput="searchCustomers()">
+                    <input type="text" id="customerSearch" class="form-control border-start-0" placeholder="Search phone or name..." oninput="searchCustomers()" aria-label="customerSearch">
                     <button class="btn btn-outline-secondary" id="clearCustomerBtn" style="display:none" onclick="clearSelectedCustomer()">
                         <i class="fas fa-times"></i>
                     </button>
@@ -140,7 +140,7 @@
         <div class="cart-footer">
             <div class="promotion-area mb-2">
                 <div class="input-group input-group-sm">
-                    <input type="text" id="promoCode" class="form-control" placeholder="Promo code">
+                    <input type="text" id="promoCode" class="form-control" placeholder="Promo code" aria-label="promoCode">
                     <button class="btn btn-outline-secondary" onclick="applyPromo()">Apply</button>
                 </div>
                 <small id="promoStatus" class="text-success" style="display:none"></small>
@@ -175,7 +175,7 @@
                     <span class="text-muted">Cash Received:</span>
                     <div class="input-group input-group-sm w-50">
                         <span class="input-group-text bg-light border-end-0">₱</span>
-                        <input type="number" id="cashReceived" class="form-control border-start-0 text-end fw-bold" placeholder="0.00" oninput="calculateChange()">
+                        <input type="number" id="cashReceived" class="form-control border-start-0 text-end fw-bold" placeholder="0.00" oninput="calculateChange()" aria-label="cashReceived">
                     </div>
                 </div>
                 <div class="d-flex justify-content-between align-items-center">
@@ -240,15 +240,15 @@
                 <form id="registerCustomerForm">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Full Name</label>
-                        <input type="text" id="regName" class="form-control py-2 shadow-sm" placeholder="e.g. Juan Dela Cruz" required>
+                        <input type="text" id="regName" class="form-control py-2 shadow-sm" placeholder="e.g. Juan Dela Cruz" required aria-label="regName">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Phone Number</label>
-                        <input type="tel" id="regPhone" class="form-control py-2 shadow-sm" placeholder="09xxxxxxxxx">
+                        <input type="tel" id="regPhone" class="form-control py-2 shadow-sm" placeholder="09xxxxxxxxx" aria-label="regPhone">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Email (Optional)</label>
-                        <input type="email" id="regEmail" class="form-control py-2 shadow-sm" placeholder="user@gmail.com">
+                        <input type="email" id="regEmail" class="form-control py-2 shadow-sm" placeholder="user@gmail.com" aria-label="regEmail">
                     </div>
                 </form>
             </div>
@@ -309,7 +309,7 @@
             <div class="modal-body p-4">
                 <div class="d-grid gap-3">
                     <!-- Bronze -->
-                    <div class="reward-card reward-bronze" id="tier1Option" onclick="selectRewardTier(1)">
+                    <div class="reward-card reward-bronze" id="tier1Option" onclick="selectRewardTier(1)" role="button" tabindex="0">
                         <div class="reward-icon">
                             <i class="fas fa-medal"></i>
                         </div>
@@ -323,7 +323,7 @@
                     </div>
                     
                     <!-- Silver -->
-                    <div class="reward-card reward-silver" id="tier2Option" onclick="selectRewardTier(2)">
+                    <div class="reward-card reward-silver" id="tier2Option" onclick="selectRewardTier(2)" role="button" tabindex="0">
                         <div class="reward-icon">
                             <i class="fas fa-medal"></i>
                         </div>
@@ -337,7 +337,7 @@
                     </div>
 
                     <!-- Gold -->
-                    <div class="reward-card reward-gold" id="tier3Option" onclick="selectRewardTier(3)">
+                    <div class="reward-card reward-gold" id="tier3Option" onclick="selectRewardTier(3)" role="button" tabindex="0">
                         <div class="reward-icon">
                             <i class="fas fa-medal"></i>
                         </div>
@@ -864,7 +864,7 @@
                 if (customers.length > 0) {
                     resultsDiv.innerHTML = customers.map(c => `
                         <a href="javascript:void(0)" class="dropdown-item py-2 border-bottom border-light" onclick='selectCustomer(${JSON.stringify(c)})'>
-                            <div class="fw-bold small text-dark">${c.fullName}</div>
+                            <div class="fw-bold small text-dark" role="button" tabindex="0">${c.fullName}</div>
                             <div class="x-small text-muted">${c.phoneNumber || 'No phone'} • ${c.points} pts</div>
                         </a>
                     `).join('');

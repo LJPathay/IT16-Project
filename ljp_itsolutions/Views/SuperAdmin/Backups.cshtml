@@ -43,7 +43,7 @@
             <h6 class="fw-bold text-dark mb-3"><i class="fas fa-clock text-primary me-2"></i>Automated Backup Strategy</h6>
             <form asp-action="UpdateBackupSchedule" method="post" class="d-flex align-items-center gap-3">
                 @Html.AntiForgeryToken()
-                <select name="schedule" class="form-select w-auto shadow-none">
+                <select name="schedule" class="form-select w-auto shadow-none" aria-label="schedule">
                     <option value="Manual" selected="@(ViewBag.BackupSchedule == "Manual" ? "selected" : null)">Manual Backups Only</option>
                     <option value="Daily" selected="@(ViewBag.BackupSchedule == "Daily" ? "selected" : null)">Daily Automation</option>
                     <option value="Weekly" selected="@(ViewBag.BackupSchedule == "Weekly" ? "selected" : null)">Weekly Automation (Weekend)</option>

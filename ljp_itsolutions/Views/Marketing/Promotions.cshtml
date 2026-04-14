@@ -12,11 +12,11 @@
                 <span class="input-group-text bg-transparent border-0 ps-3">
                     <i class="fas fa-search text-muted"></i>
                 </span>
-                <input type="text" id="promoSearch" class="form-control border-0 shadow-none ps-2 py-2" placeholder="Search campaigns...">
+                <input type="text" id="promoSearch" class="form-control border-0 shadow-none ps-2 py-2" placeholder="Search campaigns..." aria-label="promoSearch">
             </div>
         </div>
         <div class="col-md-3">
-            <select id="statusFilter" class="form-select shadow-sm rounded-pill border py-2">
+            <select id="statusFilter" class="form-select shadow-sm rounded-pill border py-2" aria-label="statusFilter">
                 <option value="">All Statuses</option>
                 <option value="Active">Active Now</option>
                 <option value="Scheduled">Scheduled</option>
@@ -171,14 +171,14 @@
                         <label class="form-label small fw-bold text-muted uppercase">Campaign Name</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="fas fa-tag"></i></span>
-                            <input name="PromotionName" class="form-control bg-light border-0 py-2" placeholder="e.g. Summer Sale 2026" required />
+                            <input name="PromotionName" class="form-control bg-light border-0 py-2" placeholder="e.g. Summer Sale 2026" required / aria-label="PromotionName">
                         </div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Target Audience</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="fas fa-bullseye"></i></span>
-                            <select name="TargetAudience" class="form-select bg-light border-0 py-2">
+                            <select name="TargetAudience" class="form-select bg-light border-0 py-2" aria-label="TargetAudience">
                                 <option value="All Patrons">All Patrons (General Announcement)</option>
                                 <option value="VIP/Gold Patrons">VIP/Gold Patrons Only (>1000 pts)</option>
                                 <option value="Inactive Patrons">Inactive Patrons (Win-back)</option>
@@ -190,7 +190,7 @@
                             <label class="form-label small fw-bold text-muted uppercase">Discount Type</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="fas fa-percent"></i></span>
-                                <select name="DiscountType" class="form-select bg-light border-0 py-2">
+                                <select name="DiscountType" class="form-select bg-light border-0 py-2" aria-label="DiscountType">
                                     <option value="Percentage">Percentage (%)</option>
                                     <option value="Fixed">Fixed Amount (₱)</option>
                                 </select>
@@ -200,7 +200,7 @@
                             <label class="form-label small fw-bold text-muted uppercase">Face Value</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="fas fa-coins"></i></span>
-                                <input name="DiscountValue" type="number" step="0.01" class="form-control bg-light border-0 py-2" placeholder="0.00" required />
+                                <input name="DiscountValue" type="number" step="0.01" class="form-control bg-light border-0 py-2" placeholder="0.00" required / aria-label="DiscountValue">
                             </div>
                         </div>
                     </div>
@@ -209,14 +209,14 @@
                             <label class="form-label small fw-bold text-muted uppercase">Start Date</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="far fa-calendar-alt"></i></span>
-                                <input name="StartDate" type="date" class="form-control bg-light border-0 py-2" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                                <input name="StartDate" type="date" class="form-control bg-light border-0 py-2" value="@DateTime.Now.ToString("yyyy-MM-dd")" required / aria-label="StartDate">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted uppercase">End Date</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="far fa-calendar-times"></i></span>
-                                <input name="EndDate" type="date" class="form-control bg-light border-0 py-2" value="@DateTime.Now.AddDays(30).ToString("yyyy-MM-dd")" required />
+                                <input name="EndDate" type="date" class="form-control bg-light border-0 py-2" value="@DateTime.Now.AddDays(30).ToString("yyyy-MM-dd")" required / aria-label="EndDate">
                             </div>
                         </div>
                     </div>
@@ -225,19 +225,19 @@
                             <label class="form-label small fw-bold text-muted uppercase">Max Redemptions <span class="text-muted fw-normal">(Optional)</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="fas fa-users"></i></span>
-                                <input name="MaxRedemptions" type="number" class="form-control bg-light border-0 py-2" placeholder="Leave empty for unlimited" />
+                                <input name="MaxRedemptions" type="number" class="form-control bg-light border-0 py-2" placeholder="Leave empty for unlimited" / aria-label="MaxRedemptions">
                             </div>
                         </div>
                         <div class="col-md-6 d-flex align-items-end mb-2">
                              <div class="form-check form-switch p-2 bg-light rounded-3 w-100">
-                                <input class="form-check-input ms-0 me-2" name="OneTimePerCustomer" type="checkbox" value="true" id="createOneTimeSwitch">
+                                <input class="form-check-input ms-0 me-2" name="OneTimePerCustomer" type="checkbox" value="true" id="createOneTimeSwitch" aria-label="OneTimePerCustomer">
                                 <label class="form-check-label fw-bold small text-dark mt-1" for="createOneTimeSwitch">1 Use Per Customer</label>
                             </div>
                         </div>
                     </div>
                     <div class="p-3 bg-light rounded-3 border border-light">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" name="IsActive" type="checkbox" checked value="true" id="createActiveSwitch">
+                            <input class="form-check-input" name="IsActive" type="checkbox" checked value="true" id="createActiveSwitch" aria-label="IsActive">
                             <label class="form-check-label fw-bold text-dark small ms-2" for="createActiveSwitch">Activate Campaign upon Approval</label>
                         </div>
                         <div class="text-muted x-small ms-5 mt-1">If enabled, the promotion will be live as soon as it's approved by a manager.</div>
@@ -276,14 +276,14 @@
                         <label class="form-label small fw-bold text-muted uppercase">Campaign Name</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="fas fa-tag"></i></span>
-                            <input name="PromotionName" id="edit-promo-name" class="form-control bg-light border-0 py-2" required />
+                            <input name="PromotionName" id="edit-promo-name" class="form-control bg-light border-0 py-2" required / aria-label="PromotionName">
                         </div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Target Audience</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="fas fa-bullseye"></i></span>
-                            <select name="TargetAudience" id="edit-promo-audience" class="form-select bg-light border-0 py-2">
+                            <select name="TargetAudience" id="edit-promo-audience" class="form-select bg-light border-0 py-2" aria-label="TargetAudience">
                                 <option value="All Patrons">All Patrons (General Announcement)</option>
                                 <option value="VIP/Gold Patrons">VIP/Gold Patrons Only (>1000 pts)</option>
                                 <option value="Inactive Patrons">Inactive Patrons (Win-back)</option>
@@ -296,7 +296,7 @@
                             <label class="form-label small fw-bold text-muted uppercase">Discount Type</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="fas fa-percent"></i></span>
-                                <select name="DiscountType" id="edit-promo-type" class="form-select bg-light border-0 py-2">
+                                <select name="DiscountType" id="edit-promo-type" class="form-select bg-light border-0 py-2" aria-label="DiscountType">
                                     <option value="Percentage">Percentage (%)</option>
                                     <option value="Fixed">Fixed Amount (₱)</option>
                                 </select>
@@ -306,7 +306,7 @@
                             <label class="form-label small fw-bold text-muted uppercase">Face Value</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="fas fa-coins"></i></span>
-                                <input name="DiscountValue" id="edit-promo-value" type="number" step="0.01" class="form-control bg-light border-0 py-2" required />
+                                <input name="DiscountValue" id="edit-promo-value" type="number" step="0.01" class="form-control bg-light border-0 py-2" required / aria-label="DiscountValue">
                             </div>
                         </div>
                     </div>
@@ -315,14 +315,14 @@
                             <label class="form-label small fw-bold text-muted uppercase">Start Date</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="far fa-calendar-alt"></i></span>
-                                <input name="StartDate" id="edit-promo-start" type="date" class="form-control bg-light border-0 py-2" required />
+                                <input name="StartDate" id="edit-promo-start" type="date" class="form-control bg-light border-0 py-2" required / aria-label="StartDate">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted uppercase">End Date</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="far fa-calendar-times"></i></span>
-                                <input name="EndDate" id="edit-promo-end" type="date" class="form-control bg-light border-0 py-2" required />
+                                <input name="EndDate" id="edit-promo-end" type="date" class="form-control bg-light border-0 py-2" required / aria-label="EndDate">
                             </div>
                         </div>
                     </div>
@@ -331,19 +331,19 @@
                             <label class="form-label small fw-bold text-muted uppercase">Max Redemptions <span class="text-muted fw-normal">(Optional)</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="fas fa-users"></i></span>
-                                <input name="MaxRedemptions" id="edit-promo-max" type="number" class="form-control bg-light border-0 py-2" placeholder="Leave empty for unlimited" />
+                                <input name="MaxRedemptions" id="edit-promo-max" type="number" class="form-control bg-light border-0 py-2" placeholder="Leave empty for unlimited" / aria-label="MaxRedemptions">
                             </div>
                         </div>
                         <div class="col-md-6 d-flex align-items-end mb-2">
                              <div class="form-check form-switch p-2 bg-light rounded-3 w-100">
-                                <input class="form-check-input ms-0 me-2" name="OneTimePerCustomer" type="checkbox" value="true" id="edit-promo-onetime">
+                                <input class="form-check-input ms-0 me-2" name="OneTimePerCustomer" type="checkbox" value="true" id="edit-promo-onetime" aria-label="OneTimePerCustomer">
                                 <label class="form-check-label fw-bold small text-dark mt-1" for="edit-promo-onetime">1 Use Per Customer</label>
                             </div>
                         </div>
                     </div>
                     <div class="p-3 bg-light rounded-3 border border-light">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" name="IsActive" id="edit-promo-active" type="checkbox" value="true">
+                            <input class="form-check-input" name="IsActive" id="edit-promo-active" type="checkbox" value="true" aria-label="IsActive">
                             <label class="form-check-label fw-bold text-dark small ms-2" for="edit-promo-active">Active Initiative</label>
                         </div>
                         <div class="text-muted x-small ms-5 mt-1">Controls whether this campaign is currently runnable at POS terminals.</div>

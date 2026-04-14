@@ -105,11 +105,11 @@
                     <span class="input-group-text bg-light border-0 text-muted ps-3">
                         <i class="fas fa-search"></i>
                     </span>
-                    <input type="text" id="txSearch" class="form-control bg-light border-0 py-2 search-input" placeholder="Search by ID, cashier, or amount...">
+                    <input type="text" id="txSearch" class="form-control bg-light border-0 py-2 search-input" placeholder="Search by ID, cashier, or amount..." aria-label="txSearch">
                 </div>
             </div>
             <div class="col-md-3">
-                <select id="statusFilter" class="form-select bg-light border-0 py-2">
+                <select id="statusFilter" class="form-select bg-light border-0 py-2" aria-label="statusFilter">
                     <option value="">All Statuses</option>
                     <option value="paid">Paid (Actionable)</option>
                     <option value="voided">Voided</option>
@@ -118,7 +118,7 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <select id="dateFilter" class="form-select bg-light border-0 py-2">
+                <select id="dateFilter" class="form-select bg-light border-0 py-2" aria-label="dateFilter">
                     <option value="">All Dates</option>
                     <option value="today">Today</option>
                     <option value="week">This Week</option>
