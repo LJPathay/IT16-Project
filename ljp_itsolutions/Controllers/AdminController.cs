@@ -397,9 +397,9 @@ namespace ljp_itsolutions.Controllers
             return File(buffer, "text/csv", $"LJP_User_Directory_{DateTime.Now:yyyyMMdd}.csv");
         }
 
-        private static bool ValidatePasswordComplexity(string password, User user, out string errorMessage)
+        private bool ValidatePasswordComplexity(string password, User user, out string errorMessage)
         {
-            int minLen = 16;
+            int minLen = int.TryParse(GetSetting("PasswordMinLength", "16"), out int ml) ? ml : 16;
             errorMessage = string.Empty;
 
             if (password.Length < minLen)

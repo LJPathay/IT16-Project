@@ -81,7 +81,7 @@ namespace ljp_itsolutions.Controllers
             var rawPassword = string.IsNullOrEmpty(user.Password) ? "Default123!@#$Initial" : user.Password;
             if (!ValidatePasswordComplexity(rawPassword, user, out string error))
             {
-                return BadRequest("Password does not meet the 16-character complexity requirements. Please follow the policy guidelines.");
+                return BadRequest(error);
             }
 
             user.UserID = Guid.NewGuid();
@@ -364,9 +364,9 @@ namespace ljp_itsolutions.Controllers
             return View(logs);
         }
 
-        private static bool ValidatePasswordComplexity(string password, User user, out string errorMessage)
+        private bool ValidatePasswordComplexity(string password, User user, out string errorMessage)
         {
-            int minLen = 16;
+            int minLen = int.TryParse(GetSetting("PasswordMinLength", "16"), out int ml) ? ml : 16;
             errorMessage = string.Empty;
 
             if (password.Length < minLen)
