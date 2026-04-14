@@ -39,7 +39,7 @@
                             var statusText = campaign.IsActive ? (isEnded ? "COMPLETED" : "OPERATIONAL") : "TERMINATED";
                             var utilizationPercent = campaign.TotalSalesValue > 0 ? (campaign.TotalDiscountGiven * 100 / campaign.TotalSalesValue) : 0;
 
-                            <tr class="campaign-row" onclick="window.location='@Url.Action("CampaignAnalytics", "Marketing", new { id = campaign.PromotionID })'">
+                            <tr class="campaign-row" onclick="window.location='@Url.Action("CampaignAnalytics", "Marketing", new { id = campaign.PromotionID })'" onkeypress="if(event.key === 'Enter') this.click()">
                                 <td class="ps-4">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="kpi-icon-box brand-primary" style="margin-left: 0; width: 32px; height: 32px; font-size: 0.8rem;">

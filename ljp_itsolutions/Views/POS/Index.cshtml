@@ -11,7 +11,7 @@
 
 
 <div class="pos-container">
-    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()" role="button" tabindex="0"></div>
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()"></div>
     
     <button class="floating-cart-btn" onclick="toggleCart()" id="cartToggleBtn">
         <i class="fas fa-shopping-cart"></i>
@@ -309,7 +309,7 @@
             <div class="modal-body p-4">
                 <div class="d-grid gap-3">
                     <!-- Bronze -->
-                    <div class="reward-card reward-bronze" id="tier1Option" onclick="selectRewardTier(1)" role="button" tabindex="0">
+                    <div class="reward-card reward-bronze" id="tier1Option" onclick="selectRewardTier(1)" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()">
                         <div class="reward-icon">
                             <i class="fas fa-medal"></i>
                         </div>
@@ -323,7 +323,7 @@
                     </div>
                     
                     <!-- Silver -->
-                    <div class="reward-card reward-silver" id="tier2Option" onclick="selectRewardTier(2)" role="button" tabindex="0">
+                    <div class="reward-card reward-silver" id="tier2Option" onclick="selectRewardTier(2)" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()">
                         <div class="reward-icon">
                             <i class="fas fa-medal"></i>
                         </div>
@@ -337,7 +337,7 @@
                     </div>
 
                     <!-- Gold -->
-                    <div class="reward-card reward-gold" id="tier3Option" onclick="selectRewardTier(3)" role="button" tabindex="0">
+                    <div class="reward-card reward-gold" id="tier3Option" onclick="selectRewardTier(3)" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()">
                         <div class="reward-icon">
                             <i class="fas fa-medal"></i>
                         </div>
@@ -863,7 +863,7 @@
                 
                 if (customers.length > 0) {
                     resultsDiv.innerHTML = customers.map(c => `
-                        <a href="javascript:void(0)" class="dropdown-item py-2 border-bottom border-light" onclick='selectCustomer(${JSON.stringify(c)})'>
+                        <a href="javascript:void(0)" class="dropdown-item py-2 border-bottom border-light" onclick='selectCustomer(${JSON.stringify(c)})' onkeypress="if(event.key === 'Enter') this.click()">
                             <div class="fw-bold small text-dark" role="button" tabindex="0">${c.fullName}</div>
                             <div class="x-small text-muted">${c.phoneNumber || 'No phone'} • ${c.points} pts</div>
                         </a>

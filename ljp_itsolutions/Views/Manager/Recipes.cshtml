@@ -299,14 +299,14 @@
 
         const prev = document.createElement('li');
         prev.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-        prev.innerHTML = `<a class="page-link" href="#" onclick="goPage(${currentPage - 1}); return false;" role="button" tabindex="0"><i class="fas fa-chevron-left x-small"></i></a>`;
+        prev.innerHTML = `<a class="page-link" href="#" onclick="goPage(${currentPage - 1}); return false;" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()"><i class="fas fa-chevron-left x-small"></i></a>`;
         ul.appendChild(prev);
 
         for (let i = 1; i <= totalPages; i++) {
             if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
                 const li = document.createElement('li');
                 li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-                li.innerHTML = `<a class="page-link" href="#" onclick="goPage(${i}); return false;" role="button" tabindex="0">${i}</a>`;
+                li.innerHTML = `<a class="page-link" href="#" onclick="goPage(${i}); return false;" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()">${i}</a>`;
                 ul.appendChild(li);
             } else if (i === currentPage - 2 || i === currentPage + 2) {
                 const li = document.createElement('li');
@@ -318,7 +318,7 @@
 
         const next = document.createElement('li');
         next.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-        next.innerHTML = `<a class="page-link" href="#" onclick="goPage(${currentPage + 1}); return false;" role="button" tabindex="0"><i class="fas fa-chevron-right x-small"></i></a>`;
+        next.innerHTML = `<a class="page-link" href="#" onclick="goPage(${currentPage + 1}); return false;" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()"><i class="fas fa-chevron-right x-small"></i></a>`;
         ul.appendChild(next);
     }
 

@@ -32,9 +32,9 @@
                                 <i class="fas fa-filter x-small"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow border-0 x-small">
-                                <li><a class="dropdown-item py-2" href="#" onclick="updateRevenue('daily', '@Model.TodaysSales.ToString("N2")')" role="button" tabindex="0">Daily View</a></li>
-                                <li><a class="dropdown-item py-2" href="#" onclick="updateRevenue('weekly', '@Model.WeeklySales.ToString("N2")')" role="button" tabindex="0">Weekly View</a></li>
-                                <li><a class="dropdown-item py-2" href="#" onclick="updateRevenue('monthly', '@Model.MonthlySales.ToString("N2")')" role="button" tabindex="0">Monthly View</a></li>
+                                <li><button type="button" class="dropdown-item py-2" onclick="updateRevenue('daily', '@Model.TodaysSales.ToString("N2")')">Daily View</button></li>
+                                <li><button type="button" class="dropdown-item py-2" onclick="updateRevenue('weekly', '@Model.WeeklySales.ToString("N2")')">Weekly View</button></li>
+                                <li><button type="button" class="dropdown-item py-2" onclick="updateRevenue('monthly', '@Model.MonthlySales.ToString("N2")')">Monthly View</button></li>
                             </ul>
                         </div>
                     </div>

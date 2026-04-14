@@ -31,7 +31,7 @@
                     <tbody>
                         @foreach (var campaign in Model)
                         {
-                            <tr style="cursor: pointer;" onclick="openApprovalModal(@campaign.PromotionID)">
+                            <tr style="cursor: pointer;" onclick="openApprovalModal(@campaign.PromotionID)" onkeypress="if(event.key === 'Enter') this.click()">
                                 <td class="ps-4">
                                     <div class="fw-bold text-dark">@campaign.PromotionName</div>
                                     <div class="text-muted x-small">ID: #@campaign.PromotionID.ToString().PadLeft(4, '0')</div>
