@@ -74,7 +74,7 @@
                                              }
                                          </div>
                                          <div>
-                                             <p class="mb-0 small fw-bold text-dark">@(log.User?.FullName ?? log.User?.Username ?? "System / Anonymous")</p>
+                                             <p class="mb-0 small fw-bold text-dark">@(log.User?.FullName ?? (log.User != null ? SecurityHelper.MaskUsername(log.User.Username) : "System / Anonymous"))</p>
                                              <p class="text-muted x-small mb-0">@(log.User?.Role ?? "Internal")</p>
                                          </div>
                                      </div>
@@ -87,7 +87,7 @@
                                 </td>
                                 <td>
                                     <div class="d-flex flex-column">
-                                        <span class="small text-dark font-monospace">@(string.IsNullOrEmpty(log.IpAddress) ? "::1" : SecurityHelper.MaskIpAddress(log.IpAddress))</span>
+                                        <span class="small text-dark font-monospace">@(string.IsNullOrEmpty(log.IpAddress) ? "::1" : log.IpAddress)</span>
                                     </div>
                                 </td>
                                 <td class="pe-4 text-end">

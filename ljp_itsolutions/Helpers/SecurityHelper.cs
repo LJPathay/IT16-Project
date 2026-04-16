@@ -17,6 +17,13 @@ namespace ljp_itsolutions.Helpers
             return name.Substring(0, 2) + "****@" + domain;
         }
 
+        public static string MaskUsername(string username)
+        {
+            if (string.IsNullOrEmpty(username)) return username;
+            if (username.Length <= 2) return username[0] + "****";
+            return username.Substring(0, 2) + "****";
+        }
+
         public static string MaskIpAddress(string ip)
         {
             if (string.IsNullOrEmpty(ip)) return "Unknown";

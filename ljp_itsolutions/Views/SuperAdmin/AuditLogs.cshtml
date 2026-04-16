@@ -88,7 +88,7 @@
                                 </td>
                                 <td>
                                     <div class="d-flex flex-column">
-                                        <span class="small text-dark font-monospace">@(string.IsNullOrEmpty(log.IpAddress) ? "—" : SecurityHelper.MaskIpAddress(log.IpAddress))</span>
+                                        <span class="small text-dark font-monospace">@(string.IsNullOrEmpty(log.IpAddress) ? "—" : log.IpAddress)</span>
                                         <span class="text-muted x-small" style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="@log.UserAgent">@(log.UserAgent != null && log.UserAgent.Length > 60 ? log.UserAgent.Substring(0, 60) + "…" : (log.UserAgent ?? "—"))</span>
                                     </div>
                                 </td>

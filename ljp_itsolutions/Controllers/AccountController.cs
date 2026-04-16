@@ -304,6 +304,9 @@ namespace ljp_itsolutions.Controllers
             await _db.SaveChangesAsync();
             await LogSecurity("PasswordReset", $"Password reset success for user: {user.Username}", "Info", user.UserID);
 
+            await _emailSender.SendEmailAsync(user.Email ?? string.Empty, "Security Alert: Password Reset Successful", 
+                $"<h3>Security Notification</h3><p>Hello {user.FullName},</p><p>Your password was successfully reset using a recovery link.</p><p>If you did not perform this reset, please contact your administrator immediately.</p>");
+
             TempData[AppConstants.SessionKeys.Message] = "Success! Password has been updated.";
             return RedirectToAction(nameof(Login));
         }
@@ -474,17 +477,26 @@ namespace ljp_itsolutions.Controllers
             }
         }
 
-            user.FullName = fullName;
-            user.Email = email;
-            user.ProfilePictureUrl = profilePictureUrl;
-            await _db.SaveChangesAsync();
-            await LogSecurity("ProfileUpdate", "User updated profile information", "Info", user.UserID);
+        var oldEmail = user.Email;
+        var emailChanged = !string.Equals(oldEmail, email, StringComparison.OrdinalIgnoreCase);
+
+        user.FullName = fullName;
+        user.Email = email;
+        user.ProfilePictureUrl = profilePictureUrl;
+        await _db.SaveChangesAsync();
+        await LogSecurity("ProfileUpdate", emailChanged ? $"User changed email from {oldEmail} to {email}" : "User updated profile information", "Info", user.UserID);
+
+        if (emailChanged && !string.IsNullOrEmpty(oldEmail))
+        {
+            await _emailSender.SendEmailAsync(oldEmail, "Security Alert: Email Address Changed", 
+                $"<h3>Security Notification</h3><p>Hello {user.FullName},</p><p>The email address for your account was recently changed from <b>{oldEmail}</b> to <b>{email}</b>.</p><p>If you did not make this change, please contact your System Administrator immediately to freeze your account and prevent unauthorized access.</p><p><i>This is an automated security message.</i></p>");
+        }
 
         // Refresh session
         HttpContext.Session.SetString("FullName", user.FullName);
         HttpContext.Session.SetString("ProfilePictureUrl", user.ProfilePictureUrl ?? "");
         
-        TempData["SuccessMessage"] = "Profile updated successfully.";
+        TempData["SuccessMessage"] = emailChanged ? "Profile updated. A notification was sent to your old email address." : "Profile updated successfully.";
         return RedirectToAction(nameof(Profile));
     }
 
@@ -553,6 +565,10 @@ namespace ljp_itsolutions.Controllers
                 user.TwoFactorEnabled = true;
                 await _db.SaveChangesAsync();
                 await LogSecurity("MfaEnabled", "User enabled Two-Factor Authentication", "Info", user.UserID);
+                
+                await _emailSender.SendEmailAsync(user.Email ?? string.Empty, "Security Alert: MFA Enabled", 
+                    $"<h3>Security Notification</h3><p>Hello {user.FullName},</p><p>Multi-Factor Authentication (MFA) has been successfully enabled for your account.</p><p>If you did not make this change, please contact your administrator immediately.</p>");
+
                 TempData["SuccessMessage"] = "Two-Factor Authentication has been enabled.";
             }
             else
@@ -576,6 +592,9 @@ namespace ljp_itsolutions.Controllers
             user.TwoFactorSecret = null;
             await _db.SaveChangesAsync();
             await LogSecurity("MfaDisabled", "User disabled Two-Factor Authentication", "Warning", user.UserID);
+
+            await _emailSender.SendEmailAsync(user.Email ?? string.Empty, "Security Alert: MFA Disabled", 
+                $"<h3>Security Notification</h3><p>Hello {user.FullName},</p><p>Multi-Factor Authentication (MFA) has been <b>DISABLED</b> for your account.</p><p>If you did not authorize this, your account may be at risk. Please contact your administrator immediately.</p>");
 
             TempData["SuccessMessage"] = "Two-Factor Authentication has been disabled.";
             return RedirectToAction(nameof(Profile));
@@ -656,6 +675,10 @@ namespace ljp_itsolutions.Controllers
             {
                 HttpContext.Session.Remove("ForcePasswordChange");
                 await LogSecurity("PasswordChangeSuccess", "Self-service password change success", "Info", user.UserID);
+                
+                await _emailSender.SendEmailAsync(user.Email ?? string.Empty, "Security Alert: Password Changed", 
+                    $"<h3>Security Notification</h3><p>Hello {user.FullName},</p><p>Your account password was recently changed from the profile settings.</p><p>If this was not you, please contact your administrator immediately.</p>");
+
                 TempData["SuccessMessage"] = "Password updated successfully.";
             }
             else
