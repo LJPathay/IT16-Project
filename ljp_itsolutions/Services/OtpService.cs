@@ -53,7 +53,7 @@ namespace ljp_itsolutions.Services
             return $"otpauth://totp/{issuer}:{username}?secret={secret}&issuer={issuer}";
         }
 
-        private string GenerateTotp(string secret, long iteration)
+        public static string GenerateTotp(string secret, long iteration)
         {
             byte[] key = Base32Decode(secret);
             byte[] counter = BitConverter.GetBytes(iteration);

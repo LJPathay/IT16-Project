@@ -11,7 +11,7 @@
 
 
 <div class="pos-container">
-    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()"></div>
+    <button class="cart-overlay" id="cartOverlay" onclick="toggleCart()" aria-label="Close cart drawer"></button>
     
     <button class="floating-cart-btn" onclick="toggleCart()" id="cartToggleBtn">
         <i class="fas fa-shopping-cart"></i>
@@ -24,7 +24,7 @@
                 <span class="input-group-text bg-white border-end-0">
                     <i class="fas fa-search text-muted"></i>
                 </span>
-                <input type="text" id="productSearch" class="form-control border-start-0" placeholder="Search products..." onkeyup="searchProducts()" aria-label="productSearch">
+                <input type="text" id="productSearch" class="form-control border-start-0" placeholder="Search products..." onkeyup="searchProducts()" aria-label="Search products">
             </div>
         </div>
 
@@ -42,11 +42,10 @@
                 var isStocked = (product.ProductRecipes != null && product.ProductRecipes.Any()) ? 
                     product.ProductRecipes.All(pr => pr.Ingredient.StockQuantity >= pr.QuantityRequired) : 
                     product.StockQuantity > 0;
-                <div class="product-card @(isStocked ? "" : "out-of-stock")" 
+                <button type="button" class="product-card @(isStocked ? "" : "out-of-stock")" 
                      data-category="@product.Category?.CategoryName" 
-                     tabindex="@(isStocked ? "0" : "-1")"
                      onclick="@(isStocked ? $"addToCart('{product.ProductID}', '{product.ProductName}', {product.Price})" : "")"
-                     onkeypress="if(event.key === 'Enter') this.click()" role="button">
+                     aria-label="Add @product.ProductName to cart">
                     <div class="product-image-container">
                         @if (!string.IsNullOrEmpty(product.ImageURL))
                         {
@@ -100,7 +99,7 @@
             <div class="position-relative">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted small"></i></span>
-                    <input type="text" id="customerSearch" class="form-control border-start-0" placeholder="Search phone or name..." oninput="searchCustomers()" aria-label="customerSearch">
+                    <input type="text" id="customerSearch" class="form-control border-start-0" placeholder="Search phone or name..." oninput="searchCustomers()" aria-label="Search customers">
                     <button class="btn btn-outline-secondary" id="clearCustomerBtn" style="display:none" onclick="clearSelectedCustomer()">
                         <i class="fas fa-times"></i>
                     </button>
@@ -140,7 +139,7 @@
         <div class="cart-footer">
             <div class="promotion-area mb-2">
                 <div class="input-group input-group-sm">
-                    <input type="text" id="promoCode" class="form-control" placeholder="Promo code" aria-label="promoCode">
+                    <input type="text" id="promoCode" class="form-control" placeholder="Promo code" aria-label="Promo code">
                     <button class="btn btn-outline-secondary" onclick="applyPromo()">Apply</button>
                 </div>
                 <small id="promoStatus" class="text-success" style="display:none"></small>
@@ -175,7 +174,7 @@
                     <span class="text-muted">Cash Received:</span>
                     <div class="input-group input-group-sm w-50">
                         <span class="input-group-text bg-light border-end-0">₱</span>
-                        <input type="number" id="cashReceived" class="form-control border-start-0 text-end fw-bold" placeholder="0.00" oninput="calculateChange()" aria-label="cashReceived">
+                        <input type="number" id="cashReceived" class="form-control border-start-0 text-end fw-bold" placeholder="0.00" oninput="calculateChange()" aria-label="Cash received">
                     </div>
                 </div>
                 <div class="d-flex justify-content-between align-items-center">
@@ -240,15 +239,15 @@
                 <form id="registerCustomerForm">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Full Name</label>
-                        <input type="text" id="regName" class="form-control py-2 shadow-sm" placeholder="e.g. Juan Dela Cruz" required aria-label="regName">
+                        <input type="text" id="regName" class="form-control py-2 shadow-sm" placeholder="e.g. Juan Dela Cruz" required aria-label="Recipient full name">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Phone Number</label>
-                        <input type="tel" id="regPhone" class="form-control py-2 shadow-sm" placeholder="09xxxxxxxxx" aria-label="regPhone">
+                        <input type="tel" id="regPhone" class="form-control py-2 shadow-sm" placeholder="09xxxxxxxxx" aria-label="Recipient phone number">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Email (Optional)</label>
-                        <input type="email" id="regEmail" class="form-control py-2 shadow-sm" placeholder="user@gmail.com" aria-label="regEmail">
+                        <input type="email" id="regEmail" class="form-control py-2 shadow-sm" placeholder="user@gmail.com" aria-label="Recipient email">
                     </div>
                 </form>
             </div>
@@ -309,7 +308,7 @@
             <div class="modal-body p-4">
                 <div class="d-grid gap-3">
                     <!-- Bronze -->
-                    <div class="reward-card reward-bronze" id="tier1Option" onclick="selectRewardTier(1)" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()">
+                    <button type="button" class="reward-card reward-bronze border-0 bg-transparent text-start w-100" id="tier1Option" onclick="selectRewardTier(1)" aria-label="Select Bronze Reward - 5 Points">
                         <div class="reward-icon">
                             <i class="fas fa-medal"></i>
                         </div>
@@ -323,7 +322,7 @@
                     </div>
                     
                     <!-- Silver -->
-                    <div class="reward-card reward-silver" id="tier2Option" onclick="selectRewardTier(2)" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()">
+                    <button type="button" class="reward-card reward-silver border-0 bg-transparent text-start w-100" id="tier2Option" onclick="selectRewardTier(2)" aria-label="Select Silver Reward - 10 Points">
                         <div class="reward-icon">
                             <i class="fas fa-medal"></i>
                         </div>
@@ -337,7 +336,7 @@
                     </div>
 
                     <!-- Gold -->
-                    <div class="reward-card reward-gold" id="tier3Option" onclick="selectRewardTier(3)" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()">
+                    <button type="button" class="reward-card reward-gold border-0 bg-transparent text-start w-100" id="tier3Option" onclick="selectRewardTier(3)" aria-label="Select Gold Reward - 20 Points">
                         <div class="reward-icon">
                             <i class="fas fa-medal"></i>
                         </div>

@@ -21,9 +21,9 @@
                             {
                                 <div class="profile-initials">@initials</div>
                             }
-                            <div class="edit-overlay" onclick="document.getElementById('profilePictureFile').click()" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()">
-                                <i class="fas fa-camera"></i>
-                            </div>
+                        <button type="button" class="edit-overlay" onclick="document.getElementById('profilePictureFile').click()" aria-label="Change profile picture" style="border:none; background:none; padding:0;">
+                            <i class="fas fa-camera"></i>
+                        </button>
                         </div>
                         <div class="profile-meta">
                             <h1 class="ux-title text-white mb-1">@Model.FullName</h1>

@@ -43,13 +43,13 @@
                 <div class="col-lg-5 col-md-12">
                     <div class="input-group">
                         <span class="input-group-text bg-light border-0 text-muted"><i class="fas fa-search"></i></span>
-                        <input type="text" id="productSearch" class="form-control bg-light border-0 ps-0" placeholder="Search products by name or ID..." aria-label="productSearch">
+                        <input type="text" id="productSearch" class="form-control bg-light border-0 ps-0" placeholder="Search products by name or ID..." aria-label="Search products">
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-12">
                     <div class="input-group">
                         <span class="input-group-text bg-light border-0 text-muted x-small fw-bold">CATEGORY</span>
-                        <select id="categoryFilter" class="form-select bg-light border-0" aria-label="categoryFilter">
+                        <select id="categoryFilter" class="form-select bg-light border-0" aria-label="Filter by category">
                             <option value="">All Categories</option>
                             @foreach (var cat in categories)
                             {
@@ -159,17 +159,17 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="modern-form-label">Product Photo</label>
-                        <input type="file" name="photo" class="modern-form-control w-100" accept="image/*" required / aria-label="photo">
+                        <input type="file" name="photo" class="modern-form-control w-100" accept="image/*" required / aria-label="Select product photo">
                         <div class="form-text text-xs">Upload a photo for POS display</div>
                     </div>
                     <div class="mb-3">
                         <label class="modern-form-label">Product Name</label>
-                        <input type="text" name="ProductName" class="modern-form-control w-100" required placeholder="e.g. Iced Vanilla Latte" / aria-label="ProductName">
+                        <input type="text" name="ProductName" class="modern-form-control w-100" required placeholder="e.g. Iced Vanilla Latte" / aria-label="Product name">
                     </div>
                     <div class="row mb-3">
                         <div class="col">
                             <label class="modern-form-label">Category</label>
-                            <select name="CategoryID" class="modern-form-control w-100" required aria-label="CategoryID">
+                            <select name="CategoryID" class="modern-form-control w-100" required aria-label="Select category">
                                 <option value="">Select Category</option>
                                 @foreach (var cat in categories)
                                 {
@@ -179,7 +179,7 @@
                         </div>
                         <div class="col">
                             <label class="modern-form-label">Price (₱)</label>
-                            <input type="number" step="0.01" name="Price" class="modern-form-control w-100" required placeholder="0.00" / aria-label="Price">
+                            <input type="number" step="0.01" name="Price" class="modern-form-control w-100" required placeholder="0.00" / aria-label="Product price">
                         </div>
                     </div>
                     <input type="hidden" name="StockQuantity" value="1000" />
@@ -206,17 +206,17 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="modern-form-label">Product Photo (Optional)</label>
-                        <input type="file" name="photo" class="modern-form-control w-100" accept="image/*" / aria-label="photo">
+                        <input type="file" name="photo" class="modern-form-control w-100" accept="image/*" / aria-label="Update product photo">
                         <div class="form-text text-xs">Leave blank to keep current photo</div>
                     </div>
                     <div class="mb-3">
                         <label class="modern-form-label">Product Name</label>
-                        <input type="text" name="ProductName" id="edit-name" class="modern-form-control w-100" required / aria-label="ProductName">
+                        <input type="text" name="ProductName" id="edit-name" class="modern-form-control w-100" required / aria-label="Update product name">
                     </div>
                     <div class="row mb-3">
                         <div class="col">
                             <label class="modern-form-label">Category</label>
-                            <select name="CategoryID" id="edit-category" class="modern-form-control w-100" required aria-label="CategoryID">
+                            <select name="CategoryID" id="edit-category" class="modern-form-control w-100" required aria-label="Update category">
                                 <option value="">Select Category</option>
                                 @foreach (var cat in categories)
                                 {
@@ -226,12 +226,12 @@
                         </div>
                         <div class="col">
                             <label class="modern-form-label">Price (₱)</label>
-                            <input type="number" step="0.01" name="Price" id="edit-price" class="modern-form-control w-100" required / aria-label="Price">
+                            <input type="number" step="0.01" name="Price" id="edit-price" class="modern-form-control w-100" required / aria-label="Update product price">
                         </div>
                     </div>
                     <input type="hidden" name="StockQuantity" id="edit-stock" value="1000" />
                     <div class="form-check form-switch mt-2">
-                        <input type="checkbox" name="IsAvailable" id="edit-available" value="true" class="form-check-input" / aria-label="IsAvailable">
+                        <input type="checkbox" name="IsAvailable" id="edit-available" value="true" class="form-check-input" / aria-label="Toggle availability for sale">
                         <label class="form-check-label fw-bold text-sm ms-2">Available for Sale</label>
                     </div>
                 </div>

@@ -99,7 +99,7 @@
         <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between">
             <div class="input-group" style="max-width: 300px;">
                 <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                <input type="text" id="inventorySearch" class="form-control bg-light border-start-0" placeholder="Search ingredients..." aria-label="inventorySearch">
+                <input type="text" id="inventorySearch" class="form-control bg-light border-start-0" placeholder="Search ingredients..." aria-label="Search ingredients">
             </div>
             <div class="d-flex gap-2">
                 <a asp-action="ExportInventoryCSV" class="btn btn-outline-dark rounded-pill px-4">
@@ -224,16 +224,16 @@
                 <form asp-action="CreateIngredient" method="post">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Ingredient Name</label>
-                        <input type="text" name="Name" class="form-control bg-light border-0 py-2" required placeholder="e.g. Fresh Milk" / aria-label="Name">
+                        <input type="text" name="Name" class="form-control bg-light border-0 py-2" required placeholder="e.g. Fresh Milk" / aria-label="Ingredient name">
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-6">
                             <label class="form-label small fw-bold text-muted uppercase">Initial Stock</label>
-                            <input type="number" step="0.001" name="StockQuantity" class="form-control bg-light border-0 py-2" required value="0" / aria-label="StockQuantity">
+                            <input type="number" step="0.001" name="StockQuantity" class="form-control bg-light border-0 py-2" required value="0" / aria-label="Initial stock quantity">
                         </div>
                         <div class="col-6">
                             <label class="form-label small fw-bold text-muted uppercase">Unit</label>
-                            <select name="Unit" class="form-select bg-light border-0 py-2" required aria-label="Unit">
+                            <select name="Unit" class="form-select bg-light border-0 py-2" required aria-label="Measurement unit">
                                 <option value="kg">kg (Kilogram)</option>
                                 <option value="L">L (Liter)</option>
                                 <option value="ml">ml (Milliliter)</option>
@@ -244,12 +244,12 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Low Stock Threshold</label>
-                        <input type="number" step="0.001" name="LowStockThreshold" class="form-control bg-light border-0 py-2" required value="1" / aria-label="LowStockThreshold">
+                        <input type="number" step="0.001" name="LowStockThreshold" class="form-control bg-light border-0 py-2" required value="1" / aria-label="Low stock threshold alert level">
                         <div class="form-text x-small text-muted mt-1"><i class="fas fa-info-circle me-1"></i>You'll be notified when stock falls below this level.</div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Expiry Date (Optional)</label>
-                        <input type="date" name="ExpiryDate" class="form-control bg-light border-0 py-2" / aria-label="ExpiryDate">
+                        <input type="date" name="ExpiryDate" class="form-control bg-light border-0 py-2" / aria-label="Expiration date">
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary rounded-pill fw-bold py-3 shadow-sm">
@@ -283,16 +283,16 @@
                     <input type="hidden" name="IngredientID" id="edit-ing-id" />
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Ingredient Name</label>
-                        <input type="text" name="Name" id="edit-ing-name" class="form-control bg-light border-0 py-2" required / aria-label="Name">
+                        <input type="text" name="Name" id="edit-ing-name" class="form-control bg-light border-0 py-2" required / aria-label="Update ingredient name">
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-6">
                             <label class="form-label small fw-bold text-muted uppercase">Update Stock</label>
-                            <input type="number" step="0.001" name="StockQuantity" id="edit-ing-stock" class="form-control bg-light border-0 py-2" required / aria-label="StockQuantity">
+                            <input type="number" step="0.001" name="StockQuantity" id="edit-ing-stock" class="form-control bg-light border-0 py-2" required / aria-label="Update current stock level">
                         </div>
                         <div class="col-6">
                             <label class="form-label small fw-bold text-muted uppercase">Unit</label>
-                            <select name="Unit" id="edit-ing-unit" class="form-select bg-light border-0 py-2" required aria-label="Unit">
+                            <select name="Unit" id="edit-ing-unit" class="form-select bg-light border-0 py-2" required aria-label="Update measurement unit">
                                 <option value="kg">kg</option>
                                 <option value="L">L</option>
                                 <option value="ml">ml</option>
@@ -303,11 +303,11 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Low Stock Threshold</label>
-                        <input type="number" step="0.001" name="LowStockThreshold" id="edit-ing-threshold" class="form-control bg-light border-0 py-2" required / aria-label="LowStockThreshold">
+                        <input type="number" step="0.001" name="LowStockThreshold" id="edit-ing-threshold" class="form-control bg-light border-0 py-2" required / aria-label="Update low stock threshold">
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Expiry Date (Optional)</label>
-                        <input type="date" name="ExpiryDate" id="edit-ing-expiry" class="form-control bg-light border-0 py-2" / aria-label="ExpiryDate">
+                        <input type="date" name="ExpiryDate" id="edit-ing-expiry" class="form-control bg-light border-0 py-2" / aria-label="Update expiration date">
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary rounded-pill fw-bold py-3 shadow-sm">
@@ -340,7 +340,7 @@
                 <form asp-action="IntakeStock" method="post">
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Select Ingredient</label>
-                        <select name="IngredientID" id="intake-ing-id" class="form-select select2 bg-light border-0" required style="width: 100%; padding: 0.75rem;" aria-label="IngredientID">
+                        <select name="IngredientID" id="intake-ing-id" class="form-select select2 bg-light border-0" required style="width: 100%; padding: 0.75rem;" aria-label="Select ingredient to intake">
                             <option value="">-- Choose Ingredient --</option>
                             @foreach (var ing in Model.Ingredients.OrderBy(i => i.Name))
                             {
@@ -352,23 +352,23 @@
                         <label class="form-label small fw-bold text-muted uppercase">Quantity to Add</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="fas fa-balance-scale"></i></span>
-                            <input type="number" step="0.001" name="Quantity" class="form-control bg-light border-0 py-2" required placeholder="0.00" / aria-label="Quantity">
+                            <input type="number" step="0.001" name="Quantity" class="form-control bg-light border-0 py-2" required placeholder="0.00" / aria-label="Quantity of stock to add">
                             <span class="input-group-text bg-light border-0 text-muted pe-3 fw-bold" id="intake-unit-badge">unit</span>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Intake Date</label>
-                        <input type="date" name="IntakeDate" id="intake-date" class="form-control bg-light border-0 py-2" required / aria-label="IntakeDate">
+                        <input type="date" name="IntakeDate" id="intake-date" class="form-control bg-light border-0 py-2" required / aria-label="Stocking date">
                         <div class="form-text x-small text-muted mt-1"><i class="fas fa-clock me-1"></i>Date of physical stocking</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Expiry Date (Optional)</label>
-                        <input type="date" name="ExpiryDate" id="intake-expiry" class="form-control bg-light border-0 py-2" / aria-label="ExpiryDate">
+                        <input type="date" name="ExpiryDate" id="intake-expiry" class="form-control bg-light border-0 py-2" / aria-label="Expiration date of batch">
                         <div class="form-text x-small text-muted mt-1"><i class="fas fa-calendar-times me-1"></i>New expiry date for this batch</div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Remarks</label>
-                        <textarea name="Remarks" class="form-control bg-light border-0 py-2" rows="3" placeholder="e.g. Weekly restock from supplier X" maxlength="200" aria-label="Remarks"></textarea>
+                        <textarea name="Remarks" class="form-control bg-light border-0 py-2" rows="3" placeholder="e.g. Weekly restock from supplier X" maxlength="200" aria-label="Intake remarks and details"></textarea>
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary rounded-pill fw-bold py-3 shadow-sm">

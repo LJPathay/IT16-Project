@@ -81,7 +81,7 @@
             <div class="d-flex align-items-center gap-3">
                 <div class="input-group" style="max-width: 300px;">
                     <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                    <input type="text" id="inventorySearch" class="form-control bg-light border-start-0" placeholder="Search ingredients..." aria-label="inventorySearch">
+                    <input type="text" id="inventorySearch" class="form-control bg-light border-start-0" placeholder="Search ingredients..." aria-label="Search ingredients">
                 </div>
             </div>
             <div class="d-flex gap-2">
@@ -208,7 +208,7 @@
                     @Html.AntiForgeryToken()
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Select Ingredient</label>
-                        <select name="IngredientID" class="form-select select2 bg-light border-0" required style="width: 100%; padding: 0.75rem;" aria-label="IngredientID">
+                        <select name="IngredientID" class="form-select select2 bg-light border-0" required style="width: 100%; padding: 0.75rem;" aria-label="Select ingredient to intake">
                             <option value="">Choose item...</option>
                             @foreach (var item in Model)
                             {
@@ -221,24 +221,24 @@
                             <label class="form-label small fw-bold text-muted uppercase">Quantity to Add</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0 text-muted ps-3"><i class="fas fa-balance-scale"></i></span>
-                                <input type="number" step="0.01" name="Quantity" class="form-control bg-light border-0 py-2" required placeholder="0.00" aria-label="Quantity">
+                                <input type="number" step="0.01" name="Quantity" class="form-control bg-light border-0 py-2" required placeholder="0.00" aria-label="Quantity of stock to add">
                                 <span class="input-group-text bg-light border-0 text-muted pe-3 fw-bold" id="intakeUnitBadge">-</span>
                             </div>
                         </div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Intake Date</label>
-                        <input type="date" name="IntakeDate" class="intake-date-input form-control bg-light border-0 py-2" required / aria-label="IntakeDate">
+                        <input type="date" name="IntakeDate" class="intake-date-input form-control bg-light border-0 py-2" required / aria-label="Date of stocking">
                         <div class="form-text x-small text-muted mt-1"><i class="fas fa-clock me-1"></i>Date of physical stocking</div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Expiry Date (Optional)</label>
-                        <input type="date" name="ExpiryDate" class="form-control bg-light border-0 py-2" / aria-label="ExpiryDate">
+                        <input type="date" name="ExpiryDate" class="form-control bg-light border-0 py-2" / aria-label="Expiration date of batch">
                         <div class="form-text x-small text-muted mt-1"><i class="fas fa-calendar-times me-1"></i>New expiry date for this batch</div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Remarks (Optional)</label>
-                        <textarea name="Remarks" class="form-control bg-light border-0 py-2" rows="3" placeholder="e.g. Supplier Batch #101, Weekly Restock" aria-label="Remarks"></textarea>
+                        <textarea name="Remarks" class="form-control bg-light border-0 py-2" rows="3" placeholder="e.g. Supplier Batch #101, Weekly Restock" aria-label="Intake remarks and details"></textarea>
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary rounded-pill fw-bold py-3 shadow-sm">
@@ -271,12 +271,12 @@
                 <form id="addIngredientForm">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted uppercase">Item Name</label>
-                        <input type="text" class="form-control bg-light border-0 py-2" id="addName" required placeholder="e.g. Arabica Beans" aria-label="addName">
+                        <input type="text" class="form-control bg-light border-0 py-2" id="addName" required placeholder="e.g. Arabica Beans" aria-label="New ingredient name">
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-6">
                             <label class="form-label small fw-bold text-muted uppercase">Unit</label>
-                            <select class="form-select bg-light border-0 py-2" id="addUnit" required aria-label="addUnit">
+                            <select class="form-select bg-light border-0 py-2" id="addUnit" required aria-label="Measurement unit">
                                 <option value="pcs">pcs</option>
                                 <option value="g">g (Grams)</option>
                                 <option value="kg">kg (Kilograms)</option>
@@ -286,12 +286,12 @@
                         </div>
                         <div class="col-6">
                             <label class="form-label small fw-bold text-muted uppercase">Initial Stock</label>
-                            <input type="number" step="0.01" class="form-control bg-light border-0 py-2" id="addStock" value="0" required aria-label="addStock">
+                            <input type="number" step="0.01" class="form-control bg-light border-0 py-2" id="addStock" value="0" required aria-label="Initial stock level">
                         </div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted uppercase">Low Stock Threshold</label>
-                        <input type="number" step="0.01" class="form-control bg-light border-0 py-2" id="addThreshold" value="10" required aria-label="addThreshold">
+                        <input type="number" step="0.01" class="form-control bg-light border-0 py-2" id="addThreshold" value="10" required aria-label="Low stock threshold alert level">
                         <div class="form-text x-small text-muted mt-1"><i class="fas fa-info-circle me-1"></i>You'll be notified when stock drops below this.</div>
                     </div>
                     <div class="d-grid">
@@ -367,7 +367,7 @@
                             <div class="mb-3">
                                 <label class="form-label small fw-bold text-muted">Set New Stock Level</label>
                                 <div class="input-group">
-                                    <input type="number" step="0.01" class="form-control bg-light border-0" id="editStock" placeholder="Enter new quantity" aria-label="editStock">
+                                    <input type="number" step="0.01" class="form-control bg-light border-0" id="editStock" placeholder="Enter new quantity" aria-label="Update current stock quantity">
                                     <span class="input-group-text bg-light border-0 text-muted" id="modalUnitEntry">unit</span>
                                 </div>
                             </div>
@@ -375,18 +375,18 @@
                             <div class="mb-3">
                                 <label class="form-label small fw-bold text-muted">Update Threshold</label>
                                 <div class="input-group">
-                                    <input type="number" step="0.01" class="form-control bg-light border-0" id="editThreshold" placeholder="Alert level" aria-label="editThreshold">
+                                    <input type="number" step="0.01" class="form-control bg-light border-0" id="editThreshold" placeholder="Alert level" aria-label="Update stock alert threshold">
                                 </div>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label small fw-bold text-muted">Update Expiry Date</label>
-                                <input type="date" class="form-control bg-light border-0" id="editExpiry" aria-label="editExpiry">
+                                <input type="date" class="form-control bg-light border-0" id="editExpiry" aria-label="Update expiration date">
                             </div>
 
                             <div class="mb-0">
                                 <label class="form-label small fw-bold text-muted">Reason / Adjust Remarks</label>
-                                <textarea class="form-control bg-light border-0" id="editRemarks" rows="2" placeholder="e.g. Supplier delivery, manual count fix..." aria-label="editRemarks"></textarea>
+                                <textarea class="form-control bg-light border-0" id="editRemarks" rows="2" placeholder="e.g. Supplier delivery, manual count fix..." aria-label="Adjustment reason or remarks"></textarea>
                             </div>
                         </div>
                     </div>

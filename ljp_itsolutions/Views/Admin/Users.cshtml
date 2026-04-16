@@ -11,9 +11,9 @@
             <div class="d-flex gap-3 flex-grow-1">
                 <div class="input-group" style="max-width: 300px;">
                     <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
-                    <input type="text" id="userSearch" class="form-control bg-light border-start-0" placeholder="Search users..." aria-label="userSearch">
+                    <input type="text" id="userSearch" class="form-control bg-light border-start-0" placeholder="Search users..." aria-label="Search users">
                 </div>
-                <select id="roleFilter" class="form-select bg-light border-0" style="max-width: 150px;" aria-label="roleFilter">
+                <select id="roleFilter" class="form-select bg-light border-0" style="max-width: 150px;" aria-label="Filter by role">
                     <option value="">All Roles</option>
                     @if (roles != null)
                     {
@@ -129,23 +129,23 @@
                 <form id="addUserForm">
                     <div class="mb-3">
                         <label for="addFullName" class="form-label small fw-bold text-muted">Full Name</label>
-                        <input type="text" class="form-control bg-light border-0" id="addFullName" placeholder="e.g. John Doe" required aria-label="addFullName">
+                        <input type="text" class="form-control bg-light border-0" id="addFullName" placeholder="e.g. John Doe" required aria-label="Full name">
                     </div>
                     <div class="mb-3">
                         <label for="addUsername" class="form-label small fw-bold text-muted">Username</label>
-                        <input type="text" class="form-control bg-light border-0" id="addUsername" placeholder="Unique username" required aria-label="addUsername">
+                        <input type="text" class="form-control bg-light border-0" id="addUsername" placeholder="Unique username" required aria-label="Username">
                     </div>
                     <div class="mb-3">
                         <label for="addEmail" class="form-label small fw-bold text-muted">Email</label>
-                        <input type="email" class="form-control bg-light border-0" id="addEmail" placeholder="user@coffee.local" required aria-label="addEmail">
+                        <input type="email" class="form-control bg-light border-0" id="addEmail" placeholder="user@coffee.local" required aria-label="Email address">
                     </div>
                     <div class="mb-3">
                         <label for="addPassword" class="form-label small fw-bold text-muted">Temporary Password</label>
-                        <input type="password" class="form-control bg-light border-0" id="addPassword" required aria-label="addPassword">
+                        <input type="password" class="form-control bg-light border-0" id="addPassword" required aria-label="Temporary password">
                     </div>
                     <div class="mb-4">
                         <label for="addRole" class="form-label small fw-bold text-muted">Role</label>
-                        <select class="form-select bg-light border-0" id="addRole" required aria-label="addRole">
+                        <select class="form-select bg-light border-0" id="addRole" required aria-label="Select user role">
                             @if (roles != null)
                             {
                                 foreach (var role in roles)
@@ -196,15 +196,15 @@
                     <input type="hidden" id="editUserId">
                     <div class="mb-3">
                         <label for="editFullName" class="form-label small fw-bold text-muted">Full Name</label>
-                        <input type="text" class="form-control bg-light border-0" id="editFullName" required aria-label="editFullName">
+                        <input type="text" class="form-control bg-light border-0" id="editFullName" required aria-label="Update full name">
                     </div>
                     <div class="mb-3">
                         <label for="editEmail" class="form-label small fw-bold text-muted">Email</label>
-                        <input type="email" class="form-control bg-light border-0" id="editEmail" required aria-label="editEmail">
+                        <input type="email" class="form-control bg-light border-0" id="editEmail" required aria-label="Update email address">
                     </div>
                     <div class="mb-4">
                         <label for="editRole" class="form-label small fw-bold text-muted">Role</label>
-                        <select class="form-select bg-light border-0" id="editRole" required aria-label="editRole">
+                        <select class="form-select bg-light border-0" id="editRole" required aria-label="Update user role">
                             @if (roles != null)
                             {
                                 foreach (var role in roles)

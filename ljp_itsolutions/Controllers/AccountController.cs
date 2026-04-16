@@ -339,7 +339,7 @@ namespace ljp_itsolutions.Controllers
             await _emailSender.SendEmailAsync(user.Email ?? string.Empty, "Security Alert: Password Reset Successful", 
                 $"<h3>Security Notification</h3><p>Hello {user.FullName},</p><p>Your password was successfully reset using a recovery link.</p><p>If you did not perform this reset, please contact your administrator immediately.</p>");
 
-            TempData[AppConstants.SessionKeys.Message] = "Success! Password has been updated.";
+            TempData[AppConstants.SessionKeys.SuccessMessage] = "Success! Password has been updated.";
             return RedirectToAction(nameof(Login));
         }
 
@@ -532,7 +532,7 @@ namespace ljp_itsolutions.Controllers
         HttpContext.Session.SetString("FullName", user.FullName);
         HttpContext.Session.SetString("ProfilePictureUrl", user.ProfilePictureUrl ?? "");
         
-        TempData["SuccessMessage"] = emailChanged ? "Profile updated. A notification was sent to your old email address." : "Profile updated successfully.";
+        TempData[AppConstants.SessionKeys.SuccessMessage] = emailChanged ? "Profile updated. A notification was sent to your old email address." : "Profile updated successfully.";
         return RedirectToAction(nameof(Profile));
     }
 
@@ -559,7 +559,7 @@ namespace ljp_itsolutions.Controllers
             HttpContext.Session.SetString("FontSize", user.FontSize);
             HttpContext.Session.SetString("ReduceMotion", user.ReduceMotion.ToString().ToLower());
 
-            TempData["SuccessMessage"] = "Accessibility settings saved.";
+            TempData[AppConstants.SessionKeys.SuccessMessage] = "Accessibility settings saved.";
             return RedirectToAction(nameof(Profile));
         }
 
@@ -605,7 +605,7 @@ namespace ljp_itsolutions.Controllers
                 await _emailSender.SendEmailAsync(user.Email ?? string.Empty, "Security Alert: MFA Enabled", 
                     $"<h3>Security Notification</h3><p>Hello {user.FullName},</p><p>Multi-Factor Authentication (MFA) has been successfully enabled for your account.</p><p>If you did not make this change, please contact your administrator immediately.</p>");
 
-                TempData["SuccessMessage"] = "Two-Factor Authentication has been enabled.";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = "Two-Factor Authentication has been enabled.";
             }
             else
             {
@@ -632,7 +632,7 @@ namespace ljp_itsolutions.Controllers
             await _emailSender.SendEmailAsync(user.Email ?? string.Empty, "Security Alert: MFA Disabled", 
                 $"<h3>Security Notification</h3><p>Hello {user.FullName},</p><p>Multi-Factor Authentication (MFA) has been <b>DISABLED</b> for your account.</p><p>If you did not authorize this, your account may be at risk. Please contact your administrator immediately.</p>");
 
-            TempData["SuccessMessage"] = "Two-Factor Authentication has been disabled.";
+            TempData[AppConstants.SessionKeys.SuccessMessage] = "Two-Factor Authentication has been disabled.";
             return RedirectToAction(nameof(Profile));
         }
 
@@ -715,7 +715,7 @@ namespace ljp_itsolutions.Controllers
                 await _emailSender.SendEmailAsync(user.Email ?? string.Empty, "Security Alert: Password Changed", 
                     $"<h3>Security Notification</h3><p>Hello {user.FullName},</p><p>Your account password was recently changed from the profile settings.</p><p>If this was not you, please contact your administrator immediately.</p>");
 
-                TempData["SuccessMessage"] = "Password updated successfully.";
+                TempData[AppConstants.SessionKeys.SuccessMessage] = "Password updated successfully.";
             }
             else
             {

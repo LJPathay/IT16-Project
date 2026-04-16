@@ -7,6 +7,9 @@ namespace ljp_itsolutions.Data
 {
     public static class DbInitializer
     {
+        private const string CoffeeBeans = "Coffee Beans";
+        private const string FreshMilk = "Fresh Milk";
+
         public static void Initialize(IServiceProvider serviceProvider)
         {
             using var scope = serviceProvider.CreateScope();
@@ -135,29 +138,29 @@ namespace ljp_itsolutions.Data
 
                         var templates = new List<RecipeTemplate>
                         {
-                            T("Espresso", ("Coffee Beans", 18m, "g")),
-                            T("Americano", ("Coffee Beans", 18m, "g"), ("Hot Water", 150m, "ml")),
-                            T("Cappuccino", ("Coffee Beans", 18m, "g"), ("Fresh Milk", 150m, "ml"), ("Milk Foam", 30m, "ml")),
-                            T("Latte", ("Coffee Beans", 18m, "g"), ("Fresh Milk", 200m, "ml"), ("Milk Foam", 20m, "ml")),
-                            T("Caramel Macchiato", ("Coffee Beans", 18m, "g"), ("Fresh Milk", 200m, "ml"), ("Caramel Syrup", 20m, "ml"), ("Vanilla Syrup", 10m, "ml")),
-                            T("Mocha", ("Coffee Beans", 18m, "g"), ("Fresh Milk", 180m, "ml"), ("Chocolate Syrup", 25m, "ml")),
-                            T("Flat White", ("Coffee Beans", 18m, "g"), ("Fresh Milk", 160m, "ml")),
-                            T("Vanilla Latte", ("Coffee Beans", 18m, "g"), ("Fresh Milk", 200m, "ml"), ("Vanilla Syrup", 20m, "ml")),
-                            T("Hazelnut Latte", ("Coffee Beans", 18m, "g"), ("Fresh Milk", 200m, "ml"), ("Hazelnut Syrup", 20m, "ml")),
-                            T("Spanish Latte", ("Coffee Beans", 18m, "g"), ("Fresh Milk", 180m, "ml"), ("Condensed Milk", 30m, "ml")),
-                            T("Iced Americano", ("Coffee Beans", 18m, "g"), ("Water", 120m, "ml"), ("Ice", 100m, "g")),
-                            T("Iced Latte", ("Coffee Beans", 18m, "g"), ("Fresh Milk", 200m, "ml"), ("Ice", 120m, "g")),
-                            T("Iced Caramel Macchiato", ("Coffee Beans", 18m, "g"), ("Fresh Milk", 200m, "ml"), ("Caramel Syrup", 20m, "ml"), ("Ice", 120m, "g")),
-                            T("Iced Mocha", ("Coffee Beans", 18m, "g"), ("Fresh Milk", 180m, "ml"), ("Chocolate Syrup", 25m, "ml"), ("Ice", 120m, "g")),
-                            T("Cold Brew Coffee", ("Coffee Beans", 25m, "g"), ("Water", 250m, "ml")),
-                            T("Hot Chocolate", ("Cocoa Powder", 25m, "g"), ("Fresh Milk", 200m, "ml"), ("Sugar", 15m, "g")),
-                            T("Matcha Latte", ("Matcha Powder", 15m, "g"), ("Fresh Milk", 200m, "ml"), ("Sugar", 10m, "g")),
-                            T("Iced Matcha Latte", ("Matcha Powder", 15m, "g"), ("Fresh Milk", 200m, "ml"), ("Ice", 120m, "g"), ("Sugar", 10m, "g")),
-                            T("Chai Latte", ("Chai Powder", 20m, "g"), ("Fresh Milk", 200m, "ml")),
-                            T("Iced Chocolate", ("Cocoa Powder", 25m, "g"), ("Fresh Milk", 200m, "ml"), ("Ice", 120m, "g")),
-                            T("Strawberry Milk", ("Strawberry Syrup", 30m, "ml"), ("Fresh Milk", 200m, "ml")),
-                            T("Vanilla Milkshake", ("Fresh Milk", 200m, "ml"), ("Vanilla Syrup", 20m, "ml"), ("Ice Cream", 1m, "scoop")),
-                            T("Cookies and Cream Milkshake", ("Fresh Milk", 200m, "ml"), ("Ice Cream", 1m, "scoop"), ("Crushed Cookies", 30m, "g")),
+                            T("Espresso", (CoffeeBeans, 18m, "g")),
+                            T("Americano", (CoffeeBeans, 18m, "g"), ("Hot Water", 150m, "ml")),
+                            T("Cappuccino", (CoffeeBeans, 18m, "g"), (FreshMilk, 150m, "ml"), ("Milk Foam", 30m, "ml")),
+                            T("Latte", (CoffeeBeans, 18m, "g"), (FreshMilk, 200m, "ml"), ("Milk Foam", 20m, "ml")),
+                            T("Caramel Macchiato", (CoffeeBeans, 18m, "g"), (FreshMilk, 200m, "ml"), ("Caramel Syrup", 20m, "ml"), ("Vanilla Syrup", 10m, "ml")),
+                            T("Mocha", (CoffeeBeans, 18m, "g"), (FreshMilk, 180m, "ml"), ("Chocolate Syrup", 25m, "ml")),
+                            T("Flat White", (CoffeeBeans, 18m, "g"), (FreshMilk, 160m, "ml")),
+                            T("Vanilla Latte", (CoffeeBeans, 18m, "g"), (FreshMilk, 200m, "ml"), ("Vanilla Syrup", 20m, "ml")),
+                            T("Hazelnut Latte", (CoffeeBeans, 18m, "g"), (FreshMilk, 200m, "ml"), ("Hazelnut Syrup", 20m, "ml")),
+                            T("Spanish Latte", (CoffeeBeans, 18m, "g"), (FreshMilk, 180m, "ml"), ("Condensed Milk", 30m, "ml")),
+                            T("Iced Americano", (CoffeeBeans, 18m, "g"), ("Water", 120m, "ml"), ("Ice", 100m, "g")),
+                            T("Iced Latte", (CoffeeBeans, 18m, "g"), (FreshMilk, 200m, "ml"), ("Ice", 120m, "g")),
+                            T("Iced Caramel Macchiato", (CoffeeBeans, 18m, "g"), (FreshMilk, 200m, "ml"), ("Caramel Syrup", 20m, "ml"), ("Ice", 120m, "g")),
+                            T("Iced Mocha", (CoffeeBeans, 18m, "g"), (FreshMilk, 180m, "ml"), ("Chocolate Syrup", 25m, "ml"), ("Ice", 120m, "g")),
+                            T("Cold Brew Coffee", (CoffeeBeans, 25m, "g"), ("Water", 250m, "ml")),
+                            T("Hot Chocolate", ("Cocoa Powder", 25m, "g"), (FreshMilk, 200m, "ml"), ("Sugar", 15m, "g")),
+                            T("Matcha Latte", ("Matcha Powder", 15m, "g"), (FreshMilk, 200m, "ml"), ("Sugar", 10m, "g")),
+                            T("Iced Matcha Latte", ("Matcha Powder", 15m, "g"), (FreshMilk, 200m, "ml"), ("Ice", 120m, "g"), ("Sugar", 10m, "g")),
+                            T("Chai Latte", ("Chai Powder", 20m, "g"), (FreshMilk, 200m, "ml")),
+                            T("Iced Chocolate", ("Cocoa Powder", 25m, "g"), (FreshMilk, 200m, "ml"), ("Ice", 120m, "g")),
+                            T("Strawberry Milk", ("Strawberry Syrup", 30m, "ml"), (FreshMilk, 200m, "ml")),
+                            T("Vanilla Milkshake", (FreshMilk, 200m, "ml"), ("Vanilla Syrup", 20m, "ml"), ("Ice Cream", 1m, "scoop")),
+                            T("Cookies and Cream Milkshake", (FreshMilk, 200m, "ml"), ("Ice Cream", 1m, "scoop"), ("Crushed Cookies", 30m, "g")),
                             T("Mango Smoothie", ("Mango Puree", 150m, "ml"), ("Ice", 120m, "g"), ("Sugar Syrup", 15m, "ml")),
                             T("Strawberry Smoothie", ("Strawberry Puree", 150m, "ml"), ("Ice", 120m, "g"), ("Sugar Syrup", 15m, "ml")),
                         };

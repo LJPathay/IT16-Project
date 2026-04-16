@@ -14,11 +14,11 @@
                 <span class="input-group-text bg-white border-0 ps-3">
                     <i class="fas fa-search text-muted"></i>
                 </span>
-                <input type="text" id="userSearch" class="form-control border-0 shadow-none ps-2 py-2" placeholder="Search by name or username..." aria-label="userSearch">
+                <input type="text" id="userSearch" class="form-control border-0 shadow-none ps-2 py-2" placeholder="Search by name or username..." aria-label="Search users by name or username">
             </div>
         </div>
         <div class="col-md-3">
-            <select id="roleFilter" class="form-select shadow-sm rounded-pill border py-2" aria-label="roleFilter">
+            <select id="roleFilter" class="form-select shadow-sm rounded-pill border py-2" aria-label="Filter by access role">
                 <option value="">All Access Roles</option>
                 @foreach (var role in roles)
                 {
@@ -139,19 +139,19 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label for="add-fullname" class="form-label x-small fw-bold text-muted">Legal Full Name</label>
-                            <input type="text" name="FullName" id="add-fullname" class="form-control rounded-3" placeholder="e.g. John Doe" required aria-label="FullName">
+                            <input type="text" name="FullName" id="add-fullname" class="form-control rounded-3" placeholder="e.g. John Doe" required aria-label="Full legal name">
                         </div>
                         <div class="col-md-6">
                             <label for="add-username" class="form-label x-small fw-bold text-muted">Account Username</label>
-                            <input type="text" name="Username" id="add-username" class="form-control rounded-3" placeholder="unique_handler" required aria-label="Username">
+                            <input type="text" name="Username" id="add-username" class="form-control rounded-3" placeholder="unique_handler" required aria-label="Account username">
                         </div>
                         <div class="col-md-6">
                             <label for="add-email" class="form-label x-small fw-bold text-muted">Email</label>
-                            <input type="email" name="Email" id="add-email" class="form-control rounded-3" placeholder="user@coffee.local" required aria-label="Email">
+                            <input type="email" name="Email" id="add-email" class="form-control rounded-3" placeholder="user@coffee.local" required aria-label="Email address">
                         </div>
                         <div class="col-12">
                             <label for="add-role" class="form-label x-small fw-bold text-muted">Security Role Assignment</label>
-                            <select name="Role" id="add-role" class="form-select rounded-3" required aria-label="Role">
+                            <select name="Role" id="add-role" class="form-select rounded-3" required aria-label="Security role assignment">
                                 @foreach (var role in roles)
                                 {
                                     <option value="@role">@role</option>
@@ -162,7 +162,7 @@
                             <label for="add-password" class="form-label x-small fw-bold text-muted">Initial Access Password</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0 rounded-start-3"><i class="fas fa-lock x-small"></i></span>
-                                <input type="password" name="Password" id="add-password" class="form-control border-start-0 rounded-end-3" required aria-label="Password">
+                                <input type="password" name="Password" id="add-password" class="form-control border-start-0 rounded-end-3" required aria-label="Initial access password">
                             </div>
                         </div>
                     </div>
@@ -209,19 +209,19 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label for="edit-fullname" class="form-label x-small fw-bold text-muted">Full Name</label>
-                            <input type="text" name="FullName" id="edit-fullname" class="form-control rounded-3" required aria-label="FullName">
+                            <input type="text" name="FullName" id="edit-fullname" class="form-control rounded-3" required aria-label="Update full name">
                         </div>
                         <div class="col-md-6">
                             <label for="edit-username" class="form-label x-small fw-bold text-muted">Username</label>
-                            <input type="text" name="Username" id="edit-username" class="form-control rounded-3" required aria-label="Username">
+                            <input type="text" name="Username" id="edit-username" class="form-control rounded-3" required aria-label="Update username">
                         </div>
                         <div class="col-md-6">
                             <label for="edit-email" class="form-label x-small fw-bold text-muted">Email</label>
-                            <input type="email" name="Email" id="edit-email" class="form-control rounded-3" required aria-label="Email">
+                            <input type="email" name="Email" id="edit-email" class="form-control rounded-3" required aria-label="Update email address">
                         </div>
                         <div class="col-12">
                             <label for="edit-role" class="form-label x-small fw-bold text-muted">Role Assignment</label>
-                            <select name="Role" id="edit-role" class="form-select rounded-3" required aria-label="Role">
+                            <select name="Role" id="edit-role" class="form-select rounded-3" required aria-label="Update security role">
                                 @foreach (var role in roles)
                                 {
                                     <option value="@role">@role</option>
@@ -230,7 +230,7 @@
                         </div>
                         <div class="col-12">
                             <div class="form-check form-switch p-2 bg-light rounded-3 ms-2">
-                                <input type="checkbox" name="IsActive" id="edit-isactive" value="true" class="form-check-input ms-0 me-2" checked aria-label="IsActive">
+                                <input type="checkbox" name="IsActive" id="edit-isactive" value="true" class="form-check-input ms-0 me-2" checked aria-label="Enable account access">
                                 <input type="hidden" name="IsActive" value="false">
                                 <label for="edit-isactive" class="form-check-label fw-bold small">Enable Account Access</label>
                             </div>

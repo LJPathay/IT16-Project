@@ -69,9 +69,9 @@
                                                 <div class="d-flex justify-content-end gap-2">
                                                     @if (!string.IsNullOrEmpty(notification.TargetUrl))
                                                     {
-                                                        <a href="@notification.TargetUrl" class="btn btn-sm btn-light rounded-pill px-3 fw-bold x-small" onclick="handleNotificationAction(@notification.NotificationID, '@notification.TargetUrl')" role="button" tabindex="0" onkeypress="if(event.key === 'Enter') this.click()">
+                                                        <button type="button" class="btn btn-sm btn-light rounded-pill px-3 fw-bold x-small" onclick="handleNotificationAction(@notification.NotificationID, '@notification.TargetUrl')">
                                                             View Scope
-                                                        </a>
+                                                        </button>
                                                     }
                                                     @if (!notification.IsRead)
                                                     {
