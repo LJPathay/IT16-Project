@@ -88,7 +88,7 @@ namespace ljp_itsolutions.Controllers
  
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Invalid credentials");
+                ModelState.AddModelError(string.Empty, "Invalid username or password.");
                 return View(model);
             }
  
@@ -102,7 +102,7 @@ namespace ljp_itsolutions.Controllers
  
             if (string.IsNullOrEmpty(user.Password))
             {
-                ModelState.AddModelError(string.Empty, "Invalid credentials");
+                ModelState.AddModelError(string.Empty, "Invalid username or password.");
                 return View(model);
             }
             /// Adaptive Brute-Force Lockout Policy (Infrastructure Standard)
@@ -110,7 +110,7 @@ namespace ljp_itsolutions.Controllers
             if (verify == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
             {
                 user.AccessFailedCount++;
-                string lockoutMsg = "Invalid credentials";
+                string lockoutMsg = "Invalid username or password.";
 
                 if (user.AccessFailedCount >= 15)
                 {
@@ -238,7 +238,7 @@ namespace ljp_itsolutions.Controllers
         {
             if (string.IsNullOrEmpty(username))
             {
-                TempData["Message"] = "Username is required.";
+                TempData["Message"] = "Please enter your username.";
                 return RedirectToAction("Login");
             }
 
@@ -289,13 +289,13 @@ namespace ljp_itsolutions.Controllers
 
             if (user == null || user.ResetTokenExpiry < DateTime.UtcNow)
             {
-                ModelState.AddModelError(string.Empty, "Invalid or expired token.");
+                ModelState.AddModelError(string.Empty, "Invalid or expired security link.");
                 return View(model);
             }
 
             if (!ValidatePasswordComplexity(model.NewPassword, user, out string complexityError))
             {
-                ModelState.AddModelError(string.Empty, complexityError);
+                ModelState.AddModelError(string.Empty, "The new password does not meet security requirements.");
                 return View(model);
             }
 
@@ -311,7 +311,7 @@ namespace ljp_itsolutions.Controllers
             {
                 if (_hasher.VerifyHashedPassword(user, past.PasswordHash, model.NewPassword) != Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
                 {
-                    ModelState.AddModelError(string.Empty, $"You cannot reuse any of your last {historyLimit} passwords.");
+                    ModelState.AddModelError(string.Empty, "You cannot reuse a previously used password.");
                     return View(model);
                 }
             }
@@ -649,7 +649,7 @@ namespace ljp_itsolutions.Controllers
 
             if (model.NewPassword != model.ConfirmPassword)
             {
-                TempData["Error"] = "New password and confirmation do not match.";
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "Mismatched password confirmation.";
                 return RedirectToAction(nameof(Profile));
             }
 
@@ -665,13 +665,13 @@ namespace ljp_itsolutions.Controllers
             if (verify == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
             {
                 await LogSecurity("PasswordChangeFailure", "Failed password change attempt: incorrect current password", "Warning", user.UserID);
-                TempData[AppConstants.SessionKeys.ErrorMessage] = "Incorrect current password.";
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "Invalid current credentials.";
                 return RedirectToAction(nameof(Profile));
             }
             
             if (!ValidatePasswordComplexity(model.NewPassword, user, out string error))
             {
-                TempData["Error"] = error;
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "The new password does not meet complexity requirements.";
                 return RedirectToAction(nameof(Profile));
             }
 
@@ -687,7 +687,7 @@ namespace ljp_itsolutions.Controllers
             {
                 if (_hasher.VerifyHashedPassword(user, past.PasswordHash, model.NewPassword) != Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
                 {
-                    TempData["Error"] = $"You cannot reuse any of your last {historyLimit} passwords.";
+                    TempData[AppConstants.SessionKeys.ErrorMessage] = "You cannot reuse a previous password.";
                     return RedirectToAction(nameof(Profile));
                 }
             }
@@ -719,7 +719,7 @@ namespace ljp_itsolutions.Controllers
             }
             else
             {
-                TempData["Error"] = "Account update failed. Please contact your administrator.";
+                TempData[AppConstants.SessionKeys.ErrorMessage] = "Security update failed. Please try again.";
             }
 
             return RedirectToAction(nameof(Profile));
