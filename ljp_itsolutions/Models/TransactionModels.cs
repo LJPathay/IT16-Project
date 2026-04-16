@@ -27,6 +27,10 @@ namespace ljp_itsolutions.Models
         public int RefundedQuantity { get; set; }
     }
 
+    /// <summary>
+    /// Financial Record: Immutable audit trail for all incoming payments.
+    /// IA POLICY: Payments must NEVER be deleted. Use Void/Refund status instead.
+    /// </summary>
     public class Payment
     {
         [Key]

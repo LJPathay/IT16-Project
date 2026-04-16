@@ -128,23 +128,23 @@
             <div class="modal-body pt-4">
                 <form id="addUserForm">
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Full Name</label>
+                        <label for="addFullName" class="form-label small fw-bold text-muted">Full Name</label>
                         <input type="text" class="form-control bg-light border-0" id="addFullName" placeholder="e.g. John Doe" required aria-label="addFullName">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Username</label>
+                        <label for="addUsername" class="form-label small fw-bold text-muted">Username</label>
                         <input type="text" class="form-control bg-light border-0" id="addUsername" placeholder="Unique username" required aria-label="addUsername">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Email</label>
+                        <label for="addEmail" class="form-label small fw-bold text-muted">Email</label>
                         <input type="email" class="form-control bg-light border-0" id="addEmail" placeholder="user@coffee.local" required aria-label="addEmail">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Temporary Password</label>
+                        <label for="addPassword" class="form-label small fw-bold text-muted">Temporary Password</label>
                         <input type="password" class="form-control bg-light border-0" id="addPassword" required aria-label="addPassword">
                     </div>
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted">Role</label>
+                        <label for="addRole" class="form-label small fw-bold text-muted">Role</label>
                         <select class="form-select bg-light border-0" id="addRole" required aria-label="addRole">
                             @if (roles != null)
                             {
@@ -195,15 +195,15 @@
                 <form id="editUserForm">
                     <input type="hidden" id="editUserId">
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Full Name</label>
+                        <label for="editFullName" class="form-label small fw-bold text-muted">Full Name</label>
                         <input type="text" class="form-control bg-light border-0" id="editFullName" required aria-label="editFullName">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Email</label>
+                        <label for="editEmail" class="form-label small fw-bold text-muted">Email</label>
                         <input type="email" class="form-control bg-light border-0" id="editEmail" required aria-label="editEmail">
                     </div>
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted">Role</label>
+                        <label for="editRole" class="form-label small fw-bold text-muted">Role</label>
                         <select class="form-select bg-light border-0" id="editRole" required aria-label="editRole">
                             @if (roles != null)
                             {

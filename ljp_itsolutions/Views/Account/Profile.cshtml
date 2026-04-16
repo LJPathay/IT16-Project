@@ -47,18 +47,18 @@
                 <div class="card-body p-4">
                     <form asp-action="UpdateProfile" method="post" enctype="multipart/form-data">
                         <div class="mb-3">
-                            <label class="modern-form-label">Full Name</label>
-                            <input type="text" name="fullName" class="modern-form-control w-100" value="@Model.FullName" required / aria-label="fullName">
+                            <label for="fullNameInput" class="modern-form-label">Full Name</label>
+                            <input type="text" id="fullNameInput" name="fullName" class="modern-form-control w-100" value="@Model.FullName" required aria-label="fullName">
                         </div>
                         <div class="mb-3">
-                            <label class="modern-form-label">Email Address</label>
-                            <input type="email" name="email" class="modern-form-control w-100" value="@Model.Email" placeholder="user@coffee.local" / aria-label="email">
+                            <label for="emailInput" class="modern-form-label">Email Address</label>
+                            <input type="email" id="emailInput" name="email" class="modern-form-control w-100" value="@Model.Email" placeholder="user@coffee.local" aria-label="email">
                         </div>
                         <div class="mb-4">
-                            <label class="modern-form-label">Profile Image</label>
+                            <label for="profilePictureUrl" class="modern-form-label">Profile Image</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-white border-2 border-end-0"><i class="fas fa-link text-muted"></i></span>
-                                <input type="text" name="profilePictureUrl" class="modern-form-control flex-grow-1 border-start-0" value="@Model.ProfilePictureUrl" placeholder="https://example.com/photo.jpg" / aria-label="profilePictureUrl">
+                                <input id="profilePictureUrl" type="text" name="profilePictureUrl" class="modern-form-control flex-grow-1 border-start-0" value="@Model.ProfilePictureUrl" placeholder="https://example.com/photo.jpg" aria-label="profilePictureUrl">
                                 <button class="btn btn-outline-secondary border-2" type="button" onclick="document.getElementById('profilePictureFile').click()">
                                     <i class="fas fa-upload"></i>
                                 </button>
@@ -83,8 +83,8 @@
                 <div class="card-body p-4">
                     <form asp-action="UpdateSettings" method="post">
                         <div class="mb-4">
-                            <label class="modern-form-label">Font Size</label>
-                            <select name="fontSize" class="modern-form-control w-100" aria-label="fontSize">
+                            <label for="fontSizeSelect" class="modern-form-label">Font Size</label>
+                            <select id="fontSizeSelect" name="fontSize" class="modern-form-control w-100" aria-label="fontSize">
                                 <option value="default" selected="@(Model.FontSize == "default")">Default (Regular)</option>
                                 <option value="large" selected="@(Model.FontSize == "large")">Large (120%)</option>
                                 <option value="extra-large" selected="@(Model.FontSize == "extra-large")">Extra Large (140%)</option>
@@ -198,11 +198,11 @@
                         <form asp-action="ChangePassword" method="post" class="w-100">
                             <div class="row">
                                 <div class="col-md-4">
-                                    <label class="modern-form-label">Current Password</label>
-                                    <input type="password" name="CurrentPassword" id="currentPassword" class="modern-form-control w-100" required / aria-label="CurrentPassword">
+                                    <label for="currentPassword" class="modern-form-label">Current Password</label>
+                                    <input type="password" name="CurrentPassword" id="currentPassword" class="modern-form-control w-100" required aria-label="CurrentPassword">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="modern-form-label">New Password</label>
+                                    <label for="newPassword" class="modern-form-label">New Password</label>
                                     <div class="password-toggle-group position-relative">
                                         <input type="password" name="NewPassword" id="newPassword" class="modern-form-control w-100" required minlength="8" style="padding-right: 45px;" / aria-label="NewPassword">
                                         <button type="button" class="password-toggle-btn" onclick="toggleNewConfirmPassword(this)">
@@ -211,7 +211,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="modern-form-label">Confirm New Password</label>
+                                    <label for="confirmPassword" class="modern-form-label">Confirm New Password</label>
                                     <div class="password-toggle-group position-relative">
                                         <input type="password" name="ConfirmPassword" id="confirmPassword" class="modern-form-control w-100" required / aria-label="ConfirmPassword">
                                     </div>

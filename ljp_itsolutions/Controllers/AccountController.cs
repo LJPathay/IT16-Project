@@ -115,7 +115,7 @@ namespace ljp_itsolutions.Controllers
                 if (user.AccessFailedCount >= 15)
                 {
                     user.IsActive = false;
-                    user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+                    user.LockoutEnd = DateTimeOffset.UtcNow.AddHours(24);
                     lockoutMsg = "Account has been suspended due to security risks. Please contact your administrator.";
                     await LogSecurity("AccountSuspended", $"User {user.Username} suspended: 15+ failed attempts.", "Critical", user.UserID);
                 }
@@ -183,6 +183,10 @@ namespace ljp_itsolutions.Controllers
             };
  
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            
+            // Clear existing session to rotate session ID and prevent fixation
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
             await LogSecurity("LoginSuccess", $"User {user.Username} logged in successfully", "Info", user.UserID);
  
@@ -289,10 +293,38 @@ namespace ljp_itsolutions.Controllers
                 return View(model);
             }
 
-            if (!ValidatePasswordComplexity(model.NewPassword, user, out string error))
+            if (!ValidatePasswordComplexity(model.NewPassword, user, out string complexityError))
             {
-                ModelState.AddModelError(string.Empty, error);
+                ModelState.AddModelError(string.Empty, complexityError);
                 return View(model);
+            }
+
+            // Check Password History
+            var historyLimit = int.TryParse(GetSetting("PasswordHistoryLimit", "5"), out int h) ? h : 5;
+            var pastPasswords = await _db.UserPasswordHistories
+                .Where(hp => hp.UserID == user.UserID)
+                .OrderByDescending(hp => hp.CreatedAt)
+                .Take(historyLimit)
+                .ToListAsync();
+
+            foreach (var past in pastPasswords)
+            {
+                if (_hasher.VerifyHashedPassword(user, past.PasswordHash, model.NewPassword) != Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
+                {
+                    ModelState.AddModelError(string.Empty, $"You cannot reuse any of your last {historyLimit} passwords.");
+                    return View(model);
+                }
+            }
+
+            // Save old password to history before resetting (if it exists)
+            if (!string.IsNullOrEmpty(user.Password))
+            {
+                _db.UserPasswordHistories.Add(new UserPasswordHistory
+                {
+                    UserID = user.UserID,
+                    PasswordHash = user.Password,
+                    CreatedAt = DateTime.UtcNow
+                });
             }
 
             user.Password = _hasher.HashPassword(user, model.NewPassword);
@@ -380,6 +412,10 @@ namespace ljp_itsolutions.Controllers
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            
+            // Rotate session
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
             
             // Clear temporary session

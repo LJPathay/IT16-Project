@@ -138,19 +138,19 @@
                 <div class="modal-body p-4">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label x-small fw-bold text-muted">Legal Full Name</label>
+                            <label for="add-fullname" class="form-label x-small fw-bold text-muted">Legal Full Name</label>
                             <input type="text" name="FullName" id="add-fullname" class="form-control rounded-3" placeholder="e.g. John Doe" required aria-label="FullName">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label x-small fw-bold text-muted">Account Username</label>
+                            <label for="add-username" class="form-label x-small fw-bold text-muted">Account Username</label>
                             <input type="text" name="Username" id="add-username" class="form-control rounded-3" placeholder="unique_handler" required aria-label="Username">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label x-small fw-bold text-muted">Email</label>
+                            <label for="add-email" class="form-label x-small fw-bold text-muted">Email</label>
                             <input type="email" name="Email" id="add-email" class="form-control rounded-3" placeholder="user@coffee.local" required aria-label="Email">
                         </div>
                         <div class="col-12">
-                            <label class="form-label x-small fw-bold text-muted">Security Role Assignment</label>
+                            <label for="add-role" class="form-label x-small fw-bold text-muted">Security Role Assignment</label>
                             <select name="Role" id="add-role" class="form-select rounded-3" required aria-label="Role">
                                 @foreach (var role in roles)
                                 {
@@ -159,7 +159,7 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label x-small fw-bold text-muted">Initial Access Password</label>
+                            <label for="add-password" class="form-label x-small fw-bold text-muted">Initial Access Password</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0 rounded-start-3"><i class="fas fa-lock x-small"></i></span>
                                 <input type="password" name="Password" id="add-password" class="form-control border-start-0 rounded-end-3" required aria-label="Password">
@@ -208,19 +208,19 @@
                 <div class="modal-body p-4">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label x-small fw-bold text-muted">Full Name</label>
+                            <label for="edit-fullname" class="form-label x-small fw-bold text-muted">Full Name</label>
                             <input type="text" name="FullName" id="edit-fullname" class="form-control rounded-3" required aria-label="FullName">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label x-small fw-bold text-muted">Username</label>
+                            <label for="edit-username" class="form-label x-small fw-bold text-muted">Username</label>
                             <input type="text" name="Username" id="edit-username" class="form-control rounded-3" required aria-label="Username">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label x-small fw-bold text-muted">Email</label>
+                            <label for="edit-email" class="form-label x-small fw-bold text-muted">Email</label>
                             <input type="email" name="Email" id="edit-email" class="form-control rounded-3" required aria-label="Email">
                         </div>
                         <div class="col-12">
-                            <label class="form-label x-small fw-bold text-muted">Role Assignment</label>
+                            <label for="edit-role" class="form-label x-small fw-bold text-muted">Role Assignment</label>
                             <select name="Role" id="edit-role" class="form-select rounded-3" required aria-label="Role">
                                 @foreach (var role in roles)
                                 {
@@ -232,15 +232,20 @@
                             <div class="form-check form-switch p-2 bg-light rounded-3 ms-2">
                                 <input type="checkbox" name="IsActive" id="edit-isactive" value="true" class="form-check-input ms-0 me-2" checked aria-label="IsActive">
                                 <input type="hidden" name="IsActive" value="false">
-                                <label class="form-check-label fw-bold small">Enable Account Access</label>
+                                <label for="edit-isactive" class="form-check-label fw-bold small">Enable Account Access</label>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between">
-                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="confirmArchive()">
-                        <i class="fas fa-archive me-1"></i>Archive Personnel
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="confirmArchive()">
+                            <i class="fas fa-archive me-1"></i>Archive
+                        </button>
+                        <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3" onclick="triggerReset()">
+                            <i class="fas fa-key me-1"></i>Reset Pass
+                        </button>
+                    </div>
                     <button type="submit" class="btn btn-primary rounded-pill px-4">Commit Changes</button>
                 </div>
             </form>
@@ -257,6 +262,27 @@
         if (confirm('Are you sure you want to archive this user? They will be moved to the Archived_Users table.')) {
             $('#archive-userid').val($('#edit-userid').val());
             $('#archiveForm').submit();
+        }
+    }
+
+    async function triggerReset() {
+        const userId = $('#edit-userid').val();
+        if(!confirm('Force a password reset for this user? They will be required to change it on their next login.')) return;
+        
+        try {
+            const res = await fetch('@Url.Action("ResetUserPassword", "SuperAdmin")?userId=' + userId, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').first().val() }
+            });
+            if(res.ok) {
+                const data = await res.json();
+                alert(data.message);
+                editModal.hide();
+            } else {
+                alert('Failed to trigger reset. User might be a SuperAdmin or not found.');
+            }
+        } catch(err) {
+            alert('Error connecting to server.');
         }
     }
 </script>

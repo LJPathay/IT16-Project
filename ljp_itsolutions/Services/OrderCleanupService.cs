@@ -34,6 +34,7 @@ namespace ljp_itsolutions.Services
                 {
                     await CleanupStaleOrders();
                     await ProcessAutomatedBackups();
+                    await PurgeOldRecords();
                     
                     // Simple logic to run expiration check once every 24 hours
                     if (DateTime.UtcNow.Hour == 8 && DateTime.UtcNow.Minute < 15) // Run around 8am
@@ -204,6 +205,51 @@ namespace ljp_itsolutions.Services
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Automated backup generation failed.");
+                }
+            }
+        }
+
+        private async Task PurgeOldRecords()
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                try
+                {
+                    // 1. Audit / Security Log Retention
+                    var retentionDaysSetting = await db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == "LogRetentionDays");
+                    if (retentionDaysSetting != null && int.TryParse(retentionDaysSetting.SettingValue, out int days) && days > 0)
+                    {
+                        var cutoff = DateTime.UtcNow.AddDays(-days);
+                        
+                        var oldAudit = db.AuditLogs.Where(a => a.Timestamp < cutoff);
+                        var oldSecurity = db.SecurityLogs.Where(s => s.Timestamp < cutoff);
+
+                        if (oldAudit.Any() || oldSecurity.Any())
+                        {
+                            db.AuditLogs.RemoveRange(oldAudit);
+                            db.SecurityLogs.RemoveRange(oldSecurity);
+                            _logger.LogInformation("Purged records older than {Days} days.", days);
+                        }
+                    }
+
+                    // 2. Archived User Retention (Fixed at 5 years / 1825 days for IA compliance)
+                    var userCutoff = DateTime.UtcNow.AddDays(-1825);
+                    var staleArchivedUsers = db.ArchivedUsers.Where(u => u.ArchivedAt < userCutoff);
+                    if (staleArchivedUsers.Any())
+                    {
+                        db.ArchivedUsers.RemoveRange(staleArchivedUsers);
+                        _logger.LogInformation("Purged archived users older than 5 years.");
+                    }
+
+                    // NOTE: PAYMENTS ARE NEVER PURGED. 
+                    // Financial records must maintain a permanent audit trail.
+
+                    await db.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Data retention purge failed.");
                 }
             }
         }

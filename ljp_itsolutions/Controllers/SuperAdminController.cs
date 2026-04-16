@@ -135,6 +135,32 @@ namespace ljp_itsolutions.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetUserPassword(Guid userId)
+        {
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            if (user.Role == UserRoles.SuperAdmin)
+            {
+                return BadRequest("SuperAdmin passwords cannot be reset here.");
+            }
+
+            // Realistic "Forgot/Force Change" policy
+            // Instead of setting a password, we generate a reset token and force a change
+            user.RequiresPasswordChange = true;
+            user.PasswordResetToken = Guid.NewGuid().ToString("N");
+            user.ResetTokenExpiry = DateTime.UtcNow.AddHours(24);
+            user.AccessFailedCount = 0;
+            user.LockoutEnd = null;
+
+            await _db.SaveChangesAsync();
+            await LogSecurity("AdminPasswordResetTriggered", $"SuperAdmin {User.Identity?.Name} triggered a password reset for {user.Username}", "Warning", user.UserID);
+
+            return Ok(new { message = "Password reset has been triggered. The user will be forced to change their password on next login." });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ArchiveUser(string id)
         {
             if (!Guid.TryParse(id, out var guid)) return RedirectToAction(AppConstants.Actions.Users);
@@ -251,8 +277,11 @@ namespace ljp_itsolutions.Controllers
             var setting = await _db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == key);
             if (setting == null) {
                 _db.SystemSettings.Add(new SystemSetting { SettingKey = key, SettingValue = value });
-            } else {
+                await LogAudit($"Created system setting: {key} = {value}");
+            } else if (setting.SettingValue != value) {
+                var oldValue = setting.SettingValue;
                 setting.SettingValue = value;
+                await LogAudit($"Updated system setting: {key}", $"Changed from '{oldValue}' to '{value}'");
             }
         }
 

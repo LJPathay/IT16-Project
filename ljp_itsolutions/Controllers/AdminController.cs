@@ -221,6 +221,15 @@ namespace ljp_itsolutions.Controllers
             user.IsActive = true;
 
             _db.Users.Add(user);
+            
+            // Add initial password to history to prevent immediate reuse
+            _db.UserPasswordHistories.Add(new UserPasswordHistory
+            {
+                UserID = user.UserID,
+                PasswordHash = user.Password,
+                CreatedAt = DateTime.UtcNow
+            });
+
             await _db.SaveChangesAsync();
 
             await LogSecurity("UserCreated", "Created User: " + user.Username, "Info", user.UserID);

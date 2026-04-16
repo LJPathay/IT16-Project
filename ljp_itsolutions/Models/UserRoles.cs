@@ -8,6 +8,6 @@ namespace ljp_itsolutions.Models
         public const string Cashier = "Cashier";
         public const string MarketingStaff = "MarketingStaff";
         //test
-        public static readonly List<string> AllExceptSuper = new() { Admin, Manager, Cashier, MarketingStaff };
+        public static readonly IReadOnlyList<string> AllExceptSuper = new List<string> { Admin, Manager, Cashier, MarketingStaff }.AsReadOnly();
     }
 }
