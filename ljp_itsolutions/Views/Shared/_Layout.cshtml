@@ -207,67 +207,49 @@
                                 <h6 class="mb-0 fw-bold text-dark">${isSuccess ? 'Operation Successful' : 'Action Failed'}</h6>
                                 <p class="mb-0 text-muted x-small">${message}</p>
                             </div>
-                            <button type="button" class="btn-close ms-2" onclick="this.closest('.position-fixed').remove()" style="font-size: 0.7rem;"></button>
                         </div>
                     </div>
                 </div>
 
                 <style>
                     .toast-wow-card {
-                        background: rgba(255, 255, 255, 0.85);
-                        backdrop-filter: blur(20px);
-                        -webkit-backdrop-filter: blur(20px);
-                        border: 1px solid rgba(255, 255, 255, 0.4);
-                        border-left: 6px solid ${isSuccess ? '#FFD700' : '#FF4D4D'};
-                        border-radius: 1.5rem;
-                        padding: 1.25rem 1.5rem;
-                        box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 0 20px ${isSuccess ? 'rgba(212, 175, 55, 0.2)' : 'rgba(220, 53, 69, 0.1)'};
+                        background: #fff;
+                        border: 1px solid #e2e8f0;
+                        border-left: 4px solid ${isSuccess ? '#d4af37' : '#ef4444'};
+                        border-radius: 1rem;
+                        padding: 1rem 1.25rem;
+                        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
                         display: flex;
                         align-items: center;
-                        gap: 1.25rem;
-                        min-width: 350px;
-                        overflow: hidden;
+                        gap: 1rem;
+                        min-width: 320px;
                         position: relative;
                     }
-                    .skeleton-content { 
-                        display: flex; 
-                        align-items: center; 
-                        gap: 1rem; 
-                        width: 100%; 
-                    }
-                    .shimmer-circle { width: 48px; height: 48px; border-radius: 50%; background: #e2e8f0; position: relative; overflow: hidden; flex-shrink: 0; }
+                    .skeleton-content { display: flex; align-items: center; gap: 1rem; width: 100%; }
+                    .shimmer-circle { width: 40px; height: 40px; border-radius: 50%; background: #f1f5f9; position: relative; overflow: hidden; flex-shrink: 0; }
                     .shimmer-circle::after, .shimmer-line::after {
                         content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-                        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+                        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
                         animation: shimmerMove 1.5s infinite;
                     }
                     .shimmer-lines { flex-grow: 1; }
-                    .shimmer-line { height: 10px; background: #e2e8f0; border-radius: 5px; margin-bottom: 10px; position: relative; overflow: hidden; }
-                    .shimmer-line.long { width: 90%; }
-                    .shimmer-line.short { width: 60%; }
+                    .shimmer-line { height: 8px; background: #f1f5f9; border-radius: 4px; margin-bottom: 8px; position: relative; overflow: hidden; }
+                    .shimmer-line.long { width: 85%; }
+                    .shimmer-line.short { width: 50%; }
                     
                     @@keyframes shimmerMove { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
                     
-                    .bg-gold-glow { 
-                        background: linear-gradient(135deg, #FFD700, #FFA500); 
-                        color: #1a1a1a; 
-                        display:flex; align-items:center; justify-content:center; 
-                        width: 48px; height: 48px; border-radius: 50%; 
-                        box-shadow: 0 8px 16px rgba(255, 165, 0, 0.3); 
-                        font-size: 1.4rem; 
-                        flex-shrink: 0;
+                    .success-icon-wrapper { 
+                        width: 40px; height: 40px; border-radius: 50%; 
+                        display: flex; align-items: center; justify-content: center; 
+                        font-size: 1.2rem; flex-shrink: 0;
+                        background: ${isSuccess ? '#fffbeb' : '#fef2f2'};
+                        color: ${isSuccess ? '#d4af37' : '#ef4444'};
+                        border: 1px solid ${isSuccess ? '#fef3c7' : '#fee2e2'};
                     }
-                    .bg-danger-glow { 
-                        background: linear-gradient(135deg, #FF4B2B, #FF416C); 
-                        color: white; 
-                        display:flex; align-items:center; justify-content:center; 
-                        width: 48px; height: 48px; border-radius: 50%; 
-                        box-shadow: 0 8px 16px rgba(255, 75, 43, 0.3); 
-                        font-size: 1.4rem; 
-                        flex-shrink: 0;
-                    }
-                    .success-text h6 { font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; }
-                    .actual-content { display: flex !important; align-items: center; gap: 1.25rem; width: 100%; animation: animate__fadeIn 0.6s both; }
+                    .success-text h6 { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 0; }
+                    .success-text p { font-size: 0.8rem; color: #64748b; margin: 0; }
+                    .actual-content { display: flex !important; align-items: center; gap: 1rem; width: 100%; }
                 </style>
             `;
             
@@ -281,15 +263,16 @@
             setTimeout(() => {
                 skeleton.style.display = 'none';
                 actual.style.display = 'flex';
-            }, 800);
+                actual.classList.add('animate__animated', 'animate__fadeIn');
+            }, 400);
 
             // Auto-remove after 5 seconds
             setTimeout(() => {
                 if (toastElement) {
-                    toastElement.querySelector('.toast-wow-card').classList.replace('animate__backInUp', 'animate__fadeOutDown');
+                    toastElement.querySelector('.toast-wow-card').classList.add('animate__animated', 'animate__fadeOutDown');
                     setTimeout(() => toastElement.remove(), 800);
                 }
-            }, 6000);
+            }, 5400);
         }
     </script>
     <script>

@@ -226,16 +226,16 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between">
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="confirmArchive()">
-                            <i class="fas fa-archive me-1"></i>Archive
-                        </button>
-                        <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3" onclick="triggerReset()">
-                            <i class="fas fa-key me-1"></i>Reset Pass
-                        </button>
-                    </div>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4">Commit Changes</button>
+                <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-light rounded-pill px-3 shadow-sm me-auto" onclick="confirmArchive()">
+                        <i class="fas fa-archive me-1"></i>Archive
+                    </button>
+                    <button type="button" class="btn btn-outline-warning rounded-pill px-3" onclick="triggerReset()">
+                        <i class="fas fa-key me-1"></i>Reset
+                    </button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm" onclick="return confirm('Apply these changes to the user account?')">
+                        Commit Changes
+                    </button>
                 </div>
             </form>
             <form id="archiveForm" asp-action="ArchiveUser" method="post" style="display:none;">
@@ -319,6 +319,8 @@
                 if (res.ok) {
                     addUserModal.hide();
                     successModal.show();
+                    // Auto-reload after 3 seconds to "make it go away"
+                    setTimeout(() => location.reload(), 3000);
                 } else {
                     const err = await res.text();
                     alert(err || 'Failed to create user. Use unique identifiers.');
