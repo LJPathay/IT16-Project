@@ -133,13 +133,43 @@ app.UseForwardedHeaders(forwardedHeadersOptions);
 
 app.Use(async (context, next) =>
 {
-    // 1. Maintenance Mode Enforcement
+    // 1. Maintenance Mode & IP Whitelisting Enforcement
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<ljp_itsolutions.Data.ApplicationDbContext>();
-        var maintenanceMode = await db.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == "MaintenanceMode");
+        var settings = await db.SystemSettings.AsNoTracking().ToListAsync();
         
-        if (maintenanceMode?.SettingValue == "true" && 
+        var maintenanceMode = settings.FirstOrDefault(s => s.SettingKey == "MaintenanceMode")?.SettingValue;
+        var adminWhitelistedIps = settings.FirstOrDefault(s => s.SettingKey == "AdminWhitelistedIps")?.SettingValue;
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        // IP Whitelisting for Administrative Routes
+        bool isAdministrativeRoute = context.Request.Path.StartsWithSegments("/SuperAdmin") || 
+                                     context.Request.Path.StartsWithSegments("/Admin") ||
+                                     context.Request.Path.StartsWithSegments("/Config");
+        
+        if (isAdministrativeRoute && !string.IsNullOrEmpty(adminWhitelistedIps) && adminWhitelistedIps != "*")
+        {
+            var allowedIps = adminWhitelistedIps.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(i => i.Trim());
+            if (!allowedIps.Contains(ip) && ip != "::1" && ip != "127.0.0.1")
+            {
+                // SECURITY: Log unauthorized administrative access attempt
+                db.SecurityLogs.Add(new SecurityLog {
+                    EventType = "UnauthorizedAdminAccessAttempt",
+                    Severity = "High",
+                    Description = $"Blocked IP {ip} from accessing administrative route: {context.Request.Path}",
+                    Timestamp = DateTime.UtcNow,
+                    IpAddress = ip
+                });
+                await db.SaveChangesAsync();
+
+                context.Response.StatusCode = 403;
+                await context.Response.WriteAsync("<html><body style='font-family:sans-serif; text-align:center; padding-top:100px;'><h1>403 Forbidden</h1><p>Your IP address is not authorized to access administrative resources.</p></body></html>");
+                return;
+            }
+        }
+
+        if (maintenanceMode == "true" && 
             !context.Request.Path.StartsWithSegments("/Account/Login") && 
             !context.User.IsInRole(UserRoles.SuperAdmin) && 
             !context.User.IsInRole(UserRoles.Admin))
@@ -152,6 +182,35 @@ app.Use(async (context, next) =>
 
     try
     {
+        // 2. Active Session Validation (Security Hardening)
+        if (context.User.Identity?.IsAuthenticated == true)
+        {
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ljp_itsolutions.Data.ApplicationDbContext>();
+                var userIdStr = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (Guid.TryParse(userIdStr, out var userId))
+                {
+                    var currentUser = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserID == userId);
+                    if (currentUser == null || !currentUser.IsActive)
+                    {
+                        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                        context.Response.Redirect("/Account/Login?msg=AccountSuspended");
+                        return;
+                    }
+                    
+                    // Force Password Change Check
+                    if ((currentUser.RequiresPasswordChange || (DateTime.UtcNow - currentUser.LastPasswordChange).TotalDays > 90) && 
+                        !context.Request.Path.StartsWithSegments("/Account/Profile") && 
+                        !context.Request.Path.StartsWithSegments("/Account/Logout"))
+                    {
+                        context.Response.Redirect("/Account/Profile?forceChange=true");
+                        return;
+                    }
+                }
+            }
+        }
+
         context.Response.Headers.Remove("X-Powered-By");
         context.Response.Headers.Remove("Server");
         context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
@@ -160,7 +219,7 @@ app.Use(async (context, next) =>
         context.Response.Headers.Append("X-Robots-Tag", "noindex, nofollow");
         context.Response.Headers.Append("Referrer-Policy", "same-origin");
         context.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()");
-        context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https: https://www.gstatic.com; connect-src 'self' https://chart.googleapis.com; frame-src 'self' https://www.google.com;");
+        context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https: https://www.gstatic.com; connect-src 'self' https://chart.googleapis.com; frame-src 'self' https://www.google.com;");
 
         await next();
     }

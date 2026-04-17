@@ -38,6 +38,25 @@ namespace ljp_itsolutions.Services
 
             if (file.Length > 0)
             {
+                // Security Hardening: File Validation
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                
+                if (!allowedExtensions.Contains(extension))
+                {
+                    return new ImageUploadResult { Error = new CloudinaryDotNet.Actions.Error { Message = "Unsupported file extension." } };
+                }
+
+                if (!file.ContentType.StartsWith("image/"))
+                {
+                    return new ImageUploadResult { Error = new CloudinaryDotNet.Actions.Error { Message = "Invalid image content type." } };
+                }
+
+                if (file.Length > 5 * 1024 * 1024) // 5MB Limit
+                {
+                    return new ImageUploadResult { Error = new CloudinaryDotNet.Actions.Error { Message = "File size exceeds 5MB limit." } };
+                }
+
                 using var stream = file.OpenReadStream();
                 var uploadParams = new ImageUploadParams
                 {

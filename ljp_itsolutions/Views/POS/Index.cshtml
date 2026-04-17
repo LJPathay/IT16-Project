@@ -11,6 +11,7 @@
 
 
 <div class="pos-container">
+    @Html.AntiForgeryToken()
     <button class="cart-overlay" id="cartOverlay" onclick="toggleCart()" aria-label="Close cart drawer"></button>
     
     <button class="floating-cart-btn" onclick="toggleCart()" id="cartToggleBtn">
@@ -195,37 +196,89 @@
 </div>
 
 
-<div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 1.5rem;">
-            <div class="modal-header bg-light border-0 pb-0">
-                <h5 class="modal-title fw-bold text-dark">
-                    <i class="fas fa-check-circle me-2 text-success"></i>Transaction Successful
+<!-- POS Success/Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-end modal-dialog-bottom-right">
+        <div class="modal-content border-0 shadow-premium receipt-glass">
+            <div class="modal-header border-0 pb-0 d-flex justify-content-between">
+                <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+                    <div class="success-dot animate__animated animate__pulse animate__infinite"></div>
+                    Order Confirmed
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="resetPOS()"></button>
             </div>
             <div class="modal-body" id="receiptModalContent">
-                <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading Receipt...</span>
-                    </div>
+                <!-- Skeleton Loader -->
+                <div id="receiptSkeleton" class="receipt-skeleton">
+                    <div class="shimmer-block title"></div>
+                    <div class="shimmer-block divider"></div>
+                    <div class="shimmer-block item mt-4"></div>
+                    <div class="shimmer-block item"></div>
+                    <div class="shimmer-block item"></div>
+                    <div class="shimmer-block total mt-5"></div>
                 </div>
+                <!-- Real Content Container -->
+                <div id="receiptActual" style="display:none"></div>
             </div>
-            <div class="modal-footer border-0 pt-0 flex-column gap-2">
-                <div class="alert alert-info py-2 px-3 border-0 rounded-4 x-small mb-2 shadow-sm d-flex align-items-center gap-2">
-                    <i class="fas fa-info-circle"></i>
-                    <span>Electronic copy has been logged to the system audit.</span>
+            <div class="modal-footer border-0 pt-0 flex-column gap-3">
+                <button type="button" class="btn btn-premium-gold w-100 py-3 shadow-sm" onclick="printReceipt()">
+                    <i class="fas fa-print me-2"></i>Generate Physical Copy
+                </button>
+                <div class="text-center">
+                    <button type="button" class="btn btn-link text-muted x-small text-decoration-none fw-bold" data-bs-dismiss="modal" onclick="resetPOS()">
+                        <i class="fas fa-plus-circle me-1"></i>Start New Transaction
+                    </button>
                 </div>
-                <button type="button" class="btn btn-primary w-100 py-2 fw-bold" onclick="printReceipt()">
-                    <i class="fas fa-print me-2"></i>Print Receipt
-                </button>
-                <button type="button" class="btn btn-light w-100 py-2 border" data-bs-dismiss="modal" onclick="resetPOS()">
-                    New Transaction
-                </button>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .modal-dialog-bottom-right {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        margin: 0;
+        width: 400px;
+        transform: translateY(100px);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .modal.show .modal-dialog-bottom-right {
+        transform: translateY(0);
+    }
+    .receipt-glass {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.8) !important;
+        border-radius: 2rem !important;
+    }
+    .shadow-premium {
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
+    }
+    .success-dot { width: 12px; height: 12px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
+    
+    .receipt-skeleton { padding: 1rem; }
+    .shimmer-block { background: #f1f5f9; border-radius: 8px; margin-bottom: 15px; position: relative; overflow: hidden; }
+    .shimmer-block.title { height: 30px; width: 60%; margin: 0 auto 20px; }
+    .shimmer-block.divider { height: 2px; width: 100%; border-radius: 0; }
+    .shimmer-block.item { height: 20px; width: 90%; }
+    .shimmer-block.total { height: 40px; width: 100%; background: #e2e8f0; }
+    .shimmer-block::after {
+        content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+        animation: shimmerMove 1.5s infinite;
+    }
+    .btn-premium-gold {
+        background: linear-gradient(135deg, #1e293b, #334155);
+        color: white;
+        border: none;
+        border-radius: 1rem;
+        font-weight: 700;
+        transition: transform 0.2s;
+    }
+    .btn-premium-gold:hover { transform: scale(1.02); color: #f8fafc; }
+</style>
 
 <!-- New Customer Modal -->
 <div class="modal fade" id="registerCustomerModal" tabindex="-1" aria-hidden="true">
@@ -810,27 +863,43 @@
         }
 
         async function loadReceipt(orderId, preRenderedHtml = null) {
-            const content = document.getElementById('receiptModalContent');
+            const skeleton = document.getElementById('receiptSkeleton');
+            const actual = document.getElementById('receiptActual');
             
+            skeleton.style.display = 'block';
+            actual.style.display = 'none';
+
+            const displayContent = (html) => {
+                setTimeout(() => {
+                    skeleton.classList.add('animate__animated', 'animate__fadeOut');
+                    setTimeout(() => {
+                        skeleton.style.display = 'none';
+                        actual.innerHTML = html;
+                        actual.style.display = 'block';
+                        actual.classList.add('animate__animated', 'animate__fadeIn');
+                        setTimeout(() => { printReceipt(); }, 50);
+                    }, 500);
+                }, 800);
+            };
+
             if (preRenderedHtml) {
-                content.innerHTML = preRenderedHtml;
-                setTimeout(() => { printReceipt(); }, 50);
+                displayContent(preRenderedHtml);
                 return;
             }
 
             try {
                 const response = await fetch(`/Cashier/GetReceiptPartial/${orderId}`);
                 if (response.ok) {
-                    content.innerHTML = await response.text();
-                    // Auto-print after a very short delay for rendering
-                    setTimeout(() => {
-                        printReceipt();
-                    }, 50);
+                    displayContent(await response.text());
                 } else {
-                    content.innerHTML = '<div class="text-danger text-center">Failed to load receipt details.</div>';
+                    skeleton.style.display = 'none';
+                    actual.innerHTML = '<div class="text-danger text-center py-5">Failed to fetch receipt data.</div>';
+                    actual.style.display = 'block';
                 }
             } catch (err) {
-                content.innerHTML = '<div class="text-danger text-center">Error loading receipt.</div>';
+                skeleton.style.display = 'none';
+                actual.innerHTML = '<div class="text-danger text-center py-5">Network error while fetching receipt.</div>';
+                actual.style.display = 'block';
             }
         }
 
