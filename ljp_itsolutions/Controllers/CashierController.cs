@@ -84,7 +84,7 @@ namespace ljp_itsolutions.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PlaceOrder([FromBody] OrderRequest request)
+        public async Task<IActionResult> PlaceOrder([FromBody] OrderRequest request, [FromHeader(Name = "X-Requested-With")] string requestedWith)
         {
             if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid order data." });
             // Basic Validation - Ensure the cart isn't empty before proceeding.
@@ -122,7 +122,7 @@ namespace ljp_itsolutions.Controllers
             // Generate View - Render the receipt HTML
             var renderedReceipt = await RenderViewToStringAsync("ReceiptData", result.Order!);
 
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            if (requestedWith == "XMLHttpRequest")
             {
                 return Json(new { 
                     success = true, 

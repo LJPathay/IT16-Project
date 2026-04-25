@@ -1,0 +1,48 @@
+function showToast(message, type = 'success') {
+    const toastId = 'toast-' + Date.now();
+    const isSuccess = type === 'success';
+    
+    const toastHtml = `
+        <div id="${toastId}" class="position-fixed bottom-0 end-0 p-4" style="z-index: 9999; max-width: 400px; pointer-events: none;">
+            <div class="toast-wow-card animate__animated animate__backInUp" style="pointer-events: auto;">
+                <div class="skeleton-content">
+                    <div class="shimmer-circle"></div>
+                    <div class="shimmer-lines"><div class="shimmer-line short"></div><div class="shimmer-line long"></div></div>
+                </div>
+                <div class="actual-content" style="display: none;">
+                    <div class="success-icon-wrapper ${isSuccess ? 'bg-gold-glow' : 'bg-danger-glow'}">
+                        <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+                    </div>
+                    <div class="success-text">
+                        <h6 class="mb-0 fw-bold">${isSuccess ? 'Success' : 'Attention'}</h6>
+                        <p class="mb-0 text-muted x-small">${message}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <style>
+            .toast-wow-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.5); border-left: 5px solid ${isSuccess ? '#FFD700' : '#FF4D4D'}; border-radius: 1.2rem; padding: 1.25rem; box-shadow: 0 15px 35px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 1rem; min-width: 320px; overflow: hidden; }
+            .shimmer-circle { width: 45px; height: 45px; border-radius: 50%; background: #f1f5f9; position: relative; overflow: hidden; }
+            .shimmer-line { height: 10px; background: #f1f5f9; border-radius: 5px; margin-bottom: 8px; position: relative; overflow: hidden; }
+            .bg-gold-glow { background: #FFD700; color: #1a1a1a; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+            .bg-danger-glow { background: #FF4D4D; color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+            .x-small { font-size: 0.75rem; }
+        </style>
+    `;
+    document.body.insertAdjacentHTML('beforeend', toastHtml);
+    setTimeout(() => {
+        const toast = document.getElementById(toastId);
+        if (toast) {
+            toast.querySelector('.skeleton-content').style.display = 'none';
+            toast.querySelector('.actual-content').style.display = 'flex';
+            setTimeout(() => { toast.remove(); }, 5000);
+        }
+    }, 800);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const t = document.getElementById('toast-trigger');
+    if (t) {
+        showToast(t.dataset.message, t.dataset.type);
+    }
+});

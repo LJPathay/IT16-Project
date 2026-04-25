@@ -108,6 +108,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditUser(User updatedUser)
         {
+            if (!ModelState.IsValid) return RedirectToAction(AppConstants.Actions.Users);
             var user = await _db.Users.FindAsync(updatedUser.UserID);
             if (user == null) return NotFound();
 
@@ -140,6 +141,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetUserPassword(Guid userId)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var user = await _db.Users.FindAsync(userId);
             if (user == null) return NotFound();
 
@@ -237,6 +239,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateSettings(IFormCollection form)
         {
+            if (!ModelState.IsValid) return RedirectToAction(AppConstants.Actions.SystemSettings);
             try {
                 var keys = new[] { 
                     "SystemName", "Timezone", "Currency", "DateFormat", 

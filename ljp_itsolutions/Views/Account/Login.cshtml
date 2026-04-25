@@ -4,15 +4,7 @@
     ViewData["Title"] = "Login";
 }
 
-<style>
-    /* Force reCAPTCHA visibility */
-    .g-recaptcha {
-        min-height: 78px !important;
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-</style>
+
 
 <div class="login-container">
     <div class="cafe-panel">
@@ -93,21 +85,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        function togglePassword(inputId, btn) {
-            const input = document.getElementById(inputId);
-            const icon = btn.querySelector('i');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        }
-    </script>
+    <script src="~/js/login.js"></script>
     @* Simplest loading method at the very end of the view *@
     <script src="https://www.google.com/recaptcha/api.js"></script> 
 }

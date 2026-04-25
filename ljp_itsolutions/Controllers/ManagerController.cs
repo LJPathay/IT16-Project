@@ -308,6 +308,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleIngredientArchive(int id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var ingredient = await _db.Ingredients.FindAsync(id);
             if (ingredient == null) return NotFound();
 
@@ -322,6 +323,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteProduct(int id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             // Keeping for compatibility but favoring Archive
             var product = await _db.Products.FindAsync(id);
             if (product != null)
@@ -382,6 +384,7 @@ namespace ljp_itsolutions.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportSalesCSV(DateTime? startDate, DateTime? endDate)
         {
+            if (!ModelState.IsValid) return BadRequest();
             DateTime start = startDate ?? DateTime.Today.AddDays(-30);
             DateTime end = endDate ?? DateTime.UtcNow;
 
@@ -821,6 +824,7 @@ namespace ljp_itsolutions.Controllers
         [HttpPost]
         public async Task<IActionResult> SyncPaymentStatus(Guid id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var order = await _db.Orders.FirstOrDefaultAsync(o => o.OrderID == id);
             if (order == null) return NotFound();
 
@@ -854,6 +858,7 @@ namespace ljp_itsolutions.Controllers
         [HttpPost]
         public async Task<IActionResult> ApproveCampaign(int id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var campaign = await _db.Promotions.FindAsync(id);
             if (campaign == null)
                 return NotFound();

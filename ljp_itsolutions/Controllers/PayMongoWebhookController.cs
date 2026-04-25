@@ -28,9 +28,8 @@ namespace ljp_itsolutions.Controllers
         }
 
         [HttpPost("webhook")]
-        public async Task<IActionResult> HandleWebhook()
+        public async Task<IActionResult> HandleWebhook([FromHeader(Name = "paymongo-signature")] string? signatureHeader)
         {
-            var signatureHeader = Request.Headers["paymongo-signature"].ToString();
             var webhookSecret = _configuration.GetSection("PayMongo:WebhookSecretKey").Value;
 
             // Read raw body to ensure signature match

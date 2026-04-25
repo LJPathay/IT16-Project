@@ -92,6 +92,12 @@ namespace ljp_itsolutions.Controllers
                 return View(model);
             }
  
+            if (!user.IsActive)
+            {
+                ModelState.AddModelError(string.Empty, "Your account is blocked. Please contact your administrator.");
+                return View(model);
+            }
+
             // Check for lockout
             if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow)
             {
@@ -139,11 +145,7 @@ namespace ljp_itsolutions.Controllers
                 return View(model);
             }
  
-            if (!user.IsActive)
-            {
-                ModelState.AddModelError(string.Empty, "Account is deactivated. Please contact administrator.");
-                return View(model);
-            }
+
 
             // MAINTENANCE MODE CHECK (Role-Specific)
             if (GetBoolSetting("MaintenanceMode") && user.Role != UserRoles.SuperAdmin)

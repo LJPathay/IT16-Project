@@ -1,3 +1,11 @@
+/* Force reCAPTCHA visibility */
+.g-recaptcha {
+    min-height: 78px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 /* Main login container */
 .login-container {
     min-height: 100vh;
