@@ -109,40 +109,32 @@ namespace ljp_itsolutions.Controllers
             var verify = _hasher.VerifyHashedPassword(user, user.Password, model.Password);
             if (verify == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
             {
-                // If a previous lockout has expired, reset the count to 1 for a fresh attempt cycle
-                if (user.LockoutEnd.HasValue && user.LockoutEnd <= DateTimeOffset.UtcNow)
-                {
-                    user.AccessFailedCount = 1;
-                }
-                else
-                {
-                    user.AccessFailedCount++;
-                }
-
-                // Clear the expired lockout end time
-                user.LockoutEnd = null;
+                user.AccessFailedCount++;
+                user.LockoutEnd = null; // Clear any expired lockout
                 string lockoutMsg = "Invalid username or password.";
 
+                // Adaptive Brute-Force Lockout Policy (3-Offense Escalation)
                 if (user.AccessFailedCount >= 15)
                 {
-                    user.IsActive = false;
-                    user.LockoutEnd = DateTimeOffset.UtcNow.AddHours(24);
-                    lockoutMsg = "Account has been suspended due to security risks. Please contact your administrator.";
-                    await LogSecurity("AccountSuspended", $"User {user.Username} suspended: 15+ failed attempts.", "Critical", user.UserID);
+                    user.IsActive = false; // Permanent Block
+                    user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100); 
+                    lockoutMsg = "Account has been permanently blocked due to multiple security violations. Please contact administration.";
+                    await LogSecurity("AccountBlockedPermanent", $"User {user.Username} blocked PERMANENTLY: 15+ failed attempts.", "Critical", user.UserID);
                 }
-                else if (user.AccessFailedCount >= 10)
+                else if (user.AccessFailedCount == 10)
                 {
-                    user.LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(30);
-                    lockoutMsg = "Account is locked for 30 minutes due to multiple failed attempts.";
+                    user.LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(10);
+                    lockoutMsg = "Second security offense: Account is locked for 10 minutes.";
+                    await LogSecurity("LockoutSecondOffense", $"User {user.Username} reached 10 failures (10m lockout).", "Warning", user.UserID);
                 }
-                else if (user.AccessFailedCount >= 5)
+                else if (user.AccessFailedCount == 5)
                 {
                     user.LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(5);
-                    lockoutMsg = "Account is temporarily locked for 5 minutes.";
+                    lockoutMsg = "First security offense: Account is temporarily locked for 5 minutes.";
+                    await LogSecurity("LockoutFirstOffense", $"User {user.Username} reached 5 failures (5m lockout).", "Warning", user.UserID);
                 }
                 
                 await _db.SaveChangesAsync();
-                await LogSecurity("LoginFailure", $"Failed login attempt #{user.AccessFailedCount} for user: {user.Username}", "Warning", user.UserID);
                 ModelState.AddModelError(string.Empty, lockoutMsg);
                 return View(model);
             }

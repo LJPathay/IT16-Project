@@ -195,22 +195,29 @@
                             <h6 class="fw-bold mb-3">Update Password</h6>
                         </div>
 
-                        <form asp-action="ChangePassword" method="post" class="w-100">                            <div class="row g-3">
-                                <div class="col-md-6">
+                        <form asp-action="ChangePassword" method="post" class="w-100">                            <div class="row g-4">
+                                <div class="col-md-5">
                                     <label for="currentPassword" class="modern-form-label">Current Password</label>
                                     <input type="password" name="CurrentPassword" id="currentPassword" class="modern-form-control w-100" required aria-label="CurrentPassword">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="newPassword" class="modern-form-label">New Password</label>
-                                    <div class="password-toggle-group position-relative">
-                                        <input type="password" name="NewPassword" id="newPassword" class="modern-form-control w-100" required style="padding-right: 45px;" / aria-label="NewPassword">
+                                    
+                                    <div class="mt-4 d-none d-md-block">
+                                        <p class="text-muted small"><i class="fas fa-info-circle me-1"></i> Ensure your new password is unique and follows the security standards shown on the right.</p>
                                     </div>
-                                    <partial name="_PasswordRequirements" model='("newPassword", "submitPasswordBtn", Model.Username, true, "")' />
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="confirmPassword" class="modern-form-label">Confirm New Password</label>
-                                    <div class="password-toggle-group position-relative">
-                                        <input type="password" name="ConfirmPassword" id="confirmPassword" class="modern-form-control w-100" required / aria-label="ConfirmPassword">
+                                <div class="col-md-7">
+                                    <div class="mb-3">
+                                        <label for="newPassword" class="modern-form-label">New Password</label>
+                                        <div class="password-toggle-group position-relative">
+                                            <input type="password" name="NewPassword" id="newPassword" class="modern-form-control w-100" required style="padding-right: 45px;" / aria-label="NewPassword">
+                                        </div>
+                                        <partial name="_PasswordRequirements" model='("newPassword", "submitPasswordBtn", Model.Username, true, "")' />
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="confirmPassword" class="modern-form-label">Confirm New Password</label>
+                                        <div class="password-toggle-group position-relative">
+                                            <input type="password" name="ConfirmPassword" id="confirmPassword" class="modern-form-control w-100" required / aria-label="ConfirmPassword">
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -220,7 +220,7 @@ app.Use(async (context, next) =>
         context.Response.Headers.Append("X-Robots-Tag", "noindex, nofollow");
         context.Response.Headers.Append("Referrer-Policy", "same-origin");
         context.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()");
-        context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://res.cloudinary.com https://www.gstatic.com https://*.googleusercontent.com; connect-src 'self'; frame-src 'self' https://www.google.com;");
+        context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://res.cloudinary.com https://www.gstatic.com https://*.googleusercontent.com; connect-src 'self' https://res.cloudinary.com; frame-src 'self' https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self';");
 
         await next();
     }
