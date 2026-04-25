@@ -34,7 +34,7 @@
     flex: 0 0 45%;
     min-width: 400px;
     position: relative;
-    background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://images.unsplash.com/photo-1642647916129-3909c75c0267?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080');
+    background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('../images/login-bg.jpg');
     background-size: cover;
     background-position: center;
     display: flex;
