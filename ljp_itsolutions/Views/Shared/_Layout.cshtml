@@ -176,6 +176,8 @@
         </main>
     </div>
 
+    <partial name="_SessionTimeoutModal" />
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
@@ -276,30 +278,87 @@
         }
     </script>
     <script>
-        // Automatic Inactivity Timeout (20 Minutes)
+        // Automatic Inactivity Timeout Implementation
         let idleTimer;
-        function resetTimer() {
-            clearTimeout(idleTimer);
-            /* 1,200,000 ms = 20 minutes */
-            idleTimer = setTimeout(() => {
-                const logoutForm = document.getElementById('logoutForm');
-                if (logoutForm) {
-                    console.warn("Session timeout due to inactivity. Logging out.");
-                    logoutForm.submit();
-                } else {
-                    window.location.href = '/Account/Login?msg=SessionExpired';
-                }
-            }, 1200000); 
+        let countdownTimer;
+        const IDLE_TIME = 5 * 60 * 1000; // 5 Minutes
+        const COUNTDOWN_TIME = 3 * 60 * 1000; // 3 Minutes
+        
+        const modalElement = document.getElementById('inactivityModal');
+        let bootstrapModal;
+
+        function initSessionTimer() {
+            if (document.getElementById('inactivityModal')) {
+                bootstrapModal = new bootstrap.Modal(modalElement);
+                
+                document.getElementById('stayLoggedInBtn').addEventListener('click', () => {
+                    bootstrapModal.hide();
+                    resetTimer();
+                });
+
+                document.getElementById('logoutNowBtn').addEventListener('click', () => {
+                    performLogout();
+                });
+
+                resetTimer();
+                
+                // List of events to reset the timer
+                ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(evt => {
+                    window.addEventListener(evt, resetTimer, true);
+                });
+            }
         }
 
-        // List of events to reset the timer
-        window.onload = resetTimer;
-        window.onmousemove = resetTimer;
-        window.onmousedown = resetTimer;
-        window.ontouchstart = resetTimer;
-        window.onclick = resetTimer;
-        window.onkeydown = resetTimer;
-        window.addEventListener('scroll', resetTimer, true);
+        function resetTimer() {
+            // Only reset if the modal is NOT showing
+            if (modalElement && modalElement.classList.contains('show')) return;
+
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(showInactivityModal, IDLE_TIME);
+        }
+
+        function showInactivityModal() {
+            bootstrapModal.show();
+            startCountdown();
+        }
+
+        function startCountdown() {
+            let timeLeft = COUNTDOWN_TIME;
+            const display = document.getElementById('inactivityCountdown');
+            const progress = document.getElementById('inactivityProgressBar');
+            
+            clearInterval(countdownTimer);
+            
+            countdownTimer = setInterval(() => {
+                timeLeft -= 1000;
+                
+                const minutes = Math.floor(timeLeft / 60000);
+                const seconds = Math.floor((timeLeft % 60000) / 1000);
+                
+                display.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                const percentage = (timeLeft / COUNTDOWN_TIME) * 100;
+                progress.style.width = percentage + '%';
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdownTimer);
+                    performLogout();
+                }
+            }, 1000);
+        }
+
+        function performLogout() {
+            console.warn("Session timeout due to inactivity. Logging out.");
+            const logoutForm = document.getElementById('logoutForm');
+            if (logoutForm) {
+                logoutForm.submit();
+            } else {
+                window.location.href = '/Account/Logout';
+            }
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', initSessionTimer);
     </script>
     @await RenderSectionAsync("Scripts", required: false)
     @if (TempData["SuccessMessage"] != null || TempData["Success"] != null || TempData["Message"] != null)

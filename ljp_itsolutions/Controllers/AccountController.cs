@@ -109,7 +109,18 @@ namespace ljp_itsolutions.Controllers
             var verify = _hasher.VerifyHashedPassword(user, user.Password, model.Password);
             if (verify == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed)
             {
-                user.AccessFailedCount++;
+                // If a previous lockout has expired, reset the count to 1 for a fresh attempt cycle
+                if (user.LockoutEnd.HasValue && user.LockoutEnd <= DateTimeOffset.UtcNow)
+                {
+                    user.AccessFailedCount = 1;
+                }
+                else
+                {
+                    user.AccessFailedCount++;
+                }
+
+                // Clear the expired lockout end time
+                user.LockoutEnd = null;
                 string lockoutMsg = "Invalid username or password.";
 
                 if (user.AccessFailedCount >= 15)
@@ -787,8 +798,6 @@ namespace ljp_itsolutions.Controllers
             }
             catch
             {
-                // reCAPTCHA verification failed due to network or configuration issue.
-                // We return false to deny access rather than throwing an exception.
             }
             return false;
         }
@@ -797,8 +806,6 @@ namespace ljp_itsolutions.Controllers
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
             var deviceToken = Request.Cookies[".CoffeeLJP.TrustedDevice"];
 
-            // Check if this IP is already trusted for this user within the last 30 days
-            // (Fulfills the "IP based" request)
             var ipTrusted = await _db.TrustedDevices.AnyAsync(d => 
                 d.UserID == userId && 
                 d.IPAddress == ip && 
@@ -806,8 +813,6 @@ namespace ljp_itsolutions.Controllers
 
             if (ipTrusted) return true;
 
-            // Check if current device token is valid
-            // (Fulfills the "Device based" request)
             if (!string.IsNullOrEmpty(deviceToken))
             {
                 var deviceTrusted = await _db.TrustedDevices.AnyAsync(d =>

@@ -1,0 +1,41 @@
+@* Inactivity / Session Timeout Modal *@
+<div class="modal fade" id="inactivityModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true" style="z-index: 9999;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 1.5rem; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
+            <div class="modal-body p-5 text-center">
+                <div class="mb-4">
+                    <div class="bg-amber-soft text-amber rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm animate__animated animate__pulse animate__infinite" style="width: 80px; height: 80px; background: #fffbeb;">
+                        <i class="fas fa-hourglass-half fa-2x"></i>
+                    </div>
+                </div>
+                <h3 class="fw-800 text-dark mb-2">Are you still there?</h3>
+                <p class="text-muted mb-4 px-4">Your session is about to expire due to inactivity. For your security, you will be automatically logged out soon.</p>
+                
+                <div class="countdown-timer mb-4">
+                    <div class="d-flex justify-content-center align-items-end gap-1">
+                        <span id="inactivityCountdown" class="display-4 fw-bold text-dark">03:00</span>
+                    </div>
+                    <div class="progress mt-3" style="height: 6px; border-radius: 3px; background: #f1f5f9;">
+                        <div id="inactivityProgressBar" class="progress-bar bg-amber" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-3">
+                    <button type="button" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm py-3" id="stayLoggedInBtn">
+                        <i class="fas fa-check-circle me-2"></i>I'm Still Working
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-lg rounded-pill fw-bold py-3" id="logoutNowBtn">
+                        <i class="fas fa-sign-out-alt me-2"></i>Sign Out Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-amber-soft { color: #d4af37; }
+    .text-amber { color: #d4af37; }
+    .bg-amber { background-color: #d4af37 !important; }
+    .fw-800 { font-weight: 800; }
+</style>

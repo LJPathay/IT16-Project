@@ -204,11 +204,8 @@
                                 <div class="col-md-4">
                                     <label for="newPassword" class="modern-form-label">New Password</label>
                                     <div class="password-toggle-group position-relative">
-                                        <input type="password" name="NewPassword" id="newPassword" class="modern-form-control w-100" required minlength="8" style="padding-right: 45px;" / aria-label="NewPassword">
-                                        <button type="button" class="password-toggle-btn" onclick="toggleNewConfirmPassword(this)">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
+                                        <input type="password" name="NewPassword" id="newPassword" class="modern-form-control w-100" required style="padding-right: 45px;" / aria-label="NewPassword">
+                                    <partial name="_PasswordRequirements" model='("newPassword", "submitPasswordBtn", Model.Username, true, "")' />
                                 </div>
                                 <div class="col-md-4">
                                     <label for="confirmPassword" class="modern-form-label">Confirm New Password</label>
@@ -218,7 +215,7 @@
                                 </div>
                             </div>
                             <div class="mt-4">
-                                <button type="submit" class="ux-btn-primary rounded-pill px-5" style="background: var(--espresso-dark);">
+                                <button type="submit" id="submitPasswordBtn" class="ux-btn-primary rounded-pill px-5" style="background: var(--espresso-dark);" disabled>
                                     <i class="fas fa-key me-2"></i>Change Password
                                 </button>
                             </div>
@@ -249,41 +246,5 @@
                 icon.classList.add('fa-eye');
             }
         }
-
-        document.getElementById('newPassword').addEventListener('input', function() {
-            const password = this.value;
-            const container = document.getElementById('strengthContainer');
-            const fill = document.getElementById('strengthFill');
-            const label = document.getElementById('strengthLabel');
-
-            if (password.length === 0) {
-                container.classList.add('d-none');
-                return;
-            }
-
-            container.classList.remove('d-none');
-
-            let strength = 0;
-            if (password.length >= 8) strength++;
-            if (/[A-Z]/.test(password)) strength++;
-            if (/[0-9]/.test(password)) strength++;
-
-            fill.className = 'strength-meter-fill';
-            label.className = 'strength-label';
-
-            if (strength <= 1) {
-                fill.classList.add('strength-weak');
-                label.textContent = 'Weak';
-                label.classList.add('text-weak');
-            } else if (strength === 2) {
-                fill.classList.add('strength-medium');
-                label.textContent = 'Medium';
-                label.classList.add('text-medium');
-            } else {
-                fill.classList.add('strength-strong');
-                label.textContent = 'Strong';
-                label.classList.add('text-strong');
-            }
-        });
     </script>
 }
