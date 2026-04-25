@@ -1,41 +1,58 @@
 # ☕ LJP IT Solutions: Coffee Shop ERP System
-### *Integrative Programming and Technologies (IT16) 
+### *Integrative Programming and Technologies (IT16)*
 
-[![Security Level](https://img.shields.io/badge/Security-Enterprise%20Grade-brightgreen)](https://github.com/LJPathay/IT16-Project)
-[![Code Quality](https://img.shields.io/badge/SonarQube-Zero%20Vulnerabilities-success)](https://github.com/LJPathay/IT16-Project)
-[![Language](https://img.shields.io/badge/Stack-ASP.NET%20Core%20%7C%20EF%20Core%20%7C%20SQL%20Server-blue)](https://github.com/LJPathay/IT16-Project)
+[![Security Level](https://img.shields.io/badge/Security-Information%20Assurance%20Grade-brightgreen)](https://github.com/LJPathay/IT16-Project)
+[![Code Quality](https://img.shields.io/badge/SonarQube-A%20Rating-success)](https://github.com/LJPathay/IT16-Project)
+[![Language](https://img.shields.io/badge/Stack-ASP.NET%20Core%20MVC%20%7C%20EF%20Core%20%7C%20SQL%20Server-blue)](https://github.com/LJPathay/IT16-Project)
 
 **LJP IT Solutions** is a robust, web-based Enterprise Resource Planning (ERP) system designed specifically for the modern coffee shop industry. It integrates real-time inventory management, secure financial transactions, and advanced marketing analytics into a unified, high-security dashboard.
 
 ---
 
-## 🛡️ Security Architecture & Hardening
-*This system has been hardened following industry best practices for data protection and access control.*
+## 🛡️ Truthful Security Architecture & Hardening
+*This system has been hardened following strict Information Assurance and Security standards.*
 
 ### 🔐 1. Identity & Access Management (IAM)
 - **Role-Based Access Control (RBAC)**: Distinct permissions for SuperAdmin, Admin, Manager, Cashier, and Marketing Staff.
-- **Advanced Multi-Factor Authentication (MFA)**: Built-in TOTP verification (Google Authenticator/Microsoft Authenticator) for sensitive accounts.
-- **Strict Password Policy**: Mandatory 16-character minimum complexity (Upper, Lower, Numeric, Special) with **Password History** to prevent reuse.
-- **Session Protection**: 20-minute inactivity timeout with Session Fixation prevention.
+- **Cryptographic Hardening**: Passwords are mathematically shielded using PBKDF2 with **100,000 algorithmic iterations**.
+- **Adaptive Brute-Force Immunity**: Failed login attempts trigger automatic tier escalation lockouts, leading up to a Permanent Block (100-year timeout) requiring administrative unblocking and clearance at 15 attempts.
+- **Zero-Knowledge Enumeration**: The "Forgot Password" algorithms are built to prevent attackers from determining if an email or username exists in the system.
+- **Strict Password Integrity**: Enforced minimum 16-character complexity (Upper, Lower, Numeric, Special) along with **Password History Limitation** to verify users aren't reusing old passwords.
+- **Multi-Factor Authentication (MFA)**: Built-in TOTP verification for privileged logins.
+- **Session Termination Policy**: Absolute 20-minute inactivity thresholds with dynamic session fixation-prevention explicitly built into the login process.
 
-### 🤖 2. Perimeter Defense
-- **Google reCAPTCHA v2**: Integrated into the login gateway to mitigate brute-force and dictionary attacks.
-- **Rate Limiting**: Intelligent IP-based throttling on all authentication endpoints.
-- **Secure Headers**: Hardened **Content Security Policy (CSP)**, X-Frame-Options (Click-jacking protection), and HSTS.
-- **Reverse Proxy Resiliency**: Dynamic `ForwardedHeaders` mapped exclusively to handle secure cloud edge proxies (runasp.net) without cyclic SSL redirect loops.
+### 🧱 2. Perimeter & Payload Defense
+- **Parameter Tampering Prevention**: The system enforces "Zero-Trust Client" principles. Pricing and data payloads sent from the frontend POS are ignored entirely in favor of strict, server-side database verification.
+- **File Upload Mitigation**: Image uploads run through explicit perimeter checks: hard-capped at **5MB** limits, parsed for explicitly allowed extensions (`.jpg, .png, .jpeg, .webp`), and inspected for `image/` MIME constraints prior to ingestion.
+- **Content Security Policy (CSP)**: Hardened headers to significantly mitigate DOM-based Cross-Site Scripting (XSS) and Content Injection. Includes `X-Frame-Options` for Click-Jacking protection.
+- **CSRF Tokens**: All critical action forms natively implement ASP.NET Anti-Forgery cryptograms.
+- **Google reCAPTCHA v2**: Deeply integrated into the login gateways.
 
-### 🕵️ 3. Auditing & Privacy
-- **Real-Time Security Monitoring**: Automated logging of all security events (login attempts, PII access, role changes).
-- **Unified Audit Interface**: Complete 1:1 design synchronization between Security Logs and Activity Tracking, utilizing streamlined avatar-based operator formatting for rapid threat identification and data consumption.
-- **Visitor Tracking**: Comprehensive audit trail capturing IP addresses and User-Agents for accountability.
-- **Data Masking (Privacy-by-Design)**: Redaction of sensitive PII (Emails, IP segments) in administrative dashboards to comply with privacy standards.
+### 🕵️ 3. Auditing & Compliance
+- **Unified Security Logging**: Complete logging of all threat factors (Unauthorized route access, lockouts, parameter tampering).
+- **Omnipresent Visitor Tracking**: Fully capable middleware identifying and logging all Anonymous and Authenticated users traversing routes, gathering their metadata structure.
+- **Cryptographic Webhook Verification**: Ensures remote connections (like PayMongo) actually originate from the vendor via secure streaming HMAC byte verification.
 
-### 📈 4. Technical Debt & Code Quality
-- **SonarQube Hardened**: Extirpated 'under-posting' vulnerabilities, enforced explicit Nullable type mapping, and slashed cognitive complexity across major controllers.
-- **Strict WCAG-A Accessibility**: Completely redundant-proofed layout rendering, establishing explicit context for screen readers by stripping ambiguous HTML image tags.
-- **CDN & Cryptographic Management**: Documented secure CDN architectures, explicitly balancing Subresource Integrity (SRI) with dynamic provider dependencies (e.g. Google reCAPTCHA, TOTP RFC-6238 hashing).
-- **Object Memory Minimization**: Bypassed catch-22 Javascript instantiation traps via global memory binding, entirely eliminating localized "unused variable" SonarQube defects.
-- **Performance Optimized**: Substituted legacy DOM manipulations with modern `globalThis` constraints and optimized backend LINQ operations (e.g., converting redundant `.Count()` structures to `.Any()`).
+---
+
+## 📂 Project File Structure
+The architecture leverages the Model-View-Controller (MVC) paradigm:
+
+```text
+ljp_itsolutions/
+├── 📁 Controllers/        # Business logic & Route end-point handling (Account, Admin, Cashier, POS, etc.)
+├── 📁 Models/             # Entity Framework database structures & ViewModel definitions
+├── 📁 Views/              # Razor (.cshtml) HTML UI components separated by Roles
+├── 📁 ViewComponents/     # Reusable modular UI elements (like Notifications)
+├── 📁 Services/           # Independent infrastructure bindings (EmailSender, PhotoService, InventoryService)
+├── 📁 Data/               # Entity Framework context (ApplicationDbContext) & Initializers
+├── 📁 Helpers/            # Extension algorithms (SecurityHelper, Encryption logic)
+├── 📁 Migrations/         # EF Core SQL Database History
+├── 📁 Backups/            # Automated database snapshot storage
+├── 📁 wwwroot/            # Static Assets (Images, centralized CSS, nonced JS scripts)
+├── appsettings.json       # Secure System Configuration
+└── Program.cs             # Application Entry point, Middleware configurations & Security pipelines
+```
 
 ---
 
@@ -92,7 +109,7 @@ dotnet run
 > **Project Defense Status**: Phase 3 Final Integration (Security Hardened)
 
 **Prepared by:** Lebron James Pathay  
-**Course & Section:** IT16 -- INFORMATION ASSURANCE AND SECURITY 1
+**Course & Section:** IT16 -- INFORMATION ASSURANCE AND SECURITY 1  
 **Subject:**  IT16  
 
 
