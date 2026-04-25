@@ -15,8 +15,8 @@ namespace ljp_itsolutions.Helpers
             byte[] clearBytes = Encoding.Unicode.GetBytes(clearText);
             using (Aes encryptor = Aes.Create())
             {
-                encryptor.Key = Rfc2898DeriveBytes.Pbkdf2(EncryptionKey, Salt, 1000, HashAlgorithmName.SHA256, 32);
-                encryptor.IV = Rfc2898DeriveBytes.Pbkdf2(EncryptionKey, Salt, 1000, HashAlgorithmName.SHA256, 16);
+                encryptor.Key = Rfc2898DeriveBytes.Pbkdf2(EncryptionKey, Salt, 100000, HashAlgorithmName.SHA256, 32);
+                encryptor.IV = Rfc2898DeriveBytes.Pbkdf2(EncryptionKey, Salt, 100000, HashAlgorithmName.SHA256, 16);
                 using (MemoryStream ms = new MemoryStream())
                 {
                     using (CryptoStream cs = new CryptoStream(ms, encryptor.CreateEncryptor(), CryptoStreamMode.Write))
@@ -39,8 +39,8 @@ namespace ljp_itsolutions.Helpers
                 byte[] cipherBytes = Convert.FromBase64String(cipherText);
                 using (Aes encryptor = Aes.Create())
                 {
-                    encryptor.Key = Rfc2898DeriveBytes.Pbkdf2(EncryptionKey, Salt, 1000, HashAlgorithmName.SHA256, 32);
-                    encryptor.IV = Rfc2898DeriveBytes.Pbkdf2(EncryptionKey, Salt, 1000, HashAlgorithmName.SHA256, 16);
+                    encryptor.Key = Rfc2898DeriveBytes.Pbkdf2(EncryptionKey, Salt, 100000, HashAlgorithmName.SHA256, 32);
+                    encryptor.IV = Rfc2898DeriveBytes.Pbkdf2(EncryptionKey, Salt, 100000, HashAlgorithmName.SHA256, 16);
                     using (MemoryStream ms = new MemoryStream())
                     {
                         using (CryptoStream cs = new CryptoStream(ms, encryptor.CreateDecryptor(), CryptoStreamMode.Write))
