@@ -118,9 +118,13 @@ C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\css\ux-premi
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\favicon.ico
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\images\coffee-logo.svg
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\images\gcash.png
+C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\images\login-bg.jpg
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\images\logo.png
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\images\maya.png
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\js\dashboard.js
+C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\js\guest-notifications.js
+C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\js\layout-core.js
+C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\js\login.js
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\js\site.js
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map
@@ -185,6 +189,7 @@ C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\wwwroot\lib\jquery\L
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\appsettings.Development.json
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\appsettings.json
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Backups\backup_20260211_201620.json
+C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Backups\backup_20260425_084602.json
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Account\AccessDenied.cshtml
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Account\ForgotPassword.cshtml
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Account\Login.cshtml
@@ -241,6 +246,10 @@ C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Shared\_Layout
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Shared\_ManagerNavigation.cshtml
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Shared\_MarketingNavigation.cshtml
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Shared\_OrderDetailsModal.cshtml
+C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Shared\_Pagination.cshtml
+C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Shared\_PaginationScripts.cshtml
+C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Shared\_PasswordRequirements.cshtml
+C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Shared\_SessionTimeoutModal.cshtml
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Shared\_SuperAdminNavigation.cshtml
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\Shared\_ValidationScriptsPartial.cshtml
 C:\Users\lebro\source\repos\ljp_itsolutions\ljp_itsolutions\Views\SuperAdmin\AuditLogs.cshtml
