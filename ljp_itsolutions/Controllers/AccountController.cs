@@ -365,6 +365,11 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> VerifyMfa(string code, bool rememberDevice = false)
         {
+            if (!ModelState.IsValid)
+            {
+                return View();
+            }
+
             if (string.IsNullOrEmpty(code))
             {
                 ModelState.AddModelError(string.Empty, "Verification code is required.");
@@ -494,6 +499,12 @@ namespace ljp_itsolutions.Controllers
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateProfile(string fullName, string email, string profilePictureUrl, IFormFile? profilePictureFile)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Invalid profile data provided.";
+            return RedirectToAction(nameof(Profile));
+        }
+
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userIdStr, out var userId))
             return Unauthorized();
@@ -544,6 +555,12 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateSettings(bool isHighContrast, string fontSize, bool reduceMotion)
         {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Invalid settings data provided.";
+                return RedirectToAction(nameof(Profile));
+            }
+
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdStr, out var userId))
                 return Unauthorized();
@@ -755,6 +772,7 @@ namespace ljp_itsolutions.Controllers
         [HttpPost]
         public async Task<IActionResult> MarkAsRead(int id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var userId = GetCurrentUserId();
             var userRole = HttpContext.Session.GetString("UserRole") ?? User.FindFirstValue(ClaimTypes.Role) ?? "-";
 

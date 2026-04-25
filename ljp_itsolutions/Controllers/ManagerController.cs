@@ -98,6 +98,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RestoreProduct(int id)
         {
+            if (!ModelState.IsValid) return RedirectToAction("ArchivedProducts");
             var product = await _db.Products.FindAsync(id);
             if (product != null)
             {
@@ -114,6 +115,11 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateProduct(Product product, IFormFile photo)
         {
+            if (!ModelState.IsValid) 
+            {
+                ViewBag.Categories = await _db.Categories.ToListAsync();
+                return View("Products", await _db.Products.Where(p => !p.IsArchived).Include(p => p.Category).ToListAsync());
+            }
             if (photo != null && photo.Length > 0)
             {
                 try
@@ -184,6 +190,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStock(int id, int stock)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var product = await _db.Products.FindAsync(id);
             if (product != null)
             {
@@ -212,6 +219,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProduct(Product product, IFormFile photo)
         {
+            if (!ModelState.IsValid) return RedirectToAction(nameof(Products));
             var existingProduct = await _db.Products.FindAsync(product.ProductID);
             if (existingProduct == null) return NotFound();
 
@@ -254,7 +262,7 @@ namespace ljp_itsolutions.Controllers
             existingProduct.CategoryID = product.CategoryID;
             existingProduct.Price = product.Price;
             existingProduct.StockQuantity = product.StockQuantity;
-            existingProduct.IsAvailable = Request.Form["IsAvailable"] == "true";
+            existingProduct.IsAvailable = product.IsAvailable;
 
             await _db.SaveChangesAsync();
             await LogAudit($"Edited Product: {existingProduct.ProductName}");
@@ -266,6 +274,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ArchiveProduct(int id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var product = await _db.Products.FindAsync(id);
             if (product != null)
             {
@@ -282,6 +291,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ArchiveIngredient(int id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var ingredient = await _db.Ingredients.FindAsync(id);
             if (ingredient != null)
             {
@@ -357,6 +367,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EmailSalesReport(DateTime? startDate, DateTime? endDate)
         {
+            if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid dates." });
             DateTime start = startDate ?? DateTime.Today.AddDays(-30);
             DateTime end = endDate ?? DateTime.UtcNow;
 
@@ -442,6 +453,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> VoidOrder(Guid id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var order = await _db.Orders
                 .Include(o => o.OrderDetails)
                     .ThenInclude(d => d.Product)
@@ -483,6 +495,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RefundOrder(Guid id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var order = await _db.Orders
                 .Include(o => o.OrderDetails)
                     .ThenInclude(d => d.Product)
@@ -527,6 +540,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateExpense(Expense expense)
         {
+            if (!ModelState.IsValid) return RedirectToAction("Finance");
             if (ModelState.IsValid)
             {
                 expense.CreatedBy = GetCurrentUserId();
@@ -566,6 +580,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteExpense(int id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var expense = await _db.Expenses.FindAsync(id);
             if (expense != null)
             {
@@ -617,6 +632,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditIngredient(Ingredient ingredient)
         {
+            if (!ModelState.IsValid) return RedirectToAction("Inventory");
             var existing = await _db.Ingredients.FindAsync(ingredient.IngredientID);
             if (existing != null)
             {
@@ -682,6 +698,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteIngredient(int id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var ingredient = await _db.Ingredients.FindAsync(id);
             if (ingredient != null)
             {
@@ -697,6 +714,7 @@ namespace ljp_itsolutions.Controllers
         [HttpGet]
         public async Task<IActionResult> GetIngredientDetails(int id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var ingredient = await _db.Ingredients
                 .FirstOrDefaultAsync(i => i.IngredientID == id);
 
@@ -749,6 +767,7 @@ namespace ljp_itsolutions.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProductRecipes(int productId)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var recipes = await _db.ProductRecipes
                 .Where(pr => pr.ProductID == productId)
                 .Select(pr => new 
@@ -771,6 +790,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateRecipe(int ProductID, List<RecipeItemDto> Recipes)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             // Remove existing recipes for this product
             var existingRecipes = await _db.ProductRecipes
                 .Where(pr => pr.ProductID == ProductID)
@@ -897,6 +917,7 @@ namespace ljp_itsolutions.Controllers
         [HttpPost]
         public async Task<IActionResult> RejectCampaign([FromBody] RejectCampaignDto dto)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             var campaign = await _db.Promotions.FindAsync(dto.Id);
             if (campaign == null)
                 return NotFound();

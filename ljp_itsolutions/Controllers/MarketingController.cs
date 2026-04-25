@@ -221,6 +221,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteCampaign(int id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var promotion = await _db.Promotions.FindAsync(id);
             if (promotion != null)
             {
@@ -268,6 +269,7 @@ namespace ljp_itsolutions.Controllers
 
         public async Task<IActionResult> CampaignAnalytics(int id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var campaign = await _db.Promotions
                 .Include(p => p.Orders)
                     .ThenInclude(o => o.Customer)
@@ -289,6 +291,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateCustomer(Customer customer)
         {
+            if (!ModelState.IsValid) return View(customer);
             if (ModelState.IsValid)
             {
                 customer.Points = 0;
@@ -329,6 +332,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteCustomer(int id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             // Only Admins or SuperAdmins can delete customers
             if (!User.IsInRole("Admin") && !User.IsInRole("SuperAdmin"))
             {
@@ -396,6 +400,7 @@ namespace ljp_itsolutions.Controllers
         //  Reports
         public async Task<IActionResult> SalesTrends(string type = "week", string value = "")
         {
+            if (!ModelState.IsValid) return BadRequest();
             var (startDate, endDate, finalValue) = CalculateDateRange(type, value);
 
             var query = _db.Orders
@@ -431,6 +436,7 @@ namespace ljp_itsolutions.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportSalesTrends(string type = "week", string value = "")
         {
+            if (!ModelState.IsValid) return BadRequest();
             var (startDate, endDate, finalValue) = CalculateDateRange(type, value);
             string label = type switch
             {

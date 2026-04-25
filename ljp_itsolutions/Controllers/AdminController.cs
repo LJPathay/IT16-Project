@@ -30,6 +30,7 @@ namespace ljp_itsolutions.Controllers
         [HttpGet]
         public IActionResult Users(bool showArchived = false)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var query = _db.Users.AsQueryable();
             
             query = query.Where(u => u.Role != "SuperAdmin");
@@ -95,6 +96,7 @@ namespace ljp_itsolutions.Controllers
 
         public IActionResult InventoryOverview(bool showArchived = false)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var query = _db.Ingredients.AsQueryable();
             
             if (showArchived)
@@ -160,6 +162,7 @@ namespace ljp_itsolutions.Controllers
         [HttpGet]
         public async Task<IActionResult> GetOrderDetails(Guid id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var order = await _db.Orders
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Product)
@@ -194,6 +197,7 @@ namespace ljp_itsolutions.Controllers
         // Creating a User
         public async Task<IActionResult> CreateUser([FromBody] User user)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             if (string.IsNullOrEmpty(user.Username))
                 return BadRequest("Username is required.");
 
@@ -242,6 +246,7 @@ namespace ljp_itsolutions.Controllers
         // Edit User
         public async Task<IActionResult> EditUser([FromBody] JsonElement data)
         {
+            if (!ModelState.IsValid) return BadRequest();
             try
             {
                 var jsonId = data.GetProperty("UserID").GetString();
@@ -279,6 +284,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleUserStatus(Guid id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var user = await _db.Users.FindAsync(id);
             if (user == null) return NotFound();
 
@@ -296,6 +302,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleIngredientArchive(int id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var ingredient = await _db.Ingredients.FindAsync(id);
             if (ingredient == null) return NotFound();
 
@@ -310,6 +317,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddIngredient([FromBody] Ingredient ingredient)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             if (string.IsNullOrEmpty(ingredient.Name)) return BadRequest("Name is required.");
 
             _db.Ingredients.Add(ingredient);
@@ -370,6 +378,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStock(int id, decimal quantity, decimal? threshold, DateTime? expiryDate, string remarks)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var ingredient = await _db.Ingredients.FindAsync(id);
             if (ingredient == null) return NotFound();
 

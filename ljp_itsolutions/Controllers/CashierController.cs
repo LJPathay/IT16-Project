@@ -59,6 +59,7 @@ namespace ljp_itsolutions.Controllers
         [HttpGet]
         public async Task<IActionResult> ValidatePromoCode(string code, int? customerId)
         {
+            if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid parameters." });
             if (string.IsNullOrWhiteSpace(code)) return Json(new { success = false, message = "Empty code" });
 
             var promotion = await _orderService.ValidatePromotionAsync(code, customerId);
@@ -85,6 +86,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PlaceOrder([FromBody] OrderRequest request)
         {
+            if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid order data." });
             // Basic Validation - Ensure the cart isn't empty before proceeding.
             if (request.ProductIds == null || !request.ProductIds.Any())
                 return Json(new { success = false, message = "No products selected." });
@@ -152,6 +154,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreatePayMongoOrder([FromBody] PayMongoOrderRequest request)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             // Cart Validation - Protects against payload tampering.
             if (request.ProductIds == null || !request.ProductIds.Any())
                 return BadRequest("No products selected.");
@@ -203,6 +206,7 @@ namespace ljp_itsolutions.Controllers
 
         public async Task<IActionResult> Receipt(Guid id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var order = await _db.Orders
                 .Include(o => o.OrderDetails)
                     .ThenInclude(d => d.Product)
@@ -218,6 +222,7 @@ namespace ljp_itsolutions.Controllers
 
         public async Task<IActionResult> GetReceiptPartial(Guid id)
         {
+            if (!ModelState.IsValid) return BadRequest();
             try 
             {
                 var order = await _db.Orders
@@ -242,6 +247,7 @@ namespace ljp_itsolutions.Controllers
         [HttpGet]
         public async Task<IActionResult> SearchCustomers(string query)
         {
+            if (!ModelState.IsValid) return Json(new List<object>());
             if (string.IsNullOrWhiteSpace(query))
                 return Json(new List<object>());
 
@@ -281,6 +287,7 @@ namespace ljp_itsolutions.Controllers
 
         public IActionResult ProcessPayment(Guid orderId, decimal amount)
         {
+            if (!ModelState.IsValid) return BadRequest();
             // Fully integrated into PlaceOrder for the POS flow
             return RedirectToAction("TransactionHistory");
         }
@@ -289,6 +296,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SendReceipt(Guid orderId, string email)
         {
+            if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid request." });
             if (string.IsNullOrEmpty(email)) return Json(new { success = false, message = "Email is required." });
 
             bool sent = await _receiptService.SendOrderReceiptAsync(orderId, email);
@@ -328,6 +336,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> StartShift(decimal startingCash)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(userIdClaim, out var cashierId))
                 return Challenge();
@@ -359,6 +368,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CloseShift(decimal actualEndingCash)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!Guid.TryParse(userIdClaim, out var cashierId))
                 return Challenge();

@@ -30,6 +30,7 @@ namespace ljp_itsolutions.Controllers
 
         public async Task<IActionResult> Dashboard()
         {
+            if (!ModelState.IsValid) return BadRequest();
             var data = await _analyticsService.GetSuperAdminDashboardDataAsync();
             return View(data);
         }
@@ -38,6 +39,7 @@ namespace ljp_itsolutions.Controllers
         // --- User Management ---
         public async Task<IActionResult> Users(bool showArchived = false)
         {
+            if (!ModelState.IsValid) return BadRequest();
             var query = _db.Users.AsQueryable();
             if (showArchived) query = query.Where(u => !u.IsActive);
             else query = query.Where(u => u.IsActive);
@@ -56,6 +58,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateUser([FromBody] User user)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
             if (string.IsNullOrEmpty(user.Username))
                 return BadRequest("Username is required.");
 
@@ -163,6 +166,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ArchiveUser(string id)
         {
+            if (!ModelState.IsValid) return RedirectToAction(AppConstants.Actions.Users);
             if (!Guid.TryParse(id, out var guid)) return RedirectToAction(AppConstants.Actions.Users);
             
             var user = await _db.Users.FindAsync(guid);
@@ -199,6 +203,7 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RestoreUser(string id)
         {
+            if (!ModelState.IsValid) return RedirectToAction(AppConstants.Actions.Users);
             if (!Guid.TryParse(id, out var guid)) return RedirectToAction(AppConstants.Actions.Users);
             var user = await _db.Users.FindAsync(guid);
             if (user != null)
@@ -357,8 +362,11 @@ namespace ljp_itsolutions.Controllers
         [HttpGet]
         public IActionResult DownloadBackup(string fileName)
         {
-            if (string.IsNullOrEmpty(fileName)) return BadRequest();
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "Backups", fileName);
+            if (!ModelState.IsValid || string.IsNullOrEmpty(fileName)) return BadRequest();
+            
+            // SECURITY: Sanitize fileName to prevent path traversal
+            var safeFileName = Path.GetFileName(fileName);
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "Backups", safeFileName);
             if (!System.IO.File.Exists(path)) return NotFound();
 
             var bytes = System.IO.File.ReadAllBytes(path);
@@ -369,8 +377,11 @@ namespace ljp_itsolutions.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteBackup(string fileName)
         {
-            if (string.IsNullOrEmpty(fileName)) return BadRequest();
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "Backups", fileName);
+            if (!ModelState.IsValid || string.IsNullOrEmpty(fileName)) return BadRequest();
+            
+            // SECURITY: Sanitize fileName to prevent path traversal
+            var safeFileName = Path.GetFileName(fileName);
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "Backups", safeFileName);
             if (System.IO.File.Exists(path))
             {
                 System.IO.File.Delete(path);
