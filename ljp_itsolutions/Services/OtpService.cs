@@ -59,7 +59,7 @@ namespace ljp_itsolutions.Services
             byte[] counter = BitConverter.GetBytes(iteration);
             if (BitConverter.IsLittleEndian) Array.Reverse(counter);
 
-            using (var hmac = new HMACSHA1(key))
+            using (var hmac = new HMACSHA256(key))
             {
                 byte[] hash = hmac.ComputeHash(counter);
                 int offset = hash[hash.Length - 1] & 0xf;
